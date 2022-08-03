@@ -1,0 +1,133 @@
+Author: Vivek Das Mohapatra <vivek@collabora.com>
+Date:   Thu Jun 16 20:15:00 2022 +0100
+
+    Modify 00_header.in to accomadate the early video mode selection
+    we need to make to keep seamless boot and optional grub menu
+    display working together.
+
+diff --git a/util/grub.d/00_header.in b/util/grub.d/00_header.in
+index f74c2a4c6..2d677649a 100644
+--- a/util/grub.d/00_header.in
++++ b/util/grub.d/00_header.in
+@@ -175,6 +175,20 @@ EOF
+     font="`make_system_path_relative_to_its_root "${font_path}"`"
+ fi
+ 
++## start header steamenv sub block
++insmod steamenv
++steamenv_noisy_loader_mode="1280x800"
++steamenv_noisy_kernel_mode="800x1280"
++steamenv_loader_mode=${GRUB_GFXMODE}
++steamenv_kernel_mode=${GRUB_GFXPAYLOAD_LINUX:-keep}
++steamenv_quiet="loglevel=3 splash quiet plymouth.ignore-serial-consoles fbcon=vc:4-6"
++steamenv_noisy="loglevel=4 splash=verbose fbcon=nodefer"
++steamenv_verbosity=""
++timeout=0
++timeout_style=menu
++steamenv_init
++## end steamenv header sub block
++
+ if loadfont \$font ; then
+ EOF
+ 	    else
+@@ -185,7 +199,7 @@ EOF
+ 	fi
+ 
+     cat << EOF
+-  set gfxmode=${GRUB_GFXMODE}
++  set gfxmode=\${steamenv_loader_mode}
+   load_video
+   insmod gfxterm
+ EOF
+--- a/util/grub.d/00_header.in	2022-06-17 16:21:53.199611249 +0100
++++ b/util/grub.d/00_header.in	2022-06-17 16:27:53.017324531 +0100
+@@ -359,89 +359,6 @@
+     fi
+ fi
+ 
+-make_timeout ()
+-{
+-    cat << EOF
+-if [ "\${recordfail}" = 1 ] ; then
+-  set timeout=${GRUB_RECORDFAIL_TIMEOUT:-30}
+-else
+-EOF
+-    if [ "x${3}" != "x" ] ; then
+-	timeout="${2}"
+-	style="${3}"
+-    elif [ "x${1}" != "x" ] && \
+-	 ([ "$quick_boot" = 1 ] || [ "x${1}" != "x0" ]) ; then
+-	# Handle the deprecated GRUB_HIDDEN_TIMEOUT scheme.
+-	timeout="${1}"
+-	if [ "x${2}" != "x0" ] ; then
+-	    grub_warn "$(gettext "Setting GRUB_TIMEOUT to a non-zero value when GRUB_HIDDEN_TIMEOUT is set is no longer supported.")"
+-	fi
+-	if [ "x${GRUB_HIDDEN_TIMEOUT_QUIET}" = "xtrue" ] ; then
+-	    style="hidden"
+-	    verbose=
+-	else
+-	    style="countdown"
+-	    verbose=" --verbose"
+-	fi
+-    else
+-	# No hidden timeout, so treat as GRUB_TIMEOUT_STYLE=menu
+-	timeout="${2}"
+-	style="menu"
+-    fi
+-    cat << EOF
+-  if [ x\$feature_timeout_style = xy ] ; then
+-    set timeout_style=${style}
+-    set timeout=${timeout}
+-EOF
+-    if [ "x${style}" = "xmenu" ] ; then
+-	cat << EOF
+-  # Fallback normal timeout code in case the timeout_style feature is
+-  # unavailable.
+-  else
+-    set timeout=${timeout}
+-EOF
+-    else
+-	cat << EOF
+-  # Fallback hidden-timeout code in case the timeout_style feature is
+-  # unavailable.
+-  elif sleep${verbose} --interruptible ${timeout} ; then
+-    set timeout=0
+-EOF
+-    fi
+-    cat << EOF
+-  fi
+-fi
+-EOF
+-if [ "$recordfail_broken" = 1 ]; then
+-  cat << EOF
+-if [ \$grub_platform = efi ]; then
+-  set timeout=${GRUB_RECORDFAIL_TIMEOUT:-30}
+-  if [ x\$feature_timeout_style = xy ] ; then
+-    set timeout_style=menu
+-  fi
+-fi
+-EOF
+-fi
+-}
+-
+-if [ "x$GRUB_BUTTON_CMOS_ADDRESS" != "x" ]; then
+-    cat <<EOF
+-if cmostest $GRUB_BUTTON_CMOS_ADDRESS ; then
+-EOF
+-make_timeout "${GRUB_HIDDEN_TIMEOUT_BUTTON}" "${GRUB_TIMEOUT_BUTTON}" "${GRUB_TIMEOUT_STYLE_BUTTON}"
+-echo else
+-make_timeout "${GRUB_HIDDEN_TIMEOUT}" "${GRUB_TIMEOUT}" "${GRUB_TIMEOUT_STYLE}"
+-echo fi
+-else
+-make_timeout "${GRUB_HIDDEN_TIMEOUT}" "${GRUB_TIMEOUT}" "${GRUB_TIMEOUT_STYLE}"
+-fi
+-
+-if [ "x$GRUB_BUTTON_CMOS_ADDRESS" != "x" ] && [ "x$GRUB_BUTTON_CMOS_CLEAN" = "xyes" ]; then
+-    cat <<EOF
+-cmosclean $GRUB_BUTTON_CMOS_ADDRESS
+-EOF
+-fi
+-
+ # Play an initial tune
+ if [ "x${GRUB_INIT_TUNE}" != "x" ] ; then
+   echo "play ${GRUB_INIT_TUNE}"

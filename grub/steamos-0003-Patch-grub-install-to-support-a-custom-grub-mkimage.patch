@@ -1,0 +1,152 @@
+From cbf2e2acd2b0a56c48fd63f1f07a4655a4cbceb4 Mon Sep 17 00:00:00 2001
+From: Arnaud Rebillout <arnaud.rebillout@collabora.com>
+Date: Thu, 4 Jul 2019 11:40:49 +0700
+Subject: [PATCH 3/5] Patch grub-install to support a custom grub-mkimage
+
+  ~ Background ~
+
+grub-install has MANY hidden options, that don't appear neither in the
+short help, neither in the manual page, but that you can find by diving
+into the code.
+
+Among this hidden options, there is `--grub-mkimage`. With such a name,
+we can imagine that we'll be able to ask grub-install to use a custom
+command in-place of grub-mkimage, in order to generate the grub image.
+
+However, digging further unveils a few things:
+- this a dummy option that does nothing
+- grub-install doesn't call grub-mkimage anyway. Instead, the code to
+  make an image is factorized in grub-install-common.c, and both
+  grub-mkimage and grub-install call the functions that are defined
+  there.
+
+We want this option badly though, we have a custom grub-mkimage, and we
+grub-install to use it.
+
+So let's implement the options `--grub-mkimage`.
+
+  ~ Implementation ~
+
+We don't really attempt to implement a universal `--grub-mkimage` option
+that would work for the whole world and that we could upstream.
+
+For the sake of simplicity, we take a few shortcuts, and only implements
+what's needed in SteamOS. Ie. we don't try to pass --directory=,
+--memdisk= and --config= to grub-mkimage. And here's why.
+
+Our custom grub-mkimage (which goes by the name of steamos-grub-mkimage)
+creates a custom config and memdisk, specific to SteamOS. So if
+grub-install would pass --config= or --memdisk= to it, the best we could
+to would be to ignore it anyway.
+
+Updated for minor unrelated code changes.
+Last-Update: 2021-06-30
+Updated-by: Vivek Das Mohapatras <vivek@collabora.com>
+
+Signed-off-by: Arnaud Rebillout <arnaud.rebillout@collabora.com>
+---
+ include/grub/util/install.h |  1 +
+ util/grub-install-common.c  |  3 +++
+ util/grub-install.c         | 32 ++++++++++++++++++++++++++++++++
+ 3 files changed, 36 insertions(+)
+
+diff --git a/include/grub/util/install.h b/include/grub/util/install.h
+index a521f1663..e61fae9a7 100644
+--- a/include/grub/util/install.h
++++ b/include/grub/util/install.h
+@@ -126,6 +126,7 @@ enum grub_install_options {
+ };
+ 
+ extern char *grub_install_source_directory;
++extern char *grub_install_grub_mkimage;
+ 
+ enum grub_install_plat
+ grub_install_get_target (const char *src);
+diff --git a/util/grub-install-common.c b/util/grub-install-common.c
+index 1d47c33c0..69f20fd41 100644
+--- a/util/grub-install-common.c
++++ b/util/grub-install-common.c
+@@ -308,6 +308,7 @@ struct install_list install_themes = { 1, 0, 0, 0 };
+ char *grub_install_source_directory = NULL;
+ char *grub_install_locale_directory = NULL;
+ char *grub_install_themes_directory = NULL;
++char *grub_install_grub_mkimage = NULL;
+ 
+ void
+ grub_install_push_module (const char *val)
+@@ -474,6 +475,8 @@ grub_install_parse (int key, char *arg)
+ 	}
+       grub_util_error (_("Unrecognized compression `%s'"), arg);
+     case GRUB_INSTALL_OPTIONS_GRUB_MKIMAGE:
++      free (grub_install_grub_mkimage);
++      grub_install_grub_mkimage = xstrdup (arg);
+       return 1;
+     default:
+       return 0;
+diff --git a/util/grub-install.c b/util/grub-install.c
+index bd6d8dbb3..dd4c1df9e 100644
+--- a/util/grub-install.c
++++ b/util/grub-install.c
+@@ -42,6 +42,8 @@
+ #include <grub/emu/config.h>
+ #include <grub/util/ofpath.h>
+ #include <grub/hfsplus.h>
++#include <grub/emu/hostfile.h>
++#include <grub/emu/exec.h>
+ 
+ #include <string.h>
+ 
+@@ -1778,12 +1779,28 @@ main (int argc, char *argv[])
+ 				       core_name);
+   char *prefix = xasprintf ("%s%s", prefix_drive ? : "",
+ 			    relative_grubdir);
++  if (grub_install_grub_mkimage)
++    {
++      int rv;
++      rv = grub_util_exec ((const char * []) { grub_install_grub_mkimage,
++					       "--prefix", prefix,
++					       "--output", imgfile,
++					       "--format", mkimage_target,
++					       NULL });
++      if (rv != 0)
++	{
++	  grub_util_error ("`%s` invocation failed\n", grub_install_grub_mkimage);
++	  exit (1);
++	}
++    }
++  else
+   grub_install_make_image_wrap (/* source dir  */ grub_install_source_directory,
+ 				/*prefix */ prefix,
+ 				/* output */ imgfile,
+ 				/* memdisk */ NULL,
+ 				have_load_cfg ? load_cfg : NULL,
+ 				/* image target */ mkimage_target, 0);
++
+   /* Backward-compatibility kludges.  */
+   switch (platform)
+     {
+@@ -1808,6 +1825,21 @@ main (int argc, char *argv[])
+     case GRUB_INSTALL_PLATFORM_X86_64_EFI:
+       {
+ 	char *dst = grub_util_path_concat (2, platdir, "grub.efi");
++	if (grub_install_grub_mkimage)
++	  {
++	    int rv;
++	    rv = grub_util_exec ((const char * []) { grub_install_grub_mkimage,
++						     "--prefix", "",
++						     "--output", dst,
++						     "--format", mkimage_target,
++						     NULL });
++	    if (rv != 0)
++	      {
++		grub_util_error ("`%s` invocation failed\n", grub_install_grub_mkimage);
++		exit (1);
++	      }
++	  }
++	else
+ 	grub_install_make_image_wrap (/* source dir  */ grub_install_source_directory,
+ 				      /* prefix */ "",
+ 				       /* output */ dst,
+-- 
+2.30.1
+

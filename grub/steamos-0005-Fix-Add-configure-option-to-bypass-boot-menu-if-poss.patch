@@ -1,0 +1,34 @@
+From af8a3f0c155896b995b634e1b78baf9ec393001d Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?Ga=C3=ABl=20PORTAY?= <gael.portay@collabora.com>
+Date: Tue, 2 Jun 2020 15:45:56 -0400
+Subject: [PATCH 5/5] Fix "Add configure option to bypass boot menu if
+ possible"
+
+This fixes commit 68d2d2e634f720de0f191cbf6d8af9278dd8e959.
+---
+ util/grub.d/00_header.in | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/util/grub.d/00_header.in b/util/grub.d/00_header.in
+index 889bc6378..16bd25647 100644
+--- a/util/grub.d/00_header.in
++++ b/util/grub.d/00_header.in
+@@ -128,6 +128,15 @@ EOF
+ EOF
+ 	return 1
+ 	;;
++      ext*)
++        DEVICE="$(grub-probe --target=device "${grubdir}")"
++        if tune2fs -l "$DEVICE" | grep -q "read-only" ; then
++          cat <<EOF
++  # GRUB lacks write support for $FS, so recordfail support is disabled.
++EOF
++          return 1
++        fi
++        ;;
+     esac
+ 
+     cat <<EOF
+-- 
+2.30.1
+

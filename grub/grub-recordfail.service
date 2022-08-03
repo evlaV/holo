@@ -1,0 +1,8 @@
+[Unit]
+Description=Record successful boot for GRUB
+
+[Service]
+ExecStart=/usr/bin/grub-editenv /boot/grub/grubenv unset recordfail
+
+[Install]
+WantedBy=multi-user.target

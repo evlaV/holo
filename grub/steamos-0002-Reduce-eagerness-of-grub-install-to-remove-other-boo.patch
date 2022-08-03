@@ -1,0 +1,350 @@
+From 71d291f3de13fcf4f8cdbb7d4d4f5d4d1b6e79e3 Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?Vivek=20Das=C2=A0Mohapatra?= <vivek@collabora.com>
+Date: Wed, 24 Apr 2019 13:45:11 +0100
+Subject: [PATCH 2/5] Reduce eagerness of grub-install to remove other
+ bootloaders
+
+By default all EFI bootloader entries whose label contains
+the OS distributor as a substring are purged. We want to
+restrict this to those entries matching all these criteria:
+
+ - On same HD and partition as targeted by grub-install
+ - Distributor matches label (as before)
+ - Path indicates entry is for an instance of grub
+---
+ Makefile.util.def             |   9 ++
+ configure.ac                  |   6 +-
+ grub-core/osdep/unix/efivar.c | 193 +++++++++++++++++++++++++++++++++-
+ 3 files changed, 203 insertions(+), 5 deletions(-)
+
+diff --git a/Makefile.util.def b/Makefile.util.def
+index 59e41423b..f8d1056bc 100644
+--- a/Makefile.util.def
++++ b/Makefile.util.def
+@@ -574,6 +574,7 @@ program = {
+   common = grub-core/osdep/init.c;
+ 
+   cflags = '$(EFIVAR_CFLAGS)';
++  cflags = '$(BLKID_CFLAGS)';
+ 
+   ldadd = '$(LIBLZMA)';
+   ldadd = libgrubmods.a;
+@@ -582,6 +583,7 @@ program = {
+   ldadd = grub-core/lib/gnulib/libgnu.a;
+   ldadd = '$(LIBINTL) $(LIBDEVMAPPER) $(LIBUTIL) $(LIBZFS) $(LIBNVPAIR) $(LIBGEOM)';
+   ldadd = '$(EFIVAR_LIBS)';
++  ldadd = '$(BLKID_LIBS)';
+ 
+   condition = COND_HAVE_EXEC;
+ };
+@@ -626,6 +628,7 @@ program = {
+   common = grub-core/osdep/init.c;
+ 
+   cflags = '$(EFIVAR_CFLAGS)';
++  cflags = '$(BLKID_CFLAGS)';
+ 
+   ldadd = '$(LIBLZMA)';
+   ldadd = libgrubmods.a;
+@@ -634,6 +637,7 @@ program = {
+   ldadd = grub-core/lib/gnulib/libgnu.a;
+   ldadd = '$(LIBINTL) $(LIBDEVMAPPER) $(LIBUTIL) $(LIBZFS) $(LIBNVPAIR) $(LIBGEOM)';
+   ldadd = '$(EFIVAR_LIBS)';
++  ldadd = '$(BLKID_LIBS)';
+ };
+ 
+ program = {
+@@ -670,6 +674,7 @@ program = {
+   common = grub-core/osdep/init.c;
+ 
+   cflags = '$(EFIVAR_CFLAGS)';
++  cflags = '$(BLKID_CFLAGS)';
+ 
+   ldadd = '$(LIBLZMA)';
+   ldadd = libgrubmods.a;
+@@ -678,6 +683,8 @@ program = {
+   ldadd = grub-core/lib/gnulib/libgnu.a;
+   ldadd = '$(LIBINTL) $(LIBDEVMAPPER) $(LIBUTIL) $(LIBZFS) $(LIBNVPAIR) $(LIBGEOM)';
+   ldadd = '$(EFIVAR_LIBS)';
++  ldadd = '$(BLKID_LIBS)';
++  cflags = ' -DSTEAMOS_BOOTLOADER';
+ };
+ 
+ program = {
+@@ -711,6 +718,7 @@ program = {
+   common = grub-core/osdep/init.c;
+ 
+   cflags = '$(EFIVAR_CFLAGS)';
++  cflags = '$(BLKID_CFLAGS)';
+ 
+   ldadd = '$(LIBLZMA)';
+   ldadd = libgrubmods.a;
+@@ -719,6 +727,7 @@ program = {
+   ldadd = grub-core/lib/gnulib/libgnu.a;
+   ldadd = '$(LIBINTL) $(LIBDEVMAPPER) $(LIBUTIL) $(LIBZFS) $(LIBNVPAIR) $(LIBGEOM)';
+   ldadd = '$(EFIVAR_LIBS)';
++  ldadd = '$(BLKID_LIBS)';
+ };
+ 
+ script = {
+diff --git a/configure.ac b/configure.ac
+index f2aa05172..017bea4bc 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -505,7 +505,7 @@ AC_SUBST(BUILD_SHEBANG)
+ gl_INIT
+ 
+ WARN_FLAGS="-Wall -W -Wshadow -Wpointer-arith -Wundef -Wchar-subscripts -Wcomment -Wdeprecated-declarations -Wdisabled-optimization -Wdiv-by-zero -Wfloat-equal -Wformat-extra-args -Wformat-security -Wformat-y2k -Wimplicit -Wimplicit-function-declaration -Wimplicit-int -Wmain -Wmissing-braces -Wmissing-format-attribute -Wmultichar -Wparentheses -Wreturn-type -Wsequence-point -Wshadow -Wsign-compare -Wswitch -Wtrigraphs -Wunknown-pragmas -Wunused -Wunused-function -Wunused-label -Wunused-parameter -Wunused-value  -Wunused-variable -Wwrite-strings -Wnested-externs -Wstrict-prototypes"
+-EXTRA_WARN_FLAGS="-Wextra -Wattributes -Wendif-labels -Winit-self -Wint-to-pointer-cast -Winvalid-pch -Wmissing-field-initializers -Wnonnull -Woverflow -Wvla -Wpointer-to-int-cast -Wstrict-aliasing -Wvariadic-macros -Wvolatile-register-var -Wpointer-sign -Wmissing-include-dirs -Wmissing-prototypes -Wmissing-declarations -Wformat=2"
++EXTRA_WARN_FLAGS="-Wextra -Wattributes -Wendif-labels -Winit-self -Wint-to-pointer-cast -Winvalid-pch -Wmissing-field-initializers -Wnonnull -Woverflow -Wvla -Wpointer-to-int-cast -Wstrict-aliasing -Wvariadic-macros -Wvolatile-register-var -Wpointer-sign -Wno-missing-include-dirs -Wmissing-prototypes -Wmissing-declarations -Wformat=2"
+ 
+ HOST_CFLAGS="$HOST_CFLAGS $WARN_FLAGS -Wcast-align"
+ 
+@@ -1784,6 +1784,10 @@ fi
+ 
+ AC_SUBST([LIBDEVMAPPER])
+ 
++dnl SteamOS specific modifications:
++PKG_CHECK_MODULES([BLKID], [blkid])
++dnl end SteamOS modifications
++
+ LIBGEOM=
+ if test x$host_kernel = xkfreebsd; then
+   AC_CHECK_LIB([geom], [geom_gettree], [],
+diff --git a/grub-core/osdep/unix/efivar.c b/grub-core/osdep/unix/efivar.c
+index 4a58328b4..c96a7eb21 100644
+--- a/grub-core/osdep/unix/efivar.c
++++ b/grub-core/osdep/unix/efivar.c
+@@ -45,6 +45,7 @@
+ 
+ #include <efiboot.h>
+ #include <efivar.h>
++#include <blkid.h>
+ 
+ struct efi_variable {
+   struct efi_variable *next;
+@@ -65,6 +66,137 @@ struct efi_variable {
+   EFI_GUID (0x47c7b225, 0xc42a, 0x11d2, 0x8e57, 0x00, 0xa0, 0xc9, 0x69, \
+ 	    0x72, 0x3b)
+ 
++#define ev_bits(val, mask, shift) \
++    (((val) & ((mask) << (shift))) >> (shift))
++
++static size_t
++ucs2_to_utf8 (const uint16_t *ucs,
++              const size_t    ucs_size,
++              char           *buf,
++              const size_t    bufsize)
++{
++  ssize_t i;
++  ssize_t j;
++
++  if (!buf)
++    return 0;
++
++  memset (buf, '\0', bufsize);
++
++  for (i = 0, j = 0; ucs[i] && i < ucs_size && j < bufsize; i++)
++    {
++      if (ucs[ i ] <= 0x7f)
++        {
++          buf[ j++ ] = ucs[ i ];
++        }
++      else if (ucs[ i ] > 0x7f && ucs[ i ] <= 0x7ff)
++        {
++          buf[ j++ ] = 0xc0 | ev_bits( ucs[ i ], 0x1f, 6 );
++          buf[ j++ ] = 0x80 | ev_bits( ucs[ i ], 0x3f, 0 );
++        }
++      else if (ucs[ i ] > 0x7ff)
++        {
++          buf[ j++ ] = 0xe0 | ev_bits( ucs[ i ], 0x0f, 12);
++          buf[ j++ ] = 0x80 | ev_bits( ucs[ i ], 0x3f,  6);
++          buf[ j++ ] = 0x80 | ev_bits( ucs[ i ], 0x3f,  0);
++        }
++    }
++
++  buf[ bufsize - 1 ] = '\0';
++
++  return j;
++}
++
++static int
++efi_loadopt_gpt_info (const efidp dp,
++                      size_t limit,
++                      uint32_t *part,
++                      char **guid,
++                      char *buf,
++                      size_t bufsize)
++{
++  int part_seen = 0;
++  int path_seen = 0;
++
++  if (buf && bufsize)
++    buf[0] = '\0';
++
++  while (limit)
++    {
++      if (limit < 4 || efidp_node_size (dp) > limit)
++        return -1;
++
++      if (dp->type == EFIDP_END_TYPE)
++        return (part_seen && path_seen) ? 0 : -1;
++
++      switch (dp->type)
++        {
++        case EFIDP_MEDIA_TYPE:
++          switch (dp->subtype)
++            {
++            case EFIDP_MEDIA_HD:
++              if (part_seen)
++                return -1;
++              if (dp->hd.signature_type != EFIDP_HD_SIGNATURE_GUID)
++                return -1;
++
++              part_seen = 1;
++
++              if (part)
++                *part = dp->hd.partition_number;
++
++              if( guid )
++                efi_guid_to_str( (efi_guid_t *)dp->hd.signature, guid );
++
++              break;
++
++            case EFIDP_MEDIA_FILE:
++              if (path_seen)
++                return -1;
++
++              size_t plim =
++                (efidp_node_size (dp) - offsetof (efidp_file, name)) / 2;
++              path_seen = ucs2_to_utf8 (dp->file.name, plim, buf, bufsize);
++              break;
++
++            default:
++              return -1;
++            }
++          break;
++
++        case EFIDP_HARDWARE_TYPE:
++        case EFIDP_ACPI_TYPE:
++        case EFIDP_MESSAGE_TYPE:
++        case EFIDP_BIOS_BOOT_TYPE:
++        default:
++          return -1;
++        }
++
++      if( limit )
++        limit -= efidp_node_size (dp);
++
++      if (efidp_next_node (dp, (const efidp_data **)&dp) < 0)
++        return -1;
++    }
++
++  return 0;
++}
++
++static void
++find_device_by_partuuid (const char *uuid, char *buf, size_t bufsz)
++{
++    char *path = blkid_evaluate_tag( "PARTUUID", uuid, NULL );
++
++    memset (buf, '\0', bufsz);
++
++    if( path )
++    {
++        strncpy( buf, path, bufsz );
++        buf[bufsz - 1] = '\0';
++        free (path);
++    }
++}
++
+ /* Log all errors recorded by libefivar/libefiboot.  */
+ static void
+ show_efi_errors (void)
+@@ -404,14 +536,25 @@ grub_install_efivar_register_efi (grub_device_t efidir_grub_dev,
+ 				  const char *efi_distributor)
+ {
+   const char *efidir_disk;
+-  int efidir_part;
++  uint efidir_part;
++  char discpart[256];
++  char distpath[256];
+   struct efi_variable *entries = NULL, *entry;
+   struct efi_variable *order;
+   int entry_num = -1;
+   int rc;
+ 
+   efidir_disk = grub_util_biosdisk_get_osdev (efidir_grub_dev->disk);
+-  efidir_part = efidir_grub_dev->disk->partition ? efidir_grub_dev->disk->partition->number + 1 : 1;
++  efidir_part = (efidir_grub_dev->disk->partition ?
++                 efidir_grub_dev->disk->partition->number + 1 : 1);
++
++  // sdxN ← basename of the partition onto which we want to install:
++  snprintf (discpart, sizeof (discpart) -1, "%s%u", efidir_disk, efidir_part );
++  discpart[ sizeof (discpart) - 1 ] = '\0';
++
++  // \EFI\<distributor>\grub… ← start of bootloader executable path(s)
++  snprintf (distpath, sizeof (distpath) - 1, "\\EFI\\%s\\grub", efi_distributor);
++  distpath[ sizeof (distpath) - 1 ] = '\0';
+ 
+ #ifdef __linux__
+   /*
+@@ -453,12 +596,54 @@ grub_install_efivar_register_efi (grub_device_t efidir_grub_dev,
+     {
+       efi_load_option *load_option = (efi_load_option *) entry->data;
+       const char *label;
++      efidp dp;
++      size_t limit;
++      uint32_t part = 0;
++      char *puid = NULL;
++      char path[256];
++      char device[64] = "";
+ 
+       if (entry->num < 0)
+ 	continue;
+       label = (const char *) efi_loadopt_desc (load_option, entry->data_size);
+-      if (strcasecmp (label, efi_distributor) != 0)
+-	continue;
++      dp = efi_loadopt_path (load_option, entry->data_size);
++
++      // we are only interested in media entries, as those
++      // are the only bootloader(s) we might be competing with:
++      if( dp->type != EFIDP_MEDIA_TYPE )
++        continue;
++
++      // inactive entries don't count
++      if (!efi_loadopt_attrs (load_option) & LOAD_OPTION_ACTIVE)
++        continue;
++
++      limit = efi_loadopt_pathlen (load_option, entry->data_size);
++      if (efi_loadopt_gpt_info (dp, limit, &part, &puid, path, sizeof (path)))
++        continue;
++
++      if (puid)
++        {
++          find_device_by_partuuid (puid, device, sizeof (device));
++          free (puid);
++        }
++
++      grub_util_info ("Comparing partitions %s:%s vs target:%s\n",
++                      entry->name, device, discpart);
++      // /dev/sdxN of EFI entry doesn't match target sdxN
++      if (strcmp (device, discpart))
++        continue;
++
++      grub_util_info ("Comparing label %s:%s vs distributor:%s\n",
++                      entry->name, (const char *)label, efi_distributor);
++      // label does not contain the OS distributor ID
++      if (!strcasestr ((const char *)label, efi_distributor))
++        continue;
++
++      grub_util_info ("Comparing path %s:%s vs target:%s...\n",
++                      entry->name, path, distpath);
++      // bootloader path doesn't match our distro and/or grub
++      if (strcasestr (path, distpath) != path)
++        continue;
+ 
+       /* To avoid problems with some firmware implementations, reuse the first
+          matching variable we find rather than deleting and recreating it.  */
+-- 
+2.30.1
+
