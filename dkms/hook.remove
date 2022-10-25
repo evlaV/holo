@@ -1,0 +1,13 @@
+[Trigger]
+Operation = Remove
+Type = Path
+Target = usr/src/*/dkms.conf
+Target = usr/lib/steamos/modules/*/build/include/
+Target = var/lib/modules/*/modules.alias
+
+[Action]
+Description = Remove DKMS modules
+Depends = dkms
+When = PreTransaction
+Exec = /usr/share/libalpm/scripts/dkms remove
+NeedsTargets

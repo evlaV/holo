@@ -1,0 +1,13 @@
+[Trigger]
+Type = Path
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Target = usr/lib/stemaos/modules/*/
+Target = !usr/lib/steamos/modules/*/?*
+
+[Action]
+Description = Updating module dependencies...
+When = PostTransaction
+Exec = /usr/share/libalpm/scripts/depmod
+NeedsTargets
