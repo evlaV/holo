@@ -1,0 +1,25 @@
+From ec0941e59f2e3a05992aadfb495adba3b3dfe979 Mon Sep 17 00:00:00 2001
+From: Emil Velikov <emil.velikov@collabora.com>
+Date: Mon, 18 Oct 2021 12:58:45 +0100
+Subject: [PATCH] defaults: set DeviceScale=1
+
+Current detection code is tad buggy
+
+Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+---
+ src/plymouthd.defaults | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/plymouthd.defaults b/src/plymouthd.defaults
+index 8072702..38c4040 100644
+--- a/src/plymouthd.defaults
++++ b/src/plymouthd.defaults
+@@ -2,4 +2,5 @@
+ [Daemon]
+ Theme=spinner
+ ShowDelay=0
++DeviceScale=1
+ DeviceTimeout=8
+-- 
+2.33.1
+

@@ -1,0 +1,90 @@
+diff --unified --recursive --text plymouth-0.9.5/scripts/plymouth-populate-initrd.in plymouth-0.9.5.patch/scripts/plymouth-populate-initrd.in
+--- plymouth-0.9.5/scripts/plymouth-populate-initrd.in	2020-07-08 13:01:28.000000000 -0700
++++ plymouth-0.9.5.patch/scripts/plymouth-populate-initrd.in	2021-11-10 14:05:37.445236719 -0800
+@@ -479,8 +479,6 @@
+     inst $SYSTEMD_UNIT_DIR/plymouth-halt.service $INITRDDIR
+ 
+     inst $SYSTEMD_UNIT_DIR/initrd-switch-root.target.wants/plymouth-switch-root.service $INITRDDIR
+-    inst $SYSTEMD_UNIT_DIR/initrd-switch-root.target.wants/plymouth-start.service $INITRDDIR
+-    inst $SYSTEMD_UNIT_DIR/sysinit.target.wants/plymouth-start.service $INITRDDIR
+     inst $SYSTEMD_UNIT_DIR/multi-user.target.wants/plymouth-quit.service $INITRDDIR
+     inst $SYSTEMD_UNIT_DIR/multi-user.target.wants/plymouth-quit-wait.service $INITRDDIR
+     inst $SYSTEMD_UNIT_DIR/reboot.target.wants/plymouth-reboot.service $INITRDDIR
+diff --unified --recursive --text plymouth-0.9.5/systemd-units/Makefile.am plymouth-0.9.5.patch/systemd-units/Makefile.am
+--- plymouth-0.9.5/systemd-units/Makefile.am	2020-07-08 13:01:28.000000000 -0700
++++ plymouth-0.9.5.patch/systemd-units/Makefile.am	2021-11-18 17:44:21.678993190 -0800
+@@ -26,11 +26,9 @@
+ 		$(DESTDIR)$(SYSTEMD_UNIT_DIR)/halt.target.wants
+ 	(cd $(DESTDIR)$(SYSTEMD_UNIT_DIR)/initrd-switch-root.target.wants && \
+ 		rm -f plymouth-start.service plymouth-switch-root.service && \
+-		$(LN_S) ../plymouth-start.service &&                         \
+ 		$(LN_S) ../plymouth-switch-root.service)
+ 	(cd $(DESTDIR)$(SYSTEMD_UNIT_DIR)/sysinit.target.wants &&            \
+ 		rm -f plymouth-start.service plymouth-read-write.service &&  \
+-		$(LN_S) ../plymouth-start.service &&                         \
+ 		$(LN_S) ../plymouth-read-write.service)
+ 	(cd $(DESTDIR)$(SYSTEMD_UNIT_DIR)/multi-user.target.wants &&         \
+ 		rm -f plymouth-quit.service plymouth-quit-wait.service &&    \
+diff --unified --recursive --text plymouth-0.9.5/systemd-units/plymouth-halt.service.in plymouth-0.9.5.patch/systemd-units/plymouth-halt.service.in
+--- plymouth-0.9.5/systemd-units/plymouth-halt.service.in	2020-07-08 13:01:28.000000000 -0700
++++ plymouth-0.9.5.patch/systemd-units/plymouth-halt.service.in	2021-11-18 19:25:32.102150027 -0800
+@@ -1,13 +1,15 @@
+ [Unit]
+ Description=Show Plymouth Halt Screen
+-After=getty@tty1.service display-manager.service plymouth-start.service
++Requisite=dbus.service
++Conflicts=sddm.service
++After=getty@tty1.service display-manager.service
+ Before=systemd-halt.service
+ DefaultDependencies=no
+ ConditionKernelCommandLine=!plymouth.enable=0
+ ConditionVirtualization=!container
+ 
+ [Service]
+-ExecStart=@PLYMOUTH_DAEMON_DIR@/plymouthd --mode=shutdown --attach-to-session
++ExecStart=@PLYMOUTH_DAEMON_DIR@/plymouthd --mode=shutdown --attach-to-session --ignore-serial-consoles
+ ExecStartPost=-@PLYMOUTH_CLIENT_DIR@/plymouth show-splash
+ Type=forking
+ RemainAfterExit=yes
+diff --unified --recursive --text plymouth-0.9.5/systemd-units/plymouth-poweroff.service.in plymouth-0.9.5.patch/systemd-units/plymouth-poweroff.service.in
+--- plymouth-0.9.5/systemd-units/plymouth-poweroff.service.in	2020-07-08 13:01:28.000000000 -0700
++++ plymouth-0.9.5.patch/systemd-units/plymouth-poweroff.service.in	2021-11-18 19:25:28.588881906 -0800
+@@ -1,13 +1,15 @@
+ [Unit]
+ Description=Show Plymouth Power Off Screen
+-After=getty@tty1.service display-manager.service plymouth-start.service
++Requisite=dbus.service
++Conflicts=sddm.service
++After=getty@tty1.service display-manager.service
+ Before=systemd-poweroff.service
+ DefaultDependencies=no
+ ConditionKernelCommandLine=!plymouth.enable=0
+ ConditionVirtualization=!container
+ 
+ [Service]
+-ExecStart=@PLYMOUTH_DAEMON_DIR@/plymouthd --mode=shutdown --attach-to-session
++ExecStart=@PLYMOUTH_DAEMON_DIR@/plymouthd --mode=shutdown --attach-to-session --ignore-serial-consoles
+ ExecStartPost=-@PLYMOUTH_CLIENT_DIR@/plymouth show-splash
+ Type=forking
+ RemainAfterExit=yes
+diff --unified --recursive --text plymouth-0.9.5/systemd-units/plymouth-reboot.service.in plymouth-0.9.5.patch/systemd-units/plymouth-reboot.service.in
+--- plymouth-0.9.5/systemd-units/plymouth-reboot.service.in	2020-07-08 13:01:28.000000000 -0700
++++ plymouth-0.9.5.patch/systemd-units/plymouth-reboot.service.in	2021-11-18 19:25:50.741804031 -0800
+@@ -1,13 +1,15 @@
+ [Unit]
+ Description=Show Plymouth Reboot Screen
+-After=getty@tty1.service display-manager.service plymouth-start.service
++Requisite=dbus.service
++Conflicts=sddm.service
++After=getty@tty1.service display-manager.service
+ Before=systemd-reboot.service
+ DefaultDependencies=no
+ ConditionKernelCommandLine=!plymouth.enable=0
+ ConditionVirtualization=!container
+ 
+ [Service]
+-ExecStart=@PLYMOUTH_DAEMON_DIR@/plymouthd --mode=reboot --attach-to-session
++ExecStart=@PLYMOUTH_DAEMON_DIR@/plymouthd --mode=reboot --attach-to-session --ignore-serial-consoles
+ ExecStartPost=-@PLYMOUTH_CLIENT_DIR@/plymouth show-splash
+ Type=forking
+ RemainAfterExit=yes
