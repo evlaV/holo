@@ -1,0 +1,59 @@
+From 59e55fd05f1615aa82899e98f032f6d908d93bd5 Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?Ga=C3=ABl=20PORTAY?= <gael.portay@collabora.com>
+Date: Thu, 7 Jan 2021 09:54:01 -0500
+Subject: [PATCH] [unpackfs] Use rsync option -S
+
+The filesystems may contains huge sparse files (for example the docker
+data file at path /var/lib/docker/devicemapper/devicemapper/data that is
+100G big).
+
+These files causes rsync to fail if the target file-system is too small
+to copy them.
+
+The option --sparse tells rsync to turn sequences of nulls into sparse
+blocks.
+
+        --sparse, -S
+
+        Try to handle sparse files efficiently so they take up less
+        space on the destination. If combined with --inplace the file
+        created might not end up with sparse blocks with some
+        combinations of kernel version and/or filesystem type. If
+        --whole-file is in effect (e.g. for a local copy) then it will
+        always work because rsync truncates the file prior to writing
+        out the updated version.
+
+        Note that versions of rsync older than 3.1.3 will reject the
+        combination of --sparse and --inplace.
+
+This adds the rsync short option -S to let rsync handle sparse files.
+
+Fixes:
+
+        18:03:36 [6]: static CalamaresUtils::ProcessResult CalamaresUtils::System::runCommand(CalamaresUtils::System::RunLocation, const QStringList&, const QString&, const QString&, std::chrono::seconds)
+            Running "env" ("sync")
+            ..  Finished. Exit code: 0
+            ..  Target cmd: ("sync") output:
+
+        rsync: [receiver] write failed on "/tmp/calamares-root-81qie5d1/var/lib/docker/devicemapper/devicemapper/data": No space left on device (28)
+        rsync error: error in file IO (code 11) at receiver.c(378) [receiver=v3.2.3]
+---
+ src/modules/unpackfs/main.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/modules/unpackfs/main.py b/src/modules/unpackfs/main.py
+index d2b2a5628..31bca4556 100644
+--- a/src/modules/unpackfs/main.py
++++ b/src/modules/unpackfs/main.py
+@@ -182,7 +182,7 @@ def file_copy(source, entry, progress_cb):
+     num_files_total_local = 0
+     num_files_copied = 0  # Gets updated through rsync output
+ 
+-    args = ['rsync', '-aHAXr', '--filter=-x trusted.overlay.*']
++    args = ['rsync', '-aHAXSr', '--filter=-x trusted.overlay.*']
+     args.extend(global_excludes())
+     if entry.excludeFile:
+         args.extend(["--exclude-from=" + entry.excludeFile])
+-- 
+2.29.2
+
