@@ -1,0 +1,36 @@
+#!/bin/sh
+
+calamares_settings_steamos_do_postinst() {
+    if [ ! -f /var/lib/calamares-steamos/initial_setup_complete ]; then
+        # Install SDDM config file (autologin root into the steamos-initial-setup session)
+        mkdir -p /etc/sddm.conf.d
+        cp /usr/share/calamares-steamos/calamares-initial-setup.conf /etc/sddm.conf.d
+
+        # Install the steamos-initial-setup xsession file & create the symlink if needed
+        mkdir -p /root/.xsessions
+        cp /usr/share/calamares-steamos/steamos-initial-setup.desktop /root/.xsessions
+        if [ ! -h /usr/share/xsessions/steamos-initial-setup.desktop ]; then
+            mkdir -p /usr/share/xsessions
+            ln -s /root/.xsessions/steamos-initial-setup.desktop \
+                  /usr/share/xsessions/steamos-initial-setup.desktop
+        fi
+
+        # Install kwin configuration for the steamos-initial-setup session
+        mkdir -p /root/.config
+        cp /usr/share/calamares-steamos/kwinrulesrc /root/.config
+    fi
+}
+
+post_install() {
+    calamares_settings_steamos_do_postinst
+}
+
+post_upgrade() {
+    calamares_settings_steamos_do_postinst
+}
+
+pre_remove() {
+    rm -f /etc/sddm.conf.d/calamares-initial-setup.conf \
+          /root/.xsessions/steamos-initial-setup.desktop \
+          /root/.config/kwinrulesrc
+}
