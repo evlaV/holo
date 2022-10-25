@@ -1,0 +1,187 @@
+From 7d89634d2d67ca13131fb4495a900e68602cfb1a Mon Sep 17 00:00:00 2001
+From: Emil Velikov <emil.velikov@collabora.com>
+Date: Thu, 8 Jul 2021 15:18:17 +0100
+Subject: [PATCH 3/5] Introduce xow-get-firmware.sh script
+
+Trivial script to do the firmware handling. Requires curl, cabextract
+kdialog/zenity, polkit and coreutils.
+
+Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+---
+ Makefile               |  8 +++-
+ dongle/mt76.cpp        | 11 +----
+ xow-get-firmware.sh.in | 97 ++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 106 insertions(+), 10 deletions(-)
+ create mode 100755 xow-get-firmware.sh.in
+
+diff --git a/Makefile b/Makefile
+index 054bff9..aa78ee6 100644
+--- a/Makefile
++++ b/Makefile
+@@ -22,7 +22,7 @@ MODPDIR := /etc/modprobe.d
+ SYSDDIR := /etc/systemd/system
+ 
+ .PHONY: all
+-all: xow
++all: xow xow-get-firmware.sh
+ 
+ xow: $(OBJECTS)
+ 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+@@ -30,10 +30,14 @@ xow: $(OBJECTS)
+ %.o: %.cpp
+ 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+ 
++xow-get-firmware.sh: xow-get-firmware.sh.in
++	sed "s|#DATADIR#|$(DATADIR)|g" $< > $@
++
+ .PHONY: install
+ install: xow
+ 	sed 's|#BINDIR#|$(BINDIR)|' install/service.in > xow.service
+ 	install -D -m 755 xow $(DESTDIR)$(BINDIR)/xow
++	install -D -m 755 xow-get-firmware.sh $(DESTDIR)$(BINDIR)/xow-get-firmware.sh
+ 	install -D -m 644 install/udev.rules $(DESTDIR)$(UDEVDIR)/50-xow.rules
+ 	install -D -m 644 install/modules.conf $(DESTDIR)$(MODLDIR)/xow-uinput.conf
+ 	install -D -m 644 install/modprobe.conf $(DESTDIR)$(MODPDIR)/xow-blacklist.conf
+@@ -44,6 +48,7 @@ install: xow
+ .PHONY: uninstall
+ uninstall:
+ 	$(RM) $(DESTDIR)$(BINDIR)/xow
++	$(RM) $(DESTDIR)$(BINDIR)/xow-get-firmware.sh
+ 	$(RM) $(DESTDIR)$(UDEVDIR)/50-xow.rules
+ 	$(RM) $(DESTDIR)$(MODLDIR)/xow-uinput.conf
+ 	$(RM) $(DESTDIR)$(MODPDIR)/xow-blacklist.conf
+@@ -52,5 +57,6 @@ uninstall:
+ .PHONY: clean
+ clean:
+ 	$(RM) xow $(OBJECTS) $(DEPENDENCIES)
++	$(RM) xow-get-firmware.sh
+ 
+ -include $(DEPENDENCIES)
+diff --git a/dongle/mt76.cpp b/dongle/mt76.cpp
+index 345a474..d230f59 100644
+--- a/dongle/mt76.cpp
++++ b/dongle/mt76.cpp
+@@ -1422,15 +1422,8 @@ bool Mt76::openFirmware()
+     if (!blob)
+     {
+         Log::error("Failed to open firmware binary %s\n\n"
+-	"You can get the firmware using the following commands.\n\n"
+-	"NOTE: By downloading the files you are subject to the by Microsoft Terms of Use\n"
+-	"https://www.microsoft.com/en-us/legal/intellectualproperty/copyright\n\n"
+-	"Instructions:\n"
+-	"curl -o driver.cab http://download.windowsupdate.com/c/msdownload/update/driver/drvs/2017/07/1cd6a87c-623f-4407-a52d-c31be49e925c_e19f60808bdcbfbd3c3df6be3e71ffc52e43261e.cab\n"
+-	"cabextract -F FW_ACC_00U.bin driver.cab\n"
+-	"echo 48084d9fa53b9bb04358f3bb127b7495dc8f7bb0b3ca1437bd24ef2b6eabdf66 FW_ACC_00U.bin | sha256sum -c\n"
+-	"sudo mv FW_ACC_00U.bin %s\n"
+-	"rm driver.cab\n", filename.c_str(), filename.c_str());
++		"You can get the firmware using: xow-get-firmware.sh\n",
++		filename.c_str());
+         return false;
+     }
+     std::istream_iterator<uint8_t> start(blob), end;
+diff --git a/xow-get-firmware.sh.in b/xow-get-firmware.sh.in
+new file mode 100755
+index 0000000..62ef774
+--- /dev/null
++++ b/xow-get-firmware.sh.in
+@@ -0,0 +1,97 @@
++#!/bin/bash
++# vim: et sts=4 sw=4
++
++set -euo pipefail
++
++readonly firmware=#DATADIR#/FW_ACC_00U.bin
++force=0
++
++usage() {
++    echo
++    echo "Usage: $(basename $0) [OPTIONS]"
++    echo
++    echo "Downloads the firmware required by XOW. Saved as $firmware"
++    echo
++    echo "OPTIONS"
++    echo
++    echo "  --force"
++    echo "        Overwrite existing file"
++    echo
++    echo "  --help"
++    echo "        This help screen"
++    echo
++}
++
++parse_args() {
++    while [[ $# -gt 0 ]]; do
++        case "$1" in
++            -h | --help ) usage; exit 0;;
++            -f | --force ) shift; force=1;;
++            * ) usage; exit 1;;
++        esac
++    done
++}
++
++check_firmware() {
++    ! [[ -e $firmware ]] && return
++
++    if (( force == 0 )); then
++        echo "Firmware file $firmware already exists. Exiting."
++        exit 0
++    fi
++
++    echo "Firmware file $firmware exists. Removing file."
++    pkexec rm $firmware
++}
++
++disclaimer() {
++    local -r url="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright"
++    local -r title="Microsoft Terms of Use"
++    local -r text="Firmware is distributed under the Microsoft Terms of Use.\n
++                    Do you accept the terms of the agreement?"
++
++    xdg-open "$url"
++    if hash kdialog &>/dev/null; then
++        ! kdialog --title "$title" --yesno "$text" && exit 0
++        echo
++        return
++    fi
++    if hash zenity &>/dev/null; then
++        ! zenity --question --title "$title" --text "$text" && exit 0
++        echo
++        return
++    fi
++    echo "Cannot create license agreement prompt. Exiting"
++    exit 1
++}
++
++get_firmware() {
++    local -r url="http://download.windowsupdate.com/c/msdownload/update/driver/drvs/2017/07/1cd6a87c-623f-4407-a52d-c31be49e925c_e19f60808bdcbfbd3c3df6be3e71ffc52e43261e.cab"
++    local -r sum="48084d9fa53b9bb04358f3bb127b7495dc8f7bb0b3ca1437bd24ef2b6eabdf66"
++    local tmp=`mktemp -d`
++
++    # TODO: trap rmdir
++    cd "$tmp" &> /dev/null
++
++    curl -o driver.cab "$url"
++    cabextract -F FW_ACC_00U.bin driver.cab
++    rm driver.cab
++
++    echo $sum FW_ACC_00U.bin | sha256sum -c
++
++    local -r destdir=`dirname $firmware`
++    ! [[ -e $destdir ]] && pkexec mkdir -p $destdir
++    pkexec mv `pwd`/FW_ACC_00U.bin $destdir
++
++    cd - &> /dev/null
++    rmdir $tmp
++}
++
++main() {
++    parse_args $@
++    check_firmware
++    disclaimer
++    get_firmware
++}
++
++main $@
+-- 
+2.32.0
+

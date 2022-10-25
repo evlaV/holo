@@ -1,0 +1,26 @@
+From 55d59d7bb2e677e16c3b3cc98940fde9d1e2b269 Mon Sep 17 00:00:00 2001
+From: Emil Velikov <emil.velikov@collabora.com>
+Date: Thu, 8 Jul 2021 15:19:27 +0100
+Subject: [PATCH 4/5] makefile: install depends on all
+
+Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index aa78ee6..e930776 100644
+--- a/Makefile
++++ b/Makefile
+@@ -34,7 +34,7 @@ xow-get-firmware.sh: xow-get-firmware.sh.in
+ 	sed "s|#DATADIR#|$(DATADIR)|g" $< > $@
+ 
+ .PHONY: install
+-install: xow
++install: all
+ 	sed 's|#BINDIR#|$(BINDIR)|' install/service.in > xow.service
+ 	install -D -m 755 xow $(DESTDIR)$(BINDIR)/xow
+ 	install -D -m 755 xow-get-firmware.sh $(DESTDIR)$(BINDIR)/xow-get-firmware.sh
+-- 
+2.32.0
+

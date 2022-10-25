@@ -1,0 +1,18 @@
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright (c) 2021 Valve.
+#  Maintainer: Guilherme G. Piccoli <gpiccoli@igalia.com>
+
+post_install() {
+	#  Create the minimal kdump initramfs for the running kernel
+	/usr/lib/kdump/kdump-load.sh initrd
+
+	systemctl enable kdump-steamos.service
+}
+
+pre_remove() {
+	systemctl disable kdump-steamos.service
+
+	#  Delete all minimal initramfs images created for kdump
+	/usr/lib/kdump/kdump-load.sh clear
+}

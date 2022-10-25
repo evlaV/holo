@@ -1,0 +1,76 @@
+From 58a430d093a4fd0e568582817e775205edec878e Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?Ga=C3=ABl=20PORTAY?= <gael.portay@collabora.com>
+Date: Fri, 14 Jun 2019 11:47:06 -0400
+Subject: [PATCH 3/3] shell-completion: add helper __casync_get_arg_n
+
+Introduce helper function __casync_get_arg_n to return the n-th argument
+in $arg. The function takes into consideration the options whose the
+following argument should not be counted as argument, and the options
+that should be counted as argument.
+
+It replaces the helper function in_array to get the command from the
+already entered command line.
+
+This function is a modified version of the helper function _count_args
+from the bash-completion project.
+---
+ shell-completion/bash/casync | 36 +++++++++++++++++++++++++-----------
+ 1 file changed, 25 insertions(+), 11 deletions(-)
+
+diff --git a/shell-completion/bash/casync b/shell-completion/bash/casync
+index d553298..bc9aeaa 100644
+--- a/shell-completion/bash/casync
++++ b/shell-completion/bash/casync
+@@ -3,10 +3,28 @@
+ 
+ # SPDX-License-Identifier: LGPL-2.1+
+ 
+-in_array() {
+-    local i
+-    for i in "${@:2}"; do
+-        [[ $1 = "$i" ]] && return
++# This function returns the n-th arg, excluding options
++# @param $1 chars  Characters out of $COMP_WORDBREAKS which should
++#     NOT be considered word breaks. See __reassemble_comp_words_by_ref.
++# @param $2 glob   Options whose following argument should not be counted
++# @param $3 glob   Options that should be counted as args
++# @param $4 int    Number that define the n-th arg to return
++__casync_get_arg_n()
++{
++    local i args cword words
++    __reassemble_comp_words_by_ref "$1" words cword
++
++    arg=
++    args=1
++    for (( i=1; i < cword; i++ )); do
++        if [[ ${words[i]} != -* && ${words[i-1]} != $2 ||
++              ${words[i]} == $3 ]]; then
++            if [[ $args -eq $4 ]]; then
++                arg=${words[i]}
++                break
++            fi
++            (( args++ ))
++        fi
+     done
+ }
+ 
+@@ -74,13 +92,9 @@ _casync() {
+     esac
+ 
+     # Check if a command was entered already
+-    local command i
+-    for (( i=0; i < ${#words[@]}-1; i++ )); do
+-        if in_array "${words[i]}" "${cmds[@]}"; then
+-            command=${words[i]}
+-            break
+-        fi
+-    done
++    local arg command
++    __casync_get_arg_n ':=' "$opts_arg" '' 1
++    command="$arg"
+ 
+     # Completion per command
+     if [[ -n $command ]]; then
+-- 
+2.27.0
+

@@ -1,0 +1,37 @@
+# Steamos things from factory (these bits are needed as
+# steamos ships with an empty /var, but a few things
+# actually need to be present, so it must be copied
+# from the factory on first boot)
+
+C /root 0750
+C /var/lib/dkms
+C /var/lib/modules
+C /var/lib/pacman
+
+# Standard var hierarchy, as seen in our PKGBUILD
+#
+# Keep the list complete and sorted alike the PKGBUILD
+# Add a comment if any rule is already handled - check against
+#   systemd-analyze cat-config tmpfiles.d
+
+#d /var/cache				# var.conf
+d /var/cache
+d /var/local
+d /var/opt
+d /var/log/old
+d /var/lib/misc
+#d /var/empty				# sshd.conf
+d /var/empty
+d /var/spool/mail 1777
+#d /var/tmp 1777			# tmp.conf
+d /var/tmp 1777
+d /var/games 0775 - 50
+L /var/mail - - - - spool/mail
+#L /var/run - - - - ../run		# var.conf
+L /var/run - - - - ../run
+#L /var/lock - - - - ../run/lock	# legacy.conf
+L /var/lock - - - - ../run/lock
+
+# SteamOS specific var hierarchy, as seen in our PKGBUILD
+
+d /var/mnt

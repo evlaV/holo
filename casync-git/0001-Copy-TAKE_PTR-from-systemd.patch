@@ -1,0 +1,33 @@
+From 30f8d14cef61671ad131101461d5c3c08d766489 Mon Sep 17 00:00:00 2001
+From: Arnaud Rebillout <arnaud.rebillout@collabora.com>
+Date: Wed, 10 Apr 2019 09:42:29 +0700
+Subject: [PATCH 1/2] Copy TAKE_PTR from systemd
+
+Signed-off-by: Arnaud Rebillout <arnaud.rebillout@collabora.com>
+---
+ src/util.h | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/src/util.h b/src/util.h
+index dc9d03e..68299a5 100644
+--- a/src/util.h
++++ b/src/util.h
+@@ -765,6 +765,15 @@ DEFINE_TRIVIAL_CLEANUP_FUNC(char*, unlink_and_free);
+ 
+ int free_and_strdup(char **p, const char *s);
+ 
++/* Takes inspiration from Rusts's Option::take() method: reads and returns a pointer, but at the same time resets it to
++ * NULL. See: https://doc.rust-lang.org/std/option/enum.Option.html#method.take */
++#define TAKE_PTR(ptr)                           \
++        ({                                      \
++                typeof(ptr) _ptr_ = (ptr);      \
++                (ptr) = NULL;                   \
++                _ptr_;                          \
++        })
++
+ /* A check against a list of errors commonly used to indicate that a syscall/ioctl/other kernel operation we request is
+  * not supported locally. We maintain a generic list for this here, instead of adjusting the possible error codes to
+  * exactly what the calls might return for the simple reasons that due to FUSE and many differing in-kernel
+-- 
+2.20.1
+

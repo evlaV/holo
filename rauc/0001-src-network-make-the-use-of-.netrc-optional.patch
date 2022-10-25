@@ -1,0 +1,33 @@
+From 78537613e8cd09a9a8cb4fcf40466c9802b06a88 Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?Ga=C3=ABl=20PORTAY?= <gael.portay@collabora.com>
+Date: Thu, 30 Jul 2020 15:46:31 -0400
+Subject: [PATCH] src/network: make the use of .netrc optional
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+libcurl ignores the ~/.netrc file by default.
+
+This makes the use of the ~/.netrc file optional; the information in the
+URL is preferred.
+
+Signed-off-by: Gaël PORTAY <gael.portay@collabora.com>
+---
+ src/network.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/network.c b/src/network.c
+index 4366fa0..17e465f 100644
+--- a/src/network.c
++++ b/src/network.c
+@@ -105,6 +105,7 @@ static gboolean transfer(RaucTransfer *xfer, GError **error)
+ 	curl_easy_setopt(curl, CURLOPT_MAXFILESIZE_LARGE, xfer->limit);
+ 	/* decode all supported Accept-Encoding headers */
+ 	curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
++	curl_easy_setopt(curl, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
+ 
+ 	/* set error buffer empty before performing a request */
+ 	errbuf[0] = 0;
+-- 
+2.30.1
+

@@ -1,0 +1,339 @@
+From 568124a3890938401c4b87997cca6d4089626881 Mon Sep 17 00:00:00 2001
+From: Ludovico de Nittis <ludovico.denittis@collabora.com>
+Date: Mon, 13 Dec 2021 12:24:47 +0100
+Subject: [PATCH 1/2] Add casync `install-args` configuration key
+
+When RAUC installs an update it might be useful to pass additional
+argument to `casync extract`.
+
+For example we could provide additional seeds or extra stores.
+
+Signed-off-by: Ludovico de Nittis <ludovico.denittis@collabora.com>
+---
+From upstream PR https://github.com/rauc/rauc/pull/817
+---
+ docs/reference.rst    |   5 ++
+ include/config_file.h |   1 +
+ src/config_file.c     |   1 +
+ src/update_handler.c  |  16 ++++
+ test/config_file.c    | 169 +++++++++++++++++++++++++++++++++++++++++-
+ 5 files changed, 189 insertions(+), 3 deletions(-)
+
+diff --git a/docs/reference.rst b/docs/reference.rst
+index a812557..3ce1f6f 100644
+--- a/docs/reference.rst
++++ b/docs/reference.rst
+@@ -188,6 +188,11 @@ The ``casync`` section contains casync-related settings.
+ For more information about using casync support of RAUC, refer to
+ :ref:`casync-support`.
+ 
++``install-args``
++  Allows to specify additional arguments that will be passed to casync when
++  installing an update. For example it can be used to include additional
++  seeds or stores.
++
+ ``storepath``
+   Allows to set the path to use as chunk store path for casync to a fixed one.
+   This is useful if your chunk store is on a dedicated server and will be the
+diff --git a/include/config_file.h b/include/config_file.h
+index d68fc0f..c65a717 100644
+--- a/include/config_file.h
++++ b/include/config_file.h
+@@ -45,6 +45,7 @@ typedef struct {
+ 	gchar *mount_prefix;
+ 	gchar *store_path;
+ 	gchar *tmp_path;
++	gchar *casync_install_args;
+ 	gboolean activate_installed;
+ 	gchar *statusfile_path;
+ 	gchar *keyring_path;
+diff --git a/src/config_file.c b/src/config_file.c
+index e907ffa..f0dd299 100644
+--- a/src/config_file.c
++++ b/src/config_file.c
+@@ -345,6 +345,7 @@ gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
+ 	/* parse [casync] section */
+ 	c->store_path = key_file_consume_string(key_file, "casync", "storepath", NULL);
+ 	c->tmp_path = key_file_consume_string(key_file, "casync", "tmppath", NULL);
++	c->casync_install_args = key_file_consume_string(key_file, "casync", "install-args", NULL);
+ 	if (!check_remaining_keys(key_file, "casync", &ierror)) {
+ 		g_propagate_error(error, ierror);
+ 		res = FALSE;
+diff --git a/src/update_handler.c b/src/update_handler.c
+index 9265efe..cd94247 100644
+--- a/src/update_handler.c
++++ b/src/update_handler.c
+@@ -241,6 +241,7 @@ static gboolean casync_extract(RaucImage *image, gchar *dest, int out_fd, const
+ {
+ 	g_autoptr(GSubprocessLauncher) launcher = NULL;
+ 	g_autoptr(GSubprocess) sproc = NULL;
++	g_auto(GStrv) casync_argvp = NULL;
+ 	GError *ierror = NULL;
+ 	gboolean res = FALSE;
+ 	g_autoptr(GPtrArray) args = g_ptr_array_new_full(5, g_free);
+@@ -256,6 +257,21 @@ static gboolean casync_extract(RaucImage *image, gchar *dest, int out_fd, const
+ 		g_ptr_array_add(args, g_strdup(store));
+ 	}
+ 	g_ptr_array_add(args, g_strdup("--seed-output=no"));
++	if (r_context()->config->casync_install_args != NULL) {
++		gboolean parse_res = FALSE;
++		parse_res = g_shell_parse_argv(r_context()->config->casync_install_args, NULL, &casync_argvp, &ierror);
++		if (!parse_res) {
++			res = parse_res;
++			g_propagate_prefixed_error(
++					error,
++					ierror,
++					"Failed to parse casync extra args: ");
++			goto out;
++		}
++		for (gchar **casync_args = casync_argvp; *casync_args != NULL; casync_args++) {
++			g_ptr_array_add(args, g_strdup(*casync_args));
++		}
++	}
+ 	g_ptr_array_add(args, g_strdup(image->filename));
+ 	g_ptr_array_add(args, g_strdup(out_fd >= 0 ? "-" : dest));
+ 	g_ptr_array_add(args, NULL);
+diff --git a/test/config_file.c b/test/config_file.c
+index 3a9a95c..814f99a 100644
+--- a/test/config_file.c
++++ b/test/config_file.c
+@@ -67,6 +67,7 @@ path=/etc/rauc/keyring/\n\
+ [casync]\n\
+ storepath=/var/lib/default.castr/\n\
+ tmppath=/tmp/\n\
++install-args=--verbose\n\
+ \n\
+ [slot.rescue.0]\n\
+ description=Rescue partition\n\
+@@ -118,6 +119,7 @@ install-same=false\n";
+ 	g_assert_true(config->activate_installed);
+ 	g_assert_cmpstr(config->statusfile_path, ==, "/mnt/persistent-rw-fs/system.raucs");
+ 	g_assert_cmpint(config->max_bundle_download_size, ==, 42);
++	g_assert_cmphex(config->bundle_formats_mask, ==, 0x2);
+ 
+ 	g_assert_nonnull(config->slots);
+ 	slotlist = g_hash_table_get_keys(config->slots);
+@@ -262,6 +264,33 @@ mountprefix=/mnt/myrauc/\n";
+ 	g_clear_error(&ierror);
+ }
+ 
++static void config_file_slots_invalid_type(ConfigFileFixture *fixture,
++		gconstpointer user_data)
++{
++	RaucConfig *config;
++	GError *ierror = NULL;
++	gchar* pathname;
++
++	const gchar *invalid_slot_type = "\
++[system]\n\
++compatible=FooCorp Super BarBazzer\n\
++bootloader=barebox\n\
++\n\
++[slot.rootfs.0]\n\
++device=/dev/null\n\
++type=oups\n\
++\t";
++
++
++	pathname = write_tmp_file(fixture->tmpdir, "system.conf", invalid_slot_type, NULL);
++	g_assert_nonnull(pathname);
++
++	g_assert_false(load_config(pathname, &config, &ierror));
++	g_assert_error(ierror, R_CONFIG_ERROR, R_CONFIG_ERROR_SLOT_TYPE);
++	g_assert_cmpstr(ierror->message, ==, "Unsupported slot type 'oups' for slot rootfs.0 selected in system config");
++	g_clear_error(&ierror);
++}
++
+ static void config_file_invalid_parent(ConfigFileFixture *fixture,
+ 		gconstpointer user_data)
+ {
+@@ -884,12 +913,12 @@ static void config_file_test_write_slot_status(void)
+ 	ss->checksum.type = G_CHECKSUM_SHA256;
+ 	ss->checksum.digest = g_strdup("dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551");
+ 
+-	write_slot_status("test/savedslot.raucs", ss, NULL);
++	g_assert_true(write_slot_status("test/savedslot.raucs", ss, NULL));
+ 
+ 	r_slot_free_status(ss);
+ 	ss = g_new0(RaucSlotStatus, 1);
+ 
+-	read_slot_status("test/savedslot.raucs", ss, NULL);
++	g_assert_true(read_slot_status("test/savedslot.raucs", ss, NULL));
+ 
+ 	g_assert_nonnull(ss);
+ 	g_assert_cmpstr(ss->status, ==, "ok");
+@@ -914,6 +943,7 @@ static void config_file_test_global_slot_status(ConfigFileFixture *fixture,
+ 	GHashTableIter iter;
+ 	GError *ierror = NULL;
+ 	RaucSlot *slot;
++	gboolean res;
+ 
+ 	g_assert_nonnull(r_context()->config->statusfile_path);
+ 
+@@ -933,8 +963,9 @@ static void config_file_test_global_slot_status(ConfigFileFixture *fixture,
+ 	/* Save status for all slots */
+ 	g_hash_table_iter_init(&iter, slots);
+ 	while (g_hash_table_iter_next(&iter, NULL, (gpointer*) &slot)) {
+-		save_slot_status(slot, &ierror);
++		res = save_slot_status(slot, &ierror);
+ 		g_assert_no_error(ierror);
++		g_assert_true(res);
+ 	}
+ 
+ 	/* Clear status for all slots */
+@@ -1006,6 +1037,131 @@ check-purpose=codesign\n";
+ 	free_config(config);
+ }
+ 
++static void config_file_bundle_formats(ConfigFileFixture *fixture,
++		gconstpointer user_data)
++{
++	RaucConfig *config;
++	g_autoptr(GError) ierror = NULL;
++	gboolean res = FALSE;
++	gchar* pathname;
++
++	const gchar *default_cfg_file = "\
++[system]\n\
++compatible=FooCorp Super BarBazzer\n\
++bootloader=barebox\n";
++	const gchar *set_cfg_file = "\
++[system]\n\
++compatible=FooCorp Super BarBazzer\n\
++bootloader=barebox\n\
++bundle-formats=plain\n";
++	const gchar *modify_cfg_file = "\
++[system]\n\
++compatible=FooCorp Super BarBazzer\n\
++bootloader=barebox\n\
++bundle-formats=-plain\n";
++	const gchar *none_cfg_file = "\
++[system]\n\
++compatible=FooCorp Super BarBazzer\n\
++bootloader=barebox\n\
++bundle-formats=-plain -verity\n";
++
++	pathname = write_tmp_file(fixture->tmpdir, "default.conf", default_cfg_file, NULL);
++	g_assert_nonnull(pathname);
++
++	res = load_config(pathname, &config, &ierror);
++	g_assert_no_error(ierror);
++	g_assert_true(res);
++	g_assert_nonnull(config);
++	g_assert_cmphex(config->bundle_formats_mask, ==, 0x3);
++
++	free_config(config);
++
++	pathname = write_tmp_file(fixture->tmpdir, "set.conf", set_cfg_file, NULL);
++	g_assert_nonnull(pathname);
++
++	res = load_config(pathname, &config, &ierror);
++	g_assert_no_error(ierror);
++	g_assert_true(res);
++	g_assert_nonnull(config);
++	g_assert_cmphex(config->bundle_formats_mask, ==, 0x1);
++
++	free_config(config);
++
++	pathname = write_tmp_file(fixture->tmpdir, "modify.conf", modify_cfg_file, NULL);
++	g_assert_nonnull(pathname);
++
++	res = load_config(pathname, &config, &ierror);
++	g_assert_no_error(ierror);
++	g_assert_true(res);
++	g_assert_nonnull(config);
++	g_assert_cmphex(config->bundle_formats_mask, ==, 0x2);
++
++	free_config(config);
++
++	pathname = write_tmp_file(fixture->tmpdir, "none.conf", none_cfg_file, NULL);
++	g_assert_nonnull(pathname);
++
++	res = load_config(pathname, &config, &ierror);
++	g_assert_error(ierror, R_CONFIG_ERROR, R_CONFIG_ERROR_INVALID_FORMAT);
++	g_assert_cmpstr(ierror->message, ==, "Invalid bundle format configuration '-plain -verity', no remaining formats");
++	g_assert_false(res);
++	g_assert_null(config);
++	g_clear_error(&ierror);
++}
++
++static void config_file_test_parse_bundle_formats(void)
++{
++	guint mask;
++	gboolean res;
++	g_autoptr(GError) ierror = NULL;
++
++	mask = 0x0;
++	res = parse_bundle_formats(&mask, "plain  verity", &ierror);
++	g_assert_no_error(ierror);
++	g_assert_cmphex(mask, ==, 0x3);
++	g_assert_true(res);
++
++	mask = 0x2;
++	res = parse_bundle_formats(&mask, "+plain -verity", &ierror);
++	g_assert_no_error(ierror);
++	g_assert_cmphex(mask, ==, 0x1);
++	g_assert_true(res);
++
++	mask = 0x3;
++	res = parse_bundle_formats(&mask, "-verity", &ierror);
++	g_assert_no_error(ierror);
++	g_assert_cmphex(mask, ==, 0x1);
++	g_assert_true(res);
++
++	mask = 0x3;
++	res = parse_bundle_formats(&mask, "-verity +verity", &ierror);
++	g_assert_no_error(ierror);
++	g_assert_cmphex(mask, ==, 0x3);
++	g_assert_true(res);
++
++	mask = 0x3;
++	res = parse_bundle_formats(&mask, "-verity plain", &ierror);
++	g_assert_error(ierror, R_CONFIG_ERROR, R_CONFIG_ERROR_INVALID_FORMAT);
++	g_assert_cmpstr(ierror->message, ==, "Invalid bundle format configuration '-verity plain', cannot combine fixed value with modification (+/-)");
++	g_assert_cmphex(mask, ==, 0x3);
++	g_assert_false(res);
++	g_clear_error(&ierror);
++
++	mask = 0x3;
++	res = parse_bundle_formats(&mask, "", &ierror);
++	g_assert_no_error(ierror);
++	g_assert_cmphex(mask, ==, 0x3);
++	g_assert_true(res);
++
++	mask = 0x3;
++	res = parse_bundle_formats(&mask, "-verity -plain", &ierror);
++	g_assert_error(ierror, R_CONFIG_ERROR, R_CONFIG_ERROR_INVALID_FORMAT);
++	g_assert_cmpstr(ierror->message, ==, "Invalid bundle format configuration '-verity -plain', no remaining formats");
++	g_assert_cmphex(mask, ==, 0x3);
++	g_assert_false(res);
++	g_clear_error(&ierror);
++}
++
+ int main(int argc, char *argv[])
+ {
+ 	setlocale(LC_ALL, "C");
+@@ -1021,6 +1177,9 @@ int main(int argc, char *argv[])
+ 	g_test_add("/config-file/bootloaders", ConfigFileFixture, NULL,
+ 			config_file_fixture_set_up, config_file_bootloaders,
+ 			config_file_fixture_tear_down);
++	g_test_add("/config-file/slots/invalid_type", ConfigFileFixture, NULL,
++			config_file_fixture_set_up, config_file_slots_invalid_type,
++			config_file_fixture_tear_down);
+ 	g_test_add("/config-file/invalid-parent", ConfigFileFixture, NULL,
+ 			config_file_fixture_set_up, config_file_invalid_parent,
+ 			config_file_fixture_tear_down);
+@@ -1095,6 +1254,10 @@ int main(int argc, char *argv[])
+ 	g_test_add("/config-file/keyring-checks", ConfigFileFixture, NULL,
+ 			config_file_fixture_set_up, config_file_keyring_checks,
+ 			config_file_fixture_tear_down);
++	g_test_add("/config-file/bundle-formats", ConfigFileFixture, NULL,
++			config_file_fixture_set_up, config_file_bundle_formats,
++			config_file_fixture_tear_down);
++	g_test_add_func("/config-file/parse-bundle-formats", config_file_test_parse_bundle_formats);
+ 
+ 	return g_test_run();
+ }
+-- 
+2.34.1
+

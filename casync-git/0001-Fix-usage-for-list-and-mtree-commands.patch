@@ -1,0 +1,72 @@
+From 9785517d008d2a20b2ec4f488f4df79688db1735 Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?Ga=C3=ABl=20PORTAY?= <gael.portay@collabora.com>
+Date: Tue, 18 Jun 2019 16:29:36 -0400
+Subject: [PATCH 1/5] Fix usage for list and mtree commands
+
+The three commands list, mtree and stats are dispatched to the same
+function: verb_list().
+
+Thus, they share the same command line interface:
+
+	casync list|mtree|stat [ARCHIVE|ARCHIVE_INDEX|DIRECTORY] [PATH]
+
+However, the output in the end is different.
+
+This commit fixes the help usage and the man page for both commands list
+and mtree.
+---
+ doc/casync.rst    | 8 ++++----
+ src/casync-tool.c | 4 ++--
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/doc/casync.rst b/doc/casync.rst
+index 00498f5..1eac050 100644
+--- a/doc/casync.rst
++++ b/doc/casync.rst
+@@ -10,8 +10,8 @@ Synopsis
+ 
+ | **casync** [*OPTIONS*...] make [*ARCHIVE* | *ARCHIVE_INDEX* | *BLOB_INDEX*] [*PATH*]
+ | **casync** [*OPTIONS*...] extract [*ARCHIVE* | *ARCHIVE_INDEX* | *BLOB_INDEX*] [*PATH*]
+-| **casync** [*OPTIONS*...] list [*ARCHIVE* | *ARCHIVE_INDEX* | *DIRECTORY*]
+-| **casync** [*OPTIONS*...] mtree [*ARCHIVE* | *ARCHIVE_INDEX* | *DIRECTORY*]
++| **casync** [*OPTIONS*...] list [*ARCHIVE* | *ARCHIVE_INDEX* | *DIRECTORY*] [*PATH*]
++| **casync** [*OPTIONS*...] mtree [*ARCHIVE* | *ARCHIVE_INDEX* | *DIRECTORY*] [*PATH*]
+ | **casync** [*OPTIONS*...] stat [*ARCHIVE* | *ARCHIVE_INDEX* | *DIRECTORY*] [*PATH*]
+ | **casync** [*OPTIONS*...] digest [*ARCHIVE* | *BLOB* | *ARCHIVE_INDEX* | *BLOB_INDEX* | *DIRECTORY*]
+ | **casync** [*OPTIONS*...] mount [*ARCHIVE* | *ARCHIVE_INDEX*] *PATH*
+@@ -55,7 +55,7 @@ The metadata replayed from the archive is controlled by the ``--with-*`` and
+ ``--without-*`` options.
+ 
+ |
+-| **casync** **list** [*ARCHIVE* | *ARCHIVE_INDEX* | *DIRECTORY*]
++| **casync** **list** [*ARCHIVE* | *ARCHIVE_INDEX* | *DIRECTORY*] [*PATH*]
+ 
+ This will list all the files and directories in the specified .catar
+ archive or .caidx index, or the directory. The argument is optional,
+@@ -69,7 +69,7 @@ The output includes the permission mask and file names::
+   -rw-r--r-- TODO
+ 
+ |
+-| **casync** **mtree** [*ARCHIVE* | *ARCHIVE_INDEX* | *DIRECTORY*]
++| **casync** **mtree** [*ARCHIVE* | *ARCHIVE_INDEX* | *DIRECTORY*] [*PATH*]
+ 
+ This is similar to **list**, but includes information about each entry in the
+ key=value format defined by BSD mtree(5)::
+diff --git a/src/casync-tool.c b/src/casync-tool.c
+index f920688..a08e8c4 100644
+--- a/src/casync-tool.c
++++ b/src/casync-tool.c
+@@ -77,8 +77,8 @@ static CaCompressionType arg_compression = CA_COMPRESSION_DEFAULT;
+ static void help(void) {
+         printf("%1$s [OPTIONS...] make [ARCHIVE|ARCHIVE_INDEX|BLOB_INDEX] [PATH]\n"
+                "%1$s [OPTIONS...] extract [ARCHIVE|ARCHIVE_INDEX|BLOB_INDEX] [PATH]\n"
+-               "%1$s [OPTIONS...] list [ARCHIVE|ARCHIVE_INDEX|DIRECTORY]\n"
+-               "%1$s [OPTIONS...] mtree [ARCHIVE|ARCHIVE_INDEX|DIRECTORY]\n"
++               "%1$s [OPTIONS...] list [ARCHIVE|ARCHIVE_INDEX|DIRECTORY] [PATH]\n"
++               "%1$s [OPTIONS...] mtree [ARCHIVE|ARCHIVE_INDEX|DIRECTORY] [PATH]\n"
+                "%1$s [OPTIONS...] stat [ARCHIVE|ARCHIVE_INDEX|DIRECTORY] [PATH]\n"
+                "%1$s [OPTIONS...] digest [ARCHIVE|BLOB|ARCHIVE_INDEX|BLOB_INDEX|DIRECTORY]\n"
+ #if HAVE_FUSE
+-- 
+2.27.0
+

@@ -1,0 +1,34 @@
+From 99becf4b875be5781bce38d9f75cf50ff29afe01 Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?Ga=C3=ABl=20PORTAY?= <gael.portay@collabora.com>
+Date: Fri, 19 Jul 2019 10:07:51 -0400
+Subject: [PATCH] tool: fix push/pull usage error
+
+---
+ src/casync-tool.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/casync-tool.c b/src/casync-tool.c
+index f920688..2712f13 100644
+--- a/src/casync-tool.c
++++ b/src/casync-tool.c
+@@ -3419,7 +3419,7 @@ static int verb_pull(int argc, char *argv[]) {
+         int r;
+ 
+         if (argc < 5) {
+-                log_error("Expected at least 5 arguments.");
++                log_error("Expected at least 4 arguments.");
+                 return -EINVAL;
+         }
+ 
+@@ -3572,7 +3572,7 @@ static int verb_push(int argc, char *argv[]) {
+         int r;
+ 
+         if (argc < 5) {
+-                log_error("Expected at least 5 arguments.");
++                log_error("Expected at least 4 arguments.");
+                 return -EINVAL;
+         }
+ 
+-- 
+2.27.0
+

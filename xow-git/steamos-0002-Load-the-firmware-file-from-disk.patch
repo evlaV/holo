@@ -1,0 +1,188 @@
+From b3df037d3fad9184750bc33c9f4fe0d16948359b Mon Sep 17 00:00:00 2001
+From: Emil Velikov <emil.velikov@collabora.com>
+Date: Mon, 17 May 2021 12:13:19 +0100
+Subject: [PATCH 2/5] Load the firmware file from disk
+
+Load the firmware file from disk, instead of the current approach where
+we embed the binary within the executable.
+
+In case the file is missing, print instructions how to fetch it.
+Explicitly mention the Microsoft Terms of Use.
+
+With this at hand, it is the user's responsibility to ensure licensing
+and terms of use compliance.
+
+v2:
+ - Create DATADIR during install
+ - Don't skip whitespace from the input stream
+
+Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+---
+ Makefile        | 18 ++++--------------
+ dongle/mt76.cpp | 46 ++++++++++++++++++++++++++++++++++++++--------
+ dongle/mt76.h   |  1 +
+ utils/bytes.h   |  4 ++++
+ 4 files changed, 47 insertions(+), 22 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index fa5aa64..054bff9 100644
+--- a/Makefile
++++ b/Makefile
+@@ -9,14 +9,13 @@ DEFINES := -DVERSION=\"$(VERSION)\"
+ CXXFLAGS += $(FLAGS) $($(BUILD)_FLAGS) $(DEFINES)
+ LDLIBS += -lpthread -lusb-1.0
+ SOURCES := $(wildcard *.cpp) $(wildcard */*.cpp)
+-OBJECTS := $(SOURCES:.cpp=.o) firmware.o
++OBJECTS := $(SOURCES:.cpp=.o)
+ DEPENDENCIES := $(SOURCES:.cpp=.d)
+ 
+-DRIVER_URL := http://download.windowsupdate.com/c/msdownload/update/driver/drvs/2017/07/1cd6a87c-623f-4407-a52d-c31be49e925c_e19f60808bdcbfbd3c3df6be3e71ffc52e43261e.cab
+-FIRMWARE_HASH := 48084d9fa53b9bb04358f3bb127b7495dc8f7bb0b3ca1437bd24ef2b6eabdf66
+-
+ PREFIX := /usr/local
+ BINDIR := $(PREFIX)/bin
++DATADIR := $(PREFIX)/share/xow/firmware
++CXXFLAGS += -DDATADIR=\"$(DATADIR)\"
+ UDEVDIR := /etc/udev/rules.d
+ MODLDIR := /etc/modules-load.d
+ MODPDIR := /etc/modprobe.d
+@@ -31,16 +30,6 @@ xow: $(OBJECTS)
+ %.o: %.cpp
+ 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+ 
+-firmware.o: firmware.bin
+-	$(LD) -r -b binary -z noexecstack -o $@ $<
+-
+-firmware.bin:
+-	curl -o driver.cab $(DRIVER_URL)
+-	cabextract -F FW_ACC_00U.bin driver.cab
+-	echo $(FIRMWARE_HASH) FW_ACC_00U.bin | sha256sum -c
+-	mv FW_ACC_00U.bin firmware.bin
+-	$(RM) driver.cab
+-
+ .PHONY: install
+ install: xow
+ 	sed 's|#BINDIR#|$(BINDIR)|' install/service.in > xow.service
+@@ -49,6 +38,7 @@ install: xow
+ 	install -D -m 644 install/modules.conf $(DESTDIR)$(MODLDIR)/xow-uinput.conf
+ 	install -D -m 644 install/modprobe.conf $(DESTDIR)$(MODPDIR)/xow-blacklist.conf
+ 	install -D -m 644 xow.service $(DESTDIR)$(SYSDDIR)/xow.service
++	install -d -m 644 $(DESTDIR)$(DATADIR)
+ 	$(RM) xow.service
+ 
+ .PHONY: uninstall
+diff --git a/dongle/mt76.cpp b/dongle/mt76.cpp
+index 55232f4..345a474 100644
+--- a/dongle/mt76.cpp
++++ b/dongle/mt76.cpp
+@@ -20,6 +20,9 @@
+ #include "../utils/log.h"
+ 
+ #include <chrono>
++#include <iostream>
++#include <iterator>
++#include <fstream>
+ 
+ #define BITS_PER_LONG (sizeof(long) * 8)
+ #define BIT(nr) (1UL << (nr))
+@@ -809,9 +812,6 @@
+ #define MT_CH_POWER_MIN 0x00
+ #define MT_CH_POWER_MAX 0x2f
+ 
+-extern const uint8_t _binary_firmware_bin_start[];
+-extern const uint8_t _binary_firmware_bin_end[];
+-
+ Mt76::Mt76(
+     std::unique_ptr<UsbDevice> usbDevice
+ ) : usbDevice(std::move(usbDevice))
+@@ -1408,6 +1408,38 @@ bool Mt76::initChannels()
+     return true;
+ }
+ 
++bool Mt76::openFirmware()
++{
++    const std::string filename(DATADIR "/FW_ACC_00U.bin");
++
++    if (firmware.size() != 0)
++    {
++        Log::debug("Firmware binary already loaded.");
++        return true;
++    }
++
++    std::ifstream blob(filename, std::ios::binary);
++    if (!blob)
++    {
++        Log::error("Failed to open firmware binary %s\n\n"
++	"You can get the firmware using the following commands.\n\n"
++	"NOTE: By downloading the files you are subject to the by Microsoft Terms of Use\n"
++	"https://www.microsoft.com/en-us/legal/intellectualproperty/copyright\n\n"
++	"Instructions:\n"
++	"curl -o driver.cab http://download.windowsupdate.com/c/msdownload/update/driver/drvs/2017/07/1cd6a87c-623f-4407-a52d-c31be49e925c_e19f60808bdcbfbd3c3df6be3e71ffc52e43261e.cab\n"
++	"cabextract -F FW_ACC_00U.bin driver.cab\n"
++	"echo 48084d9fa53b9bb04358f3bb127b7495dc8f7bb0b3ca1437bd24ef2b6eabdf66 FW_ACC_00U.bin | sha256sum -c\n"
++	"sudo mv FW_ACC_00U.bin %s\n"
++	"rm driver.cab\n", filename.c_str(), filename.c_str());
++        return false;
++    }
++    std::istream_iterator<uint8_t> start(blob), end;
++    noskipws(blob);
++
++    firmware = Bytes(std::vector<uint8_t>(start, end));
++    return true;
++}
++
+ bool Mt76::loadFirmware()
+ {
+     if (controlRead(MT_FCE_DMA_ADDR, MT_VEND_READ_CFG))
+@@ -1435,6 +1467,9 @@ bool Mt76::loadFirmware()
+         }
+     }
+ 
++    if (!openFirmware())
++        return false;
++
+     DmaConfig config = {};
+ 
+     config.props.rxBulkEnabled = true;
+@@ -1450,11 +1485,6 @@ bool Mt76::loadFirmware()
+     controlWrite(MT_FCE_PDMA_GLOBAL_CONF, 0x44);
+     controlWrite(MT_FCE_SKIP_FS, 0x03);
+ 
+-    firmware = Bytes(
+-        _binary_firmware_bin_start,
+-        _binary_firmware_bin_end
+-    );
+-
+     const FwHeader *header = firmware.toStruct<FwHeader>();
+     Bytes::Iterator ilmStart = firmware.begin() + sizeof(FwHeader);
+     Bytes::Iterator dlmStart = ilmStart + header->ilmLength;
+diff --git a/dongle/mt76.h b/dongle/mt76.h
+index 9eed764..0328347 100644
+--- a/dongle/mt76.h
++++ b/dongle/mt76.h
+@@ -532,6 +532,7 @@ private:
+     bool initRegisters();
+     bool calibrateCrystal();
+     bool initChannels();
++    bool openFirmware();
+     bool loadFirmware();
+     bool loadFirmwarePart(
+         uint32_t offset,
+diff --git a/utils/bytes.h b/utils/bytes.h
+index 8bcc50e..1e05c69 100644
+--- a/utils/bytes.h
++++ b/utils/bytes.h
+@@ -44,6 +44,10 @@ public:
+         std::initializer_list<uint8_t> elements
+     ) : data(elements) {}
+ 
++    inline Bytes(
++        std::vector<uint8_t> vect
++    ) : data(vect) {}
++
+     inline Bytes(
+         const uint8_t *begin,
+         const uint8_t *end
+-- 
+2.32.0
+

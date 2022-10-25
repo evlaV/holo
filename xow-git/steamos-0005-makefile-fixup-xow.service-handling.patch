@@ -1,0 +1,56 @@
+From 7fa33662d24c7bbe41b13e74d10949a8f470f021 Mon Sep 17 00:00:00 2001
+From: Emil Velikov <emil.velikov@collabora.com>
+Date: Thu, 8 Jul 2021 15:21:07 +0100
+Subject: [PATCH 5/5] makefile: fixup xow.service handling
+
+Move to a separate target - install should not be doing sed or rm.
+
+Signed-off-by: Emil Velikov <emil.velikov@collabora.com>
+---
+ Makefile | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index e930776..848461b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -22,7 +22,7 @@ MODPDIR := /etc/modprobe.d
+ SYSDDIR := /etc/systemd/system
+ 
+ .PHONY: all
+-all: xow xow-get-firmware.sh
++all: xow xow-get-firmware.sh xow.service
+ 
+ xow: $(OBJECTS)
+ 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+@@ -33,9 +33,11 @@ xow: $(OBJECTS)
+ xow-get-firmware.sh: xow-get-firmware.sh.in
+ 	sed "s|#DATADIR#|$(DATADIR)|g" $< > $@
+ 
++xow.service: install/service.in
++	sed 's|#BINDIR#|$(BINDIR)|' $< > $@
++
+ .PHONY: install
+ install: all
+-	sed 's|#BINDIR#|$(BINDIR)|' install/service.in > xow.service
+ 	install -D -m 755 xow $(DESTDIR)$(BINDIR)/xow
+ 	install -D -m 755 xow-get-firmware.sh $(DESTDIR)$(BINDIR)/xow-get-firmware.sh
+ 	install -D -m 644 install/udev.rules $(DESTDIR)$(UDEVDIR)/50-xow.rules
+@@ -43,7 +45,6 @@ install: all
+ 	install -D -m 644 install/modprobe.conf $(DESTDIR)$(MODPDIR)/xow-blacklist.conf
+ 	install -D -m 644 xow.service $(DESTDIR)$(SYSDDIR)/xow.service
+ 	install -d -m 644 $(DESTDIR)$(DATADIR)
+-	$(RM) xow.service
+ 
+ .PHONY: uninstall
+ uninstall:
+@@ -58,5 +59,6 @@ uninstall:
+ clean:
+ 	$(RM) xow $(OBJECTS) $(DEPENDENCIES)
+ 	$(RM) xow-get-firmware.sh
++	$(RM) xow.service
+ 
+ -include $(DEPENDENCIES)
+-- 
+2.32.0
+

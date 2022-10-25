@@ -1,0 +1,42 @@
+From 898b6d6dc7f4da117a8c049cb6dc56f54a9bec12 Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?Ga=C3=ABl=20PORTAY?= <gael.portay@collabora.com>
+Date: Wed, 19 Jun 2019 11:53:42 -0400
+Subject: [PATCH 3/5] man: fix top-level path in stat command section
+
+The top-level path in an archive is `/', not `.'.
+
+See:
+
+	$ casync stat archive.catar . || echo "Oops!" >&2
+	Seek path not available in archive.
+	Oops!
+
+	$ casync stat archive.catar / || echo "Oops!" >&2
+	    File: .
+	    Mode: drwxr-xr-x
+	FileAttr: ----------
+	 FATAttr: ---
+	  Offset: 0
+	    Time: 2019-06-19 18:16:40.005732803
+	    User: gportay (1000)
+	   Group: gportay (1000)
+---
+ doc/casync.rst | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/doc/casync.rst b/doc/casync.rst
+index c113f08..2545ae0 100644
+--- a/doc/casync.rst
++++ b/doc/casync.rst
+@@ -86,7 +86,7 @@ key=value format defined by BSD mtree(5)::
+ This will show detailed information about a file or directory *PATH*, as found
+ in either *ARCHIVE* or *ARCHIVE_INDEX* or underneath *DIRECTORY*. Both arguments
+ are optional. The first defaults to the current directory, and the second
+-the top-level path (``.``).
++the top-level path (``/``).
+ 
+ Example output::
+ 
+-- 
+2.27.0
+

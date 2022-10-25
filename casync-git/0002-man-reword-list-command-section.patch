@@ -1,0 +1,36 @@
+From 6704fc1ff0a04792c974c9a1691592f47ddcd3f8 Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?Ga=C3=ABl=20PORTAY?= <gael.portay@collabora.com>
+Date: Wed, 19 Jun 2019 11:43:42 -0400
+Subject: [PATCH 2/5] man: reword list command section
+
+The commands list, mtree and stat are similar.
+
+This rewording is inspired on the stat command section that is section
+the most up-to-date.
+
+Note: the top-level path in archive is `/', not `.'.
+---
+ doc/casync.rst | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/doc/casync.rst b/doc/casync.rst
+index 1eac050..c113f08 100644
+--- a/doc/casync.rst
++++ b/doc/casync.rst
+@@ -57,9 +57,10 @@ The metadata replayed from the archive is controlled by the ``--with-*`` and
+ |
+ | **casync** **list** [*ARCHIVE* | *ARCHIVE_INDEX* | *DIRECTORY*] [*PATH*]
+ 
+-This will list all the files and directories in the specified .catar
+-archive or .caidx index, or the directory. The argument is optional,
+-and the current directory will be used by default.
++This will list all the files and directories at *PATH* as found in either
++*ARCHIVE* or *ARCHIVE_INDEX* or underneath *DIRECTORY*. Both arguments are
++optional. The first defaults to the current directory. The second defaults to
++the top-level path of the archive (``/``).
+ 
+ The output includes the permission mask and file names::
+ 
+-- 
+2.27.0
+
