@@ -2,7 +2,7 @@
 
 pkgname=casync-git
 pkgver=2.r227.g99559cd
-pkgrel=3
+pkgrel=4
 pkgdesc="Content-Addressable Data Synchronization Tool"
 arch=(x86 x86_64)
 url="https://github.com/systemd/casync"
@@ -29,7 +29,8 @@ source=("$pkgname::git+$url#commit=99559cd"
         '0001-Add-download-progress.patch'
         '0002-Add-seeding-progress.patch'
         '0003-Force-display-of-extract-stats.patch'
-        '0001-casync-http-make-the-use-of-.netrc-optional.patch')
+        '0001-casync-http-make-the-use-of-.netrc-optional.patch'
+        '0001-caencoder-remove-sys-mount.h-to-fix-build-against-gl.patch')
 
 sha256sums=('SKIP'
             'b7000251a5bd6072a6cc9f359cc63556a17f4bc3a513af96870f60371ffa3c28'
@@ -47,7 +48,8 @@ sha256sums=('SKIP'
             '7eb294a530b626d3ef1e71dae463d6886eeec8effa3864b20be14700bffae67b'
             '799462b39676675196d4bf99565fe51f3ea4f705d197004faaf2a3e8bbedaad5'
             '957ae0a2715a6b22cda16ddec29d037438d4a4772767d7d072418d47ce0871a8'
-            '0a580459c2732e8de14cdb2081845062a3c3dc4446f739fb64695c3ab77f83a5')
+            '0a580459c2732e8de14cdb2081845062a3c3dc4446f739fb64695c3ab77f83a5'
+            '89d0ceda9f5dbb3cbd83ae1db651e573d9ba8fee355d50c88887ca5939d1660c')
 
 pkgver() {
   cd "$pkgname"
@@ -76,6 +78,7 @@ prepare() {
   patch -p1 -i "$srcdir/0002-Add-seeding-progress.patch"
   patch -p1 -i "$srcdir/0003-Force-display-of-extract-stats.patch"
   patch -p1 -i "$srcdir/0001-casync-http-make-the-use-of-.netrc-optional.patch"
+  patch -p1 -i "$srcdir/0001-caencoder-remove-sys-mount.h-to-fix-build-against-gl.patch"
 }
 
 build() {
