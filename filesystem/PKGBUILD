@@ -4,7 +4,7 @@
 pkgname=filesystem
 pkgver=2021.12.07
 # https://bugs.archlinux.org/task/72284
-pkgrel=1.7
+pkgrel=1.8
 pkgdesc='Base SteamOS Linux files'
 arch=('x86_64')
 license=('GPL')
@@ -31,7 +31,7 @@ sha256sums=('e03bede3d258d680548696623d5979c6edf03272e801a813c81ba5a5c64f4f82'
             'c774dbbcaea38ee1c1141d0daf82aa8177bfb26aca896d6f0c4ccdc902f6ac42'
             'dad04a370e488aa85fb0a813a5c83cf6fd981ce01883fc59685447b092de84b5'
             '8ca2d8eef6fb5143c9ef7e9174ccfef59ac7ad2deee243574cd10c763156cc10'
-            'c8ee7a9faf798caab178ec51afae4146f1efd8a716b7acedf28345b6c75f9697'
+            '7c4596dafc51407fd87d571b4b0c6b54f13cbe47a33a45a3ec865ed37d42391a'
             'a54d010860b3e9c4b8ccc282e61da5b7118c7547697151aaca36ee771d323dc9'
             '5e06477834f51abf42ea4e8dc199632afc6afbfd8c44354685a271e9a48d2c0a'
             '5e4088ad8d0853d390fa303f6be8c3f69c33834200cba9e90f7849f1993ca8d0'
