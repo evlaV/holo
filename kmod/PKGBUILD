@@ -1,9 +1,9 @@
 # Maintainer: Dave Reisner <dreisner@archlinux.org>
-# Contributor: Collabora Ltd <gael.portay@collabora.com> 
 
 pkgname=kmod
-pkgver=29
-pkgrel=1.3
+pkgver=30
+# SteamOS use /usr/lib/steamos/modules
+pkgrel=1.2
 pkgdesc="Linux kernel module management tools and library"
 arch=('x86_64')
 url='https://git.kernel.org/pub/scm/utils/kernel/kmod/kmod.git'
@@ -16,13 +16,28 @@ conflicts=('module-init-tools')
 replaces=('module-init-tools')
 validpgpkeys=('EAB33C9690013C733916AC839BA2A5A630CBEA53')  # Lucas DeMarchi
 source=("https://www.kernel.org/pub/linux/utils/kernel/$pkgname/$pkgname-$pkgver.tar."{xz,sign}
+        '0001-master.patch'
         'depmod-search.conf'
-        'depmod.hook' 'depmod.script')
-md5sums=('e81e63acd80697d001c8d85c1acb38a0'
+        'depmod.hook'
+        'depmod.script')
+md5sums=('85202f0740a75eb52f2163c776f9b564'
          'SKIP'
+         '109042785e725717fe6a6d545c51a090'
          'dd62cbf62bd8f212f51ef8c43bec9a77'
          '6f6d7cd8a11bea8d1d1cd8767ce04a69'
-         '18fb3d1f6024a5a84514c8276cb3ebff')
+         'b00253ca0d4ebfb2414e4596597bdebd')
+sha256sums=('f897dd72698dc6ac1ef03255cd0a5734ad932318e4adbaebc7338ef2f5202f9f'
+            'SKIP'
+            '99a02347c809307675a9a643ec34704ec5289b754d53dd4d319b32849b299c60'
+            '1a92bfeae870f61ce814577e69d2a147a9c0caf6aed1131243e4179241fcc4a8'
+            'c4aa55e668da612647472774aed70519a1e162ee3a42f7ac3aee2a5c1ce73356'
+            'd2cd04a09feba30e1376144a8110ec7521892acb0940c3c4ba459aeecf0452ed')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  patch -Np1 < ../0001-master.patch
+}
 
 build() {
   cd "$pkgname-$pkgver"
@@ -37,24 +52,25 @@ build() {
   make
 }
 
-#check() {
-#  # As of kmod v20, the test suite needs to build some kernel modules, and thus
-#  # needs headers available in order to run. We depend on linux-headers, but
-#  # this is really only to try and make sure that *some* useable tree of kernel
-#  # headers exist. The first useable tree we find is good enough, as these
-#  # modules will never be loaded by tests.
-#
-#  local kdirs=(/usr/lib/steamos/modules/*/build/Makefile)
-#  if [[ ! -f ${kdirs[0]} ]]; then
-#    printf '==> Unable to find kernel headers to build modules for tests\n' >&2
-#    return 1
-#  fi
-#
-#  local kver kdir=${kdirs[0]%/Makefile}
-#  IFS=/ read _ _ _ kver _ <<<"$kdir"
-#
-#  make -C "$pkgname-$pkgver" check KDIR="$kdir" KVER="$kver"
-#}
+check() {
+  # As of kmod v20, the test suite needs to build some kernel modules, and thus
+  # needs headers available in order to run. We depend on linux-headers, but
+  # this is really only to try and make sure that *some* useable tree of kernel
+  # headers exist. The first useable tree we find is good enough, as these
+  # modules will never be loaded by tests.
+
+  # SteamOS: Also check /usr/lib/steamos/modules/ used by the vanilla linux packages for module indirection.
+  local kdirs=(/usr/lib/{/steamos,}/modules/*/build/Makefile)
+  if [[ ! -f ${kdirs[0]} ]]; then
+    printf '==> Unable to find kernel headers to build modules for tests\n' >&2
+    return 1
+  fi
+
+  local kver kdir=${kdirs[0]%/Makefile}
+  IFS=/ read _ _ _ kver _ <<<"$kdir"
+
+  make -C "$pkgname-$pkgver" check KDIR="$kdir" KVER="$kver"
+}
 
 package() {
   make -C "$pkgname-$pkgver" DESTDIR="$pkgdir" install
