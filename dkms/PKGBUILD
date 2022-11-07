@@ -2,9 +2,9 @@
 # Contributor: Balwinder S "bsd" Dheeman (bdheeman AT gmail.com)
 
 pkgname=dkms
-pkgver=3.0.3
-pkgrel=1.2
-#hooks uses updated module directory for steamos which is /usr/lib/steamos/modules
+pkgver=3.0.7
+# SteamOS use /usr/lib/steamos/modules
+pkgrel=1.1
 pkgdesc='Dynamic Kernel Modules System'
 arch=('any')
 url='https://github.com/dell/dkms'
@@ -42,7 +42,7 @@ prepare() {
 
   # /usr move
   msg2 '/usr move patching'
-  for i in dkms{.in,.8.in,_framework.conf,.bash-completion,_common.postinst} sign_helper.sh; do
+  for i in dkms{.in,.8.in,_framework.conf,.bash-completion,_common.postinst}; do
     sed -ri 's,/lib/modules,/usr/lib/modules,g' "$i"
   done
 }
