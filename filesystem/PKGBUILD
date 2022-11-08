@@ -4,7 +4,7 @@
 pkgname=filesystem
 pkgver=2021.12.07
 # https://bugs.archlinux.org/task/72284
-pkgrel=1.8
+pkgrel=1.9
 pkgdesc='Base SteamOS Linux files'
 arch=('x86_64')
 license=('GPL')
@@ -166,9 +166,6 @@ package() {
   install -m644 "$srcdir"/issue-steamos etc/issue
   install -m644 "$srcdir"/issue-steamos usr/share/factory/etc/issue
   install -Dm644 "$srcdir"/os-release-steamos usr/lib/os-release
-
-  # https://bugs.archlinux.org/task/72284
-  echo "SteamOS release rolling (Holo)" > etc/arch-release
 
   # Add separate release file, for clarity-sake
   ln -s arch-release etc/steamos-release
