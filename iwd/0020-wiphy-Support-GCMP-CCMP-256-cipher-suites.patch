@@ -1,0 +1,44 @@
+From ecadc72bcd2878de84018ec9cfa36047ecfec37d Mon Sep 17 00:00:00 2001
+From: Denis Kenzior <denkenz@gmail.com>
+Date: Fri, 21 Oct 2022 11:11:43 -0500
+Subject: [PATCH 20/27] wiphy: Support GCMP|CCMP-256 cipher suites
+
+---
+ src/wiphy.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/src/wiphy.c b/src/wiphy.c
+index f0451b60..76f1ba7c 100644
+--- a/src/wiphy.c
++++ b/src/wiphy.c
+@@ -150,6 +150,12 @@ enum ie_rsn_cipher_suite wiphy_select_cipher(struct wiphy *wiphy, uint16_t mask)
+ 
+ 	mask &= wiphy->supported_ciphers;
+ 
++	if (mask & IE_RSN_CIPHER_SUITE_GCMP_256)
++		return IE_RSN_CIPHER_SUITE_GCMP_256;
++
++	if (mask & IE_RSN_CIPHER_SUITE_CCMP_256)
++		return IE_RSN_CIPHER_SUITE_CCMP_256;
++
+ 	if (mask & IE_RSN_CIPHER_SUITE_GCMP)
+ 		return IE_RSN_CIPHER_SUITE_GCMP;
+ 
+@@ -1239,6 +1245,14 @@ static void parse_supported_ciphers(struct wiphy *wiphy, const void *data,
+ 		case CRYPTO_CIPHER_GCMP:
+ 			wiphy->supported_ciphers |= IE_RSN_CIPHER_SUITE_GCMP;
+ 			break;
++		case CRYPTO_CIPHER_GCMP_256:
++			wiphy->supported_ciphers |=
++				IE_RSN_CIPHER_SUITE_GCMP_256;
++			break;
++		case CRYPTO_CIPHER_CCMP_256:
++			wiphy->supported_ciphers |=
++				IE_RSN_CIPHER_SUITE_CCMP_256;
++			break;
+ 		default:	/* TODO: Support other ciphers */
+ 			break;
+ 		}
+-- 
+2.38.1
+

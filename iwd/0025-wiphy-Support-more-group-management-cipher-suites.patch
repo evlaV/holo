@@ -1,0 +1,51 @@
+From 7584b385625f2ac445cd71a2e94e6d17dd962e1e Mon Sep 17 00:00:00 2001
+From: Denis Kenzior <denkenz@gmail.com>
+Date: Fri, 21 Oct 2022 13:42:21 -0500
+Subject: [PATCH 25/27] wiphy: Support more group management cipher suites
+
+---
+ src/wiphy.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/src/wiphy.c b/src/wiphy.c
+index 76f1ba7c..bb83f814 100644
+--- a/src/wiphy.c
++++ b/src/wiphy.c
+@@ -165,6 +165,15 @@ enum ie_rsn_cipher_suite wiphy_select_cipher(struct wiphy *wiphy, uint16_t mask)
+ 	if (mask & IE_RSN_CIPHER_SUITE_TKIP)
+ 		return IE_RSN_CIPHER_SUITE_TKIP;
+ 
++	if (mask & IE_RSN_CIPHER_SUITE_BIP_GMAC_256)
++		return IE_RSN_CIPHER_SUITE_BIP_GMAC_256;
++
++	if (mask & IE_RSN_CIPHER_SUITE_BIP_CMAC_256)
++		return IE_RSN_CIPHER_SUITE_BIP_CMAC_256;
++
++	if (mask & IE_RSN_CIPHER_SUITE_BIP_GMAC)
++		return IE_RSN_CIPHER_SUITE_BIP_GMAC;
++
+ 	if (mask & IE_RSN_CIPHER_SUITE_BIP_CMAC)
+ 		return IE_RSN_CIPHER_SUITE_BIP_CMAC;
+ 
+@@ -1253,6 +1262,18 @@ static void parse_supported_ciphers(struct wiphy *wiphy, const void *data,
+ 			wiphy->supported_ciphers |=
+ 				IE_RSN_CIPHER_SUITE_CCMP_256;
+ 			break;
++		case CRYPTO_CIPHER_BIP_GMAC:
++			wiphy->supported_ciphers |=
++				IE_RSN_CIPHER_SUITE_BIP_GMAC;
++			break;
++		case CRYPTO_CIPHER_BIP_GMAC_256:
++			wiphy->supported_ciphers |=
++				IE_RSN_CIPHER_SUITE_BIP_GMAC_256;
++			break;
++		case CRYPTO_CIPHER_BIP_CMAC_256:
++			wiphy->supported_ciphers |=
++				IE_RSN_CIPHER_SUITE_BIP_CMAC_256;
++			break;
+ 		default:	/* TODO: Support other ciphers */
+ 			break;
+ 		}
+-- 
+2.38.1
+

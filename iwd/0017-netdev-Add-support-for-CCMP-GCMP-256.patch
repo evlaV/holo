@@ -1,0 +1,27 @@
+From b3c3b087855a390a66a8c41ecacac05b392018d8 Mon Sep 17 00:00:00 2001
+From: Denis Kenzior <denkenz@gmail.com>
+Date: Fri, 21 Oct 2022 10:56:17 -0500
+Subject: [PATCH 17/27] netdev: Add support for CCMP|GCMP-256
+
+These are similar to CCMP/GCMP, just a different key size which is
+already taken care of by calling crypto_cipher_key_len
+---
+ src/netdev.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/netdev.c b/src/netdev.c
+index 4ca230e4..7b894860 100644
+--- a/src/netdev.c
++++ b/src/netdev.c
+@@ -1565,6 +1565,8 @@ static bool netdev_copy_tk(uint8_t *tk_buf, const uint8_t *tk,
+ 	switch (cipher) {
+ 	case CRYPTO_CIPHER_CCMP:
+ 	case CRYPTO_CIPHER_GCMP:
++	case CRYPTO_CIPHER_GCMP_256:
++	case CRYPTO_CIPHER_CCMP_256:
+ 		/*
+ 		 * 802.11-2020 12.8.3 Mapping PTK to CCMP keys:
+ 		 * "A STA shall use the temporal key as the CCMP key
+-- 
+2.38.1
+

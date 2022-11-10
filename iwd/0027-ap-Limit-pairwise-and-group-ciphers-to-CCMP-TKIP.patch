@@ -1,0 +1,30 @@
+From 75ec7d807663bc3a5adf6d8235d65188c2a11a1b Mon Sep 17 00:00:00 2001
+From: Denis Kenzior <denkenz@gmail.com>
+Date: Fri, 21 Oct 2022 15:50:26 -0500
+Subject: [PATCH 27/27] ap: Limit pairwise and group ciphers to CCMP|TKIP
+
+---
+ src/ap.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/src/ap.c b/src/ap.c
+index 429de560..2939a9c1 100644
+--- a/src/ap.c
++++ b/src/ap.c
+@@ -3303,8 +3303,11 @@ struct ap_state *ap_start(struct netdev *netdev, struct l_settings *config,
+ 	err = -EINVAL;
+ 
+ 	/* TODO: Add all ciphers supported by wiphy */
+-	ap->ciphers = wiphy_select_cipher(wiphy, 0xffff);
+-	ap->group_cipher = wiphy_select_cipher(wiphy, 0xffff);
++	ap->ciphers = wiphy_select_cipher(wiphy, IE_RSN_CIPHER_SUITE_TKIP |
++						IE_RSN_CIPHER_SUITE_CCMP);
++	ap->group_cipher = wiphy_select_cipher(wiphy,
++						IE_RSN_CIPHER_SUITE_TKIP |
++						IE_RSN_CIPHER_SUITE_CCMP);
+ 	ap->beacon_interval = 100;
+ 	ap->networks = l_queue_new();
+ 
+-- 
+2.38.1
+

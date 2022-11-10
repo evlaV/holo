@@ -1,0 +1,60 @@
+From 80408260791461b4bdcbb02da60ab649785b8a34 Mon Sep 17 00:00:00 2001
+From: Denis Kenzior <denkenz@gmail.com>
+Date: Thu, 20 Oct 2022 14:13:08 -0500
+Subject: [PATCH 10/27] ie: add ie_rsn_cipher_suite_to_string
+
+---
+ src/ie.c | 24 ++++++++++++++++++++++++
+ src/ie.h |  1 +
+ 2 files changed, 25 insertions(+)
+
+diff --git a/src/ie.c b/src/ie.c
+index 89f19b11..a424af27 100644
+--- a/src/ie.c
++++ b/src/ie.c
+@@ -437,6 +437,30 @@ uint32_t ie_rsn_cipher_suite_to_cipher(enum ie_rsn_cipher_suite suite)
+ 	}
+ }
+ 
++const char *ie_rsn_cipher_suite_to_string(enum ie_rsn_cipher_suite suite)
++{
++	switch (suite) {
++	case IE_RSN_CIPHER_SUITE_CCMP:
++		return "CCMP-128";
++	case IE_RSN_CIPHER_SUITE_TKIP:
++		return "TKIP";
++	case IE_RSN_CIPHER_SUITE_WEP40:
++		return "WEP-40";
++	case IE_RSN_CIPHER_SUITE_WEP104:
++		return "WEP-104";
++	case IE_RSN_CIPHER_SUITE_BIP_CMAC:
++		return "BIP-CMAC-128";
++	case IE_RSN_CIPHER_SUITE_GCMP:
++		return "GCMP-128";
++	case IE_RSN_CIPHER_SUITE_NO_GROUP_TRAFFIC:
++		return "NO-TRAFFIC";
++	case IE_RSN_CIPHER_SUITE_USE_GROUP_CIPHER:
++		break;
++	}
++
++	return NULL;
++}
++
+ /* 802.11, Section 8.4.2.27.2 */
+ static bool ie_parse_cipher_suite(const uint8_t *data,
+ 					enum ie_rsn_cipher_suite *out)
+diff --git a/src/ie.h b/src/ie.h
+index 2cbe35f2..1dadcb6b 100644
+--- a/src/ie.h
++++ b/src/ie.h
+@@ -587,6 +587,7 @@ unsigned char *ie_tlv_builder_finalize(struct ie_tlv_builder *builder,
+ 					size_t *out_len);
+ 
+ uint32_t ie_rsn_cipher_suite_to_cipher(enum ie_rsn_cipher_suite suite);
++const char *ie_rsn_cipher_suite_to_string(enum ie_rsn_cipher_suite suite);
+ 
+ int ie_parse_rsne(struct ie_tlv_iter *iter, struct ie_rsn_info *info);
+ int ie_parse_rsne_from_data(const uint8_t *data, size_t len,
+-- 
+2.38.1
+

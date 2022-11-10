@@ -1,0 +1,26 @@
+From fb9bcdadeca42786c643ff787b5dc7451ea74f49 Mon Sep 17 00:00:00 2001
+From: Denis Kenzior <denkenz@gmail.com>
+Date: Fri, 21 Oct 2022 11:10:58 -0500
+Subject: [PATCH 19/27] station: Use IE_CIPHER_IS_GCMP_CCMP
+
+---
+ src/station.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/src/station.c b/src/station.c
+index 11e86d1f..eab16eff 100644
+--- a/src/station.c
++++ b/src/station.c
+@@ -1167,8 +1167,7 @@ build_ie:
+ 	 * also indicates support.
+ 	 */
+ 	if (wiphy_supports_ext_key_id(wiphy) && bss_info.extended_key_id &&
+-			(info.pairwise_ciphers & (IE_RSN_CIPHER_SUITE_CCMP |
+-						  IE_RSN_CIPHER_SUITE_GCMP)))
++			IE_CIPHER_IS_GCMP_CCMP(info.pairwise_ciphers))
+ 		info.extended_key_id = true;
+ 
+ 	/* RSN takes priority */
+-- 
+2.38.1
+

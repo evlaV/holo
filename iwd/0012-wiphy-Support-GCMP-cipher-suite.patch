@@ -1,0 +1,52 @@
+From 81b9eb515e66dfe8ffc0096063098c470c277070 Mon Sep 17 00:00:00 2001
+From: Denis Kenzior <denkenz@gmail.com>
+Date: Thu, 20 Oct 2022 14:01:39 -0500
+Subject: [PATCH 12/27] wiphy: Support GCMP cipher suite
+
+---
+ src/station.c | 3 ++-
+ src/wiphy.c   | 7 ++++++-
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/src/station.c b/src/station.c
+index 294edd61..e0c163fb 100644
+--- a/src/station.c
++++ b/src/station.c
+@@ -1167,7 +1167,8 @@ build_ie:
+ 	 * also indicates support.
+ 	 */
+ 	if (wiphy_supports_ext_key_id(wiphy) && bss_info.extended_key_id &&
+-			info.pairwise_ciphers == IE_RSN_CIPHER_SUITE_CCMP)
++			(info.pairwise_ciphers & (IE_RSN_CIPHER_SUITE_CCMP |
++						  IE_RSN_CIPHER_SUITE_GCMP)))
+ 		info.extended_key_id = true;
+ 
+ 	/* RSN takes priority */
+diff --git a/src/wiphy.c b/src/wiphy.c
+index da4610d0..f0451b60 100644
+--- a/src/wiphy.c
++++ b/src/wiphy.c
+@@ -150,7 +150,9 @@ enum ie_rsn_cipher_suite wiphy_select_cipher(struct wiphy *wiphy, uint16_t mask)
+ 
+ 	mask &= wiphy->supported_ciphers;
+ 
+-	/* CCMP is our first choice, TKIP second */
++	if (mask & IE_RSN_CIPHER_SUITE_GCMP)
++		return IE_RSN_CIPHER_SUITE_GCMP;
++
+ 	if (mask & IE_RSN_CIPHER_SUITE_CCMP)
+ 		return IE_RSN_CIPHER_SUITE_CCMP;
+ 
+@@ -1234,6 +1236,9 @@ static void parse_supported_ciphers(struct wiphy *wiphy, const void *data,
+ 			wiphy->supported_ciphers |=
+ 				IE_RSN_CIPHER_SUITE_BIP_CMAC;
+ 			break;
++		case CRYPTO_CIPHER_GCMP:
++			wiphy->supported_ciphers |= IE_RSN_CIPHER_SUITE_GCMP;
++			break;
+ 		default:	/* TODO: Support other ciphers */
+ 			break;
+ 		}
+-- 
+2.38.1
+

@@ -1,0 +1,105 @@
+From 5998043bd2c69036a7377ce4053f4bf7c72bdaf7 Mon Sep 17 00:00:00 2001
+From: Denis Kenzior <denkenz@gmail.com>
+Date: Fri, 21 Oct 2022 10:42:45 -0500
+Subject: [PATCH 16/27] ie: Add support for GCMP|CCMP-256
+
+---
+ src/ie.c | 26 ++++++++++++++++++++++++++
+ src/ie.h |  2 ++
+ 2 files changed, 28 insertions(+)
+
+diff --git a/src/ie.c b/src/ie.c
+index a424af27..4a3e02e1 100644
+--- a/src/ie.c
++++ b/src/ie.c
+@@ -432,6 +432,10 @@ uint32_t ie_rsn_cipher_suite_to_cipher(enum ie_rsn_cipher_suite suite)
+ 		return CRYPTO_CIPHER_BIP_CMAC;
+ 	case IE_RSN_CIPHER_SUITE_GCMP:
+ 		return CRYPTO_CIPHER_GCMP;
++	case IE_RSN_CIPHER_SUITE_GCMP_256:
++		return CRYPTO_CIPHER_GCMP_256;
++	case IE_RSN_CIPHER_SUITE_CCMP_256:
++		return CRYPTO_CIPHER_CCMP_256;
+ 	default:
+ 		return 0;
+ 	}
+@@ -452,6 +456,10 @@ const char *ie_rsn_cipher_suite_to_string(enum ie_rsn_cipher_suite suite)
+ 		return "BIP-CMAC-128";
+ 	case IE_RSN_CIPHER_SUITE_GCMP:
+ 		return "GCMP-128";
++	case IE_RSN_CIPHER_SUITE_GCMP_256:
++		return "GCMP-256";
++	case IE_RSN_CIPHER_SUITE_CCMP_256:
++		return "CCMP-256";
+ 	case IE_RSN_CIPHER_SUITE_NO_GROUP_TRAFFIC:
+ 		return "NO-TRAFFIC";
+ 	case IE_RSN_CIPHER_SUITE_USE_GROUP_CIPHER:
+@@ -496,6 +504,12 @@ static bool ie_parse_cipher_suite(const uint8_t *data,
+ 		case 8:
+ 			*out = IE_RSN_CIPHER_SUITE_GCMP;
+ 			return true;
++		case 9:
++			*out = IE_RSN_CIPHER_SUITE_GCMP_256;
++			return true;
++		case 10:
++			*out = IE_RSN_CIPHER_SUITE_CCMP_256;
++			return true;
+ 		default:
+ 			return false;
+ 		}
+@@ -610,6 +624,8 @@ static bool ie_parse_group_cipher(const uint8_t *data,
+ 	case IE_RSN_CIPHER_SUITE_WEP40:
+ 	case IE_RSN_CIPHER_SUITE_NO_GROUP_TRAFFIC:
+ 	case IE_RSN_CIPHER_SUITE_GCMP:
++	case IE_RSN_CIPHER_SUITE_GCMP_256:
++	case IE_RSN_CIPHER_SUITE_CCMP_256:
+ 		break;
+ 	default:
+ 		return false;
+@@ -635,6 +651,8 @@ static int ie_parse_pairwise_cipher(const uint8_t *data,
+ 	case IE_RSN_CIPHER_SUITE_WEP40:
+ 	case IE_RSN_CIPHER_SUITE_USE_GROUP_CIPHER:
+ 	case IE_RSN_CIPHER_SUITE_GCMP:
++	case IE_RSN_CIPHER_SUITE_GCMP_256:
++	case IE_RSN_CIPHER_SUITE_CCMP_256:
+ 		break;
+ 	default:
+ 		return -ERANGE;
+@@ -945,6 +963,12 @@ static bool ie_build_cipher_suite(uint8_t *data, const uint8_t *oui,
+ 	case IE_RSN_CIPHER_SUITE_GCMP:
+ 		selector = 8;
+ 		goto done;
++	case IE_RSN_CIPHER_SUITE_GCMP_256:
++		selector = 9;
++		goto done;
++	case IE_RSN_CIPHER_SUITE_CCMP_256:
++		selector = 10;
++		goto done;
+ 	}
+ 
+ 	return false;
+@@ -1034,6 +1058,8 @@ static int build_ciphers_common(const struct ie_rsn_info *info, uint8_t *to,
+ 		IE_RSN_CIPHER_SUITE_WEP40,
+ 		IE_RSN_CIPHER_SUITE_USE_GROUP_CIPHER,
+ 		IE_RSN_CIPHER_SUITE_GCMP,
++		IE_RSN_CIPHER_SUITE_GCMP_256,
++		IE_RSN_CIPHER_SUITE_CCMP_256,
+ 	};
+ 	unsigned int pos = 0;
+ 	unsigned int i;
+diff --git a/src/ie.h b/src/ie.h
+index 1dadcb6b..f447a4f9 100644
+--- a/src/ie.h
++++ b/src/ie.h
+@@ -332,6 +332,8 @@ enum ie_rsn_cipher_suite {
+ 	IE_RSN_CIPHER_SUITE_BIP_CMAC		= 0x0020,
+ 	IE_RSN_CIPHER_SUITE_NO_GROUP_TRAFFIC	= 0x0040,
+ 	IE_RSN_CIPHER_SUITE_GCMP		= 0x0080,
++	IE_RSN_CIPHER_SUITE_GCMP_256		= 0x0100,
++	IE_RSN_CIPHER_SUITE_CCMP_256		= 0x0200,
+ };
+ 
+ enum ie_rsn_akm_suite {
+-- 
+2.38.1
+

@@ -1,0 +1,34 @@
+From d643964fedb4c1d146fe61289cc77c5201ce1993 Mon Sep 17 00:00:00 2001
+From: Denis Kenzior <denkenz@gmail.com>
+Date: Thu, 20 Oct 2022 14:00:39 -0500
+Subject: [PATCH 08/27] netdev: Add support for setting GCMP keys
+
+---
+ src/netdev.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/src/netdev.c b/src/netdev.c
+index 231ed986..4ca230e4 100644
+--- a/src/netdev.c
++++ b/src/netdev.c
+@@ -1564,12 +1564,15 @@ static bool netdev_copy_tk(uint8_t *tk_buf, const uint8_t *tk,
+ {
+ 	switch (cipher) {
+ 	case CRYPTO_CIPHER_CCMP:
++	case CRYPTO_CIPHER_GCMP:
+ 		/*
+-		 * 802.11-2016 12.8.3 Mapping PTK to CCMP keys:
++		 * 802.11-2020 12.8.3 Mapping PTK to CCMP keys:
+ 		 * "A STA shall use the temporal key as the CCMP key
+ 		 * for MPDUs between the two communicating STAs."
++		 *
++		 * Similar verbiage in 12.8.8
+ 		 */
+-		memcpy(tk_buf, tk, 16);
++		memcpy(tk_buf, tk, crypto_cipher_key_len(cipher));
+ 		break;
+ 	case CRYPTO_CIPHER_TKIP:
+ 		/*
+-- 
+2.38.1
+

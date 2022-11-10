@@ -1,0 +1,106 @@
+From 201b85e8daca53a651626c929485bc86488a1194 Mon Sep 17 00:00:00 2001
+From: Denis Kenzior <denkenz@gmail.com>
+Date: Wed, 19 Oct 2022 16:21:34 -0500
+Subject: [PATCH 02/27] crypto: Rename BIP to BIP_CMAC
+
+To match the spec more closely.  Several additional BIP algorithms are
+being introduced, including BIP_GMAC_128|256 and BIP_CMAC_256.
+---
+ src/crypto.c  | 2 +-
+ src/crypto.h  | 2 +-
+ src/ie.c      | 2 +-
+ src/netdev.c  | 2 +-
+ src/wiphy.c   | 2 +-
+ tools/hwsim.c | 4 ++--
+ 6 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/src/crypto.c b/src/crypto.c
+index 19d55e70..89e315df 100644
+--- a/src/crypto.c
++++ b/src/crypto.c
+@@ -501,7 +501,7 @@ int crypto_cipher_key_len(enum crypto_cipher cipher)
+ 		return 32;
+ 	case CRYPTO_CIPHER_CCMP:
+ 		return 16;
+-	case CRYPTO_CIPHER_BIP:
++	case CRYPTO_CIPHER_BIP_CMAC:
+ 		return 16;
+ 	}
+ 
+diff --git a/src/crypto.h b/src/crypto.h
+index b6fa2ec3..b2cd8839 100644
+--- a/src/crypto.h
++++ b/src/crypto.h
+@@ -30,7 +30,7 @@ enum crypto_cipher {
+ 	CRYPTO_CIPHER_WEP104 = 0x000fac05,
+ 	CRYPTO_CIPHER_TKIP = 0x000fac02,
+ 	CRYPTO_CIPHER_CCMP = 0x000fac04,
+-	CRYPTO_CIPHER_BIP = 0x000fac06,
++	CRYPTO_CIPHER_BIP_CMAC = 0x000fac06,
+ };
+ 
+ enum crypto_akm {
+diff --git a/src/ie.c b/src/ie.c
+index 070454ef..245b59c9 100644
+--- a/src/ie.c
++++ b/src/ie.c
+@@ -429,7 +429,7 @@ uint32_t ie_rsn_cipher_suite_to_cipher(enum ie_rsn_cipher_suite suite)
+ 	case IE_RSN_CIPHER_SUITE_WEP104:
+ 		return CRYPTO_CIPHER_WEP104;
+ 	case IE_RSN_CIPHER_SUITE_BIP:
+-		return CRYPTO_CIPHER_BIP;
++		return CRYPTO_CIPHER_BIP_CMAC;
+ 	default:
+ 		return 0;
+ 	}
+diff --git a/src/netdev.c b/src/netdev.c
+index 206907b8..cd8e7086 100644
+--- a/src/netdev.c
++++ b/src/netdev.c
+@@ -1684,7 +1684,7 @@ static void netdev_set_igtk(struct handshake_state *hs, uint16_t key_index,
+ 	}
+ 
+ 	switch (cipher) {
+-	case CRYPTO_CIPHER_BIP:
++	case CRYPTO_CIPHER_BIP_CMAC:
+ 		memcpy(igtk_buf, igtk, 16);
+ 		break;
+ 	default:
+diff --git a/src/wiphy.c b/src/wiphy.c
+index 6fdd3df5..1283bede 100644
+--- a/src/wiphy.c
++++ b/src/wiphy.c
+@@ -1215,7 +1215,7 @@ static void parse_supported_ciphers(struct wiphy *wiphy, const void *data,
+ 		case CRYPTO_CIPHER_WEP104:
+ 			wiphy->supported_ciphers |= IE_RSN_CIPHER_SUITE_WEP104;
+ 			break;
+-		case CRYPTO_CIPHER_BIP:
++		case CRYPTO_CIPHER_BIP_CMAC:
+ 			wiphy->supported_ciphers |= IE_RSN_CIPHER_SUITE_BIP;
+ 			break;
+ 		default:	/* TODO: Support other ciphers */
+diff --git a/tools/hwsim.c b/tools/hwsim.c
+index e5501904..75f074ab 100644
+--- a/tools/hwsim.c
++++ b/tools/hwsim.c
+@@ -175,7 +175,7 @@ static const uint32_t hwsim_supported_ciphers[] = {
+ 	CRYPTO_CIPHER_WEP104,
+ 	CRYPTO_CIPHER_TKIP,
+ 	CRYPTO_CIPHER_CCMP,
+-	CRYPTO_CIPHER_BIP,
++	CRYPTO_CIPHER_BIP_CMAC,
+ };
+ static uint32_t hwsim_ciphers[L_ARRAY_SIZE(hwsim_supported_ciphers)];
+ static int hwsim_num_ciphers = 0;
+@@ -196,7 +196,7 @@ static const struct hwsim_support cipher_map[] = {
+ 	{ "wep104", CRYPTO_CIPHER_WEP104 },
+ 	{ "tkip", CRYPTO_CIPHER_TKIP },
+ 	{ "ccmp", CRYPTO_CIPHER_CCMP },
+-	{ "bip", CRYPTO_CIPHER_BIP },
++	{ "bip", CRYPTO_CIPHER_BIP_CMAC },
+ 	{ }
+ };
+ 
+-- 
+2.38.1
+
