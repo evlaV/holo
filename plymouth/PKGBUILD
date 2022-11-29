@@ -9,7 +9,7 @@ pkgver=22.02.122
 # Scaling fixes
 # - explicit workaround DeviceScale=1, since our kernel is missing rotation
 # Disable on start, allow deactivate to fail
-pkgrel=1.3
+pkgrel=1.4
 pkgdesc="A graphical boot splash screen with kernel mode-setting support"
 url="https://www.freedesktop.org/wiki/Software/Plymouth/"
 arch=('i686' 'x86_64')
@@ -40,6 +40,7 @@ source=("https://gitlab.freedesktop.org/${pkgname}/${pkgname}/-/archive/${pkgver
        'plymouth-systemd-units.patch'          # SteamOS: disable on startup
        'plymouthd.conf.patch'
        '0001-defaults-set-DeviceScale-1.patch' # SteamOS: explicit DeviceScale=1
+       '0001-Revert-drm-Honour-screen-rotation-when-detecting-HiD.patch' # SteamOS: temporary revert the orientation detection
 )
 
 sha256sums=('8921cd61a9f32f5f8903ceffb9ab0defaef8326253e1549ef85587c19b7f2ab6'
@@ -57,7 +58,8 @@ sha256sums=('8921cd61a9f32f5f8903ceffb9ab0defaef8326253e1549ef85587c19b7f2ab6'
             '9484a109825526974305ae6f5428c1054da3ea3be32f9614ba6852b3dab06faa'
             '5b51b1c4f8ab74fd25a1a2a48e4d2a4e752b816531581c255455d08dca85ab4c'
             '71d34351b4313da01e1ceeb082d9776599974ce143c87e93f0a465f342a74fd2'
-            '5be4e85480db4fbd0acf81855500ea3275cd06eaabd5553e39ff694b85dab9bc')
+            '5be4e85480db4fbd0acf81855500ea3275cd06eaabd5553e39ff694b85dab9bc'
+            'ebf03812c3c338287349c5e8471adf9716a19b972e1c119410a797c6f823ac92')
 
 prepare() {
 	cd "$srcdir"/${pkgname}-${pkgver}
@@ -66,6 +68,7 @@ prepare() {
 	patch -p1 -i $srcdir/plymouthd.conf.patch
 	patch -p1 -i $srcdir/0001-defaults-set-DeviceScale-1.patch
 	patch -p1 -i $srcdir/plymouth-systemd-units.patch
+	patch -p1 -i $srcdir/0001-Revert-drm-Honour-screen-rotation-when-detecting-HiD.patch
 }
 
 build() {

@@ -1,0 +1,45 @@
+From bc9c97ba01da95e80be5adbebf0b15d51a297ff5 Mon Sep 17 00:00:00 2001
+From: Emil Velikov <emil.l.velikov@gmail.com>
+Date: Tue, 29 Nov 2022 20:16:53 +0000
+Subject: [PATCH] Revert "drm: Honour screen rotation when detecting HiDPI"
+
+This reverts commit a76fe9a06993a2e2c7ee11da9d39202f47195b39.
+---
+ src/plugins/renderers/drm/plugin.c | 7 +------
+ 1 file changed, 1 insertion(+), 6 deletions(-)
+
+diff --git a/src/plugins/renderers/drm/plugin.c b/src/plugins/renderers/drm/plugin.c
+index 02e9413a..1f222af9 100644
+--- a/src/plugins/renderers/drm/plugin.c
++++ b/src/plugins/renderers/drm/plugin.c
+@@ -1164,7 +1164,6 @@ get_output_info (ply_renderer_backend_t *backend,
+ {
+         drmModeModeInfo *mode = NULL;
+         drmModeConnector *connector;
+-        bool has_90_rotation = false;
+ 
+         memset (output, 0, sizeof(*output));
+         output->connector_id = connector_id;
+@@ -1179,9 +1178,6 @@ get_output_info (ply_renderer_backend_t *backend,
+ 
+         output_get_controller_info (backend, connector, output);
+         ply_renderer_connector_get_rotation_and_tiled (backend, connector, output);
+-        if (output->rotation == PLY_PIXEL_BUFFER_ROTATE_COUNTER_CLOCKWISE ||
+-            output->rotation == PLY_PIXEL_BUFFER_ROTATE_CLOCKWISE)
+-            has_90_rotation = true;
+ 
+         if (!output->tiled)
+                 mode = get_preferred_mode (connector);
+@@ -1196,8 +1192,7 @@ get_output_info (ply_renderer_backend_t *backend,
+         }
+         output->mode = *mode;
+         output->device_scale = ply_get_device_scale (mode->hdisplay, mode->vdisplay,
+-                                                     (!has_90_rotation) ? connector->mmWidth : connector->mmHeight,
+-                                                     (!has_90_rotation) ? connector->mmHeight : connector->mmWidth);
++                                                     connector->mmWidth, connector->mmHeight);
+         output->connector_type = connector->connector_type;
+         output->connected = true;
+ out:
+-- 
+2.38.1
+
