@@ -234,9 +234,9 @@ index 51cdb5e1d..2f5217358 100644
 --- a/util/grub.d/10_linux.in
 +++ b/util/grub.d/10_linux.in
 @@ -23,6 +23,7 @@ datarootdir="@datarootdir@"
+ datarootdir="@datarootdir@"
  ubuntu_recovery="@UBUNTU_RECOVERY@"
  quiet_boot="@QUIET_BOOT@"
- quick_boot="@QUICK_BOOT@"
 +gfxpayload_dynamic="@GFXPAYLOAD_DYNAMIC@"
  
  . "$pkgdatadir/grub-mkconfig_lib"

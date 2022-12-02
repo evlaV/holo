@@ -51,12 +51,11 @@ index 8752777e0..0aa41da93 100644
  
  # These are defined in this script, export them here so that user can
  # override them.
-@@ -244,7 +248,8 @@ export GRUB_DEFAULT \
+@@ -244,6 +248,7 @@ export GRUB_DEFAULT \
    GRUB_BADRAM \
    GRUB_OS_PROBER_SKIP_LIST \
-   GRUB_DISABLE_SUBMENU \
--  GRUB_RECORDFAIL_TIMEOUT
-+  GRUB_RECORDFAIL_TIMEOUT \
+-  GRUB_DISABLE_SUBMENU
++  GRUB_DISABLE_SUBMENU \
 +  GRUB_RECOVERY_TITLE
  
  if test "x${grub_cfg}" != "x"; then

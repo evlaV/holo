@@ -23,7 +23,7 @@ _gnulib_commit='be584c56eb1311606e5ea1a36363b97bddb6eed3'
 _unifont_ver='14.0.01'
 _pkgver=2.06
 pkgver=${_pkgver/-/}
-pkgrel=4.5
+pkgrel=4.6
 url='https://www.gnu.org/software/grub/'
 arch=('x86_64')
 license=('GPL3')
@@ -86,8 +86,6 @@ source=("git+https://git.savannah.gnu.org/git/grub.git#tag=${_tag}?signed"
         'debian-wubi-no-windows.patch'
         'debian-maybe-quiet.patch'
         'debian-install-efi-adjust-distributor.patch'
-        'debian-quick-boot.patch'
-        'debian-quick-boot-lvm.patch'
         'debian-gfxpayload-dynamic.patch'
         'debian-vt-handoff.patch'
         'debian-probe-fusionio.patch'
@@ -126,10 +124,8 @@ source=("git+https://git.savannah.gnu.org/git/grub.git#tag=${_tag}?signed"
         'steamos-0001-SteamOS-stage-II-bootloader-implemented-as-a-grub-mo.patch'
         'steamos-0002-Reduce-eagerness-of-grub-install-to-remove-other-boo.patch'
         'steamos-0003-Patch-grub-install-to-support-a-custom-grub-mkimage.patch'
-        'steamos-0005-Fix-Add-configure-option-to-bypass-boot-menu-if-poss.patch'
         'steamos-0006-10_linux-always-hide-the-Loading-messages-in-quiet-m.patch'
         'steamos-0007-00_header-steamenv.patch'
-        'grub-recordfail.service'
         'grub.default')
 
 sha256sums=('SKIP'
@@ -161,13 +157,11 @@ sha256sums=('SKIP'
             'da1d54da56b1175c41f7ea5ed55c7d305b714b61eb10361bd50dd402fd66628f'
             '4560286dfe5afe95afa91a8d46aa36a3fd10ad2bf6b7c7847bb19084c3a4c640'
             '26f815c4ac19100aa75a0dbd2fa2cc8ae1a0be38e9ae09c8e72d1eda3baf56a9'
-            'dd396c05333d1551c19531dc06fab446980cdf5920cbca85f2a835d5d1910f69'
-            '3f3936df78b71cec700116457d6d2a5c089d49325ec7aa8fad35f94312d6f917'
-            'a94bcf2ca5b3652a4ad2c100e46110514220809255221b6d9271044f4b0e904d'
+            '1741771384a1babd60e295380b1122c74d616feb01fe588a5c782a8e5f372058'
             'f514b17eb9e21d305927bc8c0eb033bb9eaa5814f626ad183a4f3a9ffb6a5358'
             '0b71ab17279c1c700a4c4e64317feaece8d97500c59719a011b10c270e48e8f6'
             '07b4dfe8550930f76d224a999923c3d4bf5f5871fa5c6914dfe90d0079d25622'
-            'b9819422f62c0471cd7fb21782d9d480224286df1cf32e7cc3a8fc313b46dfb2'
+            '94ae8a8637b984fb1b47ee5b5bff682981600b7f1f4946db04056ef532a79469'
             '7dbf5c8bf695422b109963d44f88c5947748498a13f66bc0bcb8b2e80fc7b27a'
             '4bc3f581363225c4a7c9d5e6d3238bd96ddb06ecdac2c8e6e4de6d9504389e2b'
             '61f422db46a9642656cbaebaad674a58952c25e4ab0dc5f93e20be4a9fc250c4'
@@ -201,10 +195,8 @@ sha256sums=('SKIP'
             'e6d9fb71295a96ff5c7f4971cc6d14f1eac72db2473a1084ec7c8116a657f5d4'
             'c2b46fa4f3c43161de12ebd0ff4e12da37eeae07fcb3ffb487e0c194630d9ee6'
             'bb3f5f2729ed7ab35d749fae3c15b229cc719b189f94224a685742230595db86'
-            '943bdf086bd2b386322bcce608b15de90e7955c92f1fcded491255c2bc3167c5'
             'cca890f4be9a2c58fc290b488b4ef9eeb490066726297e4fda5ec87215d9e7a9'
-            '95e7805670c72b26afb94d6a4765e9ec5f19298fb8a75e97b9543847be5e6148'
-            '65d41c0bcb933cf06060082b60571ba6c4e40b873e13117fca5708101e7182c2'
+            '49aaae59d5dc51c90860c94ad94074918f35f131bd1e56a737b86d18ad67a5d4'
             '9f6fad49d082d7e1372563a971c7d1221df7603dca3fb6de16324ee7c10528e9')
 
 _backports=(
@@ -232,10 +224,10 @@ _configure_options=(
 	--with-bootdir="/boot"
 	--with-grubdir="grub"
 	--disable-silent-rules
-	# SteamOS: #T21734: quick-boot and quiet-boot are imported from debian(via patch)
+	# SteamOS: #T21734: quiet-boot is imported from debian (via patch)
 	# but disabled by default so enable manually.
+        # quick-boot was imported the same way but is no longer necessary
 	--enable-quiet-boot
-	--enable-quick-boot
 	--disable-werror
 )
 
@@ -275,8 +267,6 @@ prepare() {
 	patch -Np1 -i "${srcdir}/debian-wubi-no-windows.patch"
 	patch -Np1 -i "${srcdir}/debian-maybe-quiet.patch"
 	patch -Np1 -i "${srcdir}/debian-install-efi-adjust-distributor.patch"
-	patch -Np1 -i "${srcdir}/debian-quick-boot.patch"
-	patch -Np1 -i "${srcdir}/debian-quick-boot-lvm.patch"
 	patch -Np1 -i "${srcdir}/debian-gfxpayload-dynamic.patch"
 	patch -Np1 -i "${srcdir}/debian-vt-handoff.patch"
 	patch -Np1 -i "${srcdir}/debian-probe-fusionio.patch"
@@ -322,7 +312,6 @@ prepare() {
 	patch -Np1 -i "${srcdir}/steamos-0001-SteamOS-stage-II-bootloader-implemented-as-a-grub-mo.patch"
 	patch -Np1 -i "${srcdir}/steamos-0002-Reduce-eagerness-of-grub-install-to-remove-other-boo.patch"
 	patch -Np1 -i "${srcdir}/steamos-0003-Patch-grub-install-to-support-a-custom-grub-mkimage.patch"
-	patch -Np1 -i "${srcdir}/steamos-0005-Fix-Add-configure-option-to-bypass-boot-menu-if-poss.patch"
 	patch -Np1 -i "${srcdir}/steamos-0006-10_linux-always-hide-the-Loading-messages-in-quiet-m.patch"
         patch -Np1 -i "${srcdir}/steamos-0007-00_header-steamenv.patch"
 	echo
@@ -524,9 +513,6 @@ package() {
 
 	echo "Package grub bios stuff..."
 	_package_grub-common_and_bios
-
-	echo "Package recordfail stuff..."
-	install -D -m644 ${srcdir}/grub-recordfail.service "${pkgdir}/usr/lib/systemd/system/grub-recordfail.service"
 
 	echo "Move grub binaries to libdir..."
 	mv "${pkgdir}/usr/bin/grub-install" "${pkgdir}/usr/lib/grub/grub-install"
