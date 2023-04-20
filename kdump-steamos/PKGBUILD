@@ -5,8 +5,8 @@
 
 pkgbase=kdump-steamos
 pkgname=kdump-steamos
-pkgver=0.91
-_srctag=v0.91
+pkgver=0.92
+_srctag=v0.92
 pkgrel=2
 pkgdesc="Kdump scripts to collect vmcore/dmesg in a small dracut-based initramfs"
 makedepends=('git')
