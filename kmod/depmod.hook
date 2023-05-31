@@ -3,7 +3,9 @@ Type = Path
 Operation = Install
 Operation = Upgrade
 Operation = Remove
-Target = usr/lib/stemaos/modules/*/
+Target = usr/lib/modules/*/
+Target = !usr/lib/modules/*/?*
+Target = usr/lib/steamos/modules/*/
 Target = !usr/lib/steamos/modules/*/?*
 
 [Action]

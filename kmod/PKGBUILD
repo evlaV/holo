@@ -3,7 +3,7 @@
 pkgname=kmod
 pkgver=30
 # SteamOS use /usr/lib/steamos/modules
-pkgrel=1.2
+pkgrel=1.3
 pkgdesc="Linux kernel module management tools and library"
 arch=('x86_64')
 url='https://git.kernel.org/pub/scm/utils/kernel/kmod/kmod.git'
@@ -24,13 +24,13 @@ md5sums=('85202f0740a75eb52f2163c776f9b564'
          'SKIP'
          '109042785e725717fe6a6d545c51a090'
          'dd62cbf62bd8f212f51ef8c43bec9a77'
-         '6f6d7cd8a11bea8d1d1cd8767ce04a69'
+         'dbc0f24bb7d5a63f38b4a42a7499cdaf'
          'b00253ca0d4ebfb2414e4596597bdebd')
 sha256sums=('f897dd72698dc6ac1ef03255cd0a5734ad932318e4adbaebc7338ef2f5202f9f'
             'SKIP'
             '99a02347c809307675a9a643ec34704ec5289b754d53dd4d319b32849b299c60'
             '1a92bfeae870f61ce814577e69d2a147a9c0caf6aed1131243e4179241fcc4a8'
-            'c4aa55e668da612647472774aed70519a1e162ee3a42f7ac3aee2a5c1ce73356'
+            '4c96f1fda1b4893d03e0ce2c377442bb39e30cd76a85103ede4e93b7d1d5701d'
             'd2cd04a09feba30e1376144a8110ec7521892acb0940c3c4ba459aeecf0452ed')
 
 prepare() {
