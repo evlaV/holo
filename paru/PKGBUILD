@@ -2,7 +2,7 @@
 # Maintainer (Holo/rust reproducibility rider): John Schoenick <johns@valvesoftware.com>
 pkgname=paru
 pkgver=1.11.1
-pkgrel=1
+pkgrel=1.1
 pkgdesc='Feature packed AUR helper'
 url='https://github.com/morganamilo/paru'
 source=("$pkgname-$pkgver.tar.gz::https://github.com/Morganamilo/paru/archive/v$pkgver.tar.gz"
