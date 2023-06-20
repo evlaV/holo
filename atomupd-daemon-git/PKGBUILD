@@ -1,9 +1,9 @@
 # Maintainer: Ludovico de Nittis <ludovico.denittis@collabora.com>
 
 pkgname=atomupd-daemon-git
-pkgver=0.20220323.0.r0.g36d2fcb
-pkgrel=2
-_tag=v0.20220323.0
+pkgver=0.20230503.0.r0.gc7a0810
+pkgrel=1
+_tag=v0.20230503.0
 pkgdesc='Atomic updates daemon'
 arch=('x86_64')
 url='https://github.com/evlav/atomupd-daemon'
@@ -28,7 +28,9 @@ build() {
 
 check() {
   export DBUS_SESSION_BUS_ADDRESS=`dbus-daemon --fork --config-file=/usr/share/dbus-1/session.conf --print-address`
-  meson test -C build --print-errorlogs
+  # Do not run multiple tests in parallel because they all rely on the same
+  # D-Bus path, so they'll conflict with each other
+  meson test --num-processes 1 -C build --print-errorlogs
 }
 
 package() {
