@@ -1,8 +1,8 @@
 # Maintainer: Gaël PORTAY <gael.portay@collabora.com>
 
 pkgname=steamos-atomupd-client-git
-_srctag=jupiter-20220207
-pkgver=r157.4d50d6d
+_srctag=v0.20230609.0
+pkgver=r301.e0c2c4d
 pkgrel=2
 pkgdesc='SteamOS Atomic Update (client) - Atomic update client for SteamOS.'
 arch=('any')

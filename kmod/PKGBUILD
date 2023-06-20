@@ -3,7 +3,7 @@
 pkgname=kmod
 pkgver=30
 # SteamOS use /usr/lib/steamos/modules
-pkgrel=1.3
+pkgrel=1.4
 pkgdesc="Linux kernel module management tools and library"
 arch=('x86_64')
 url='https://git.kernel.org/pub/scm/utils/kernel/kmod/kmod.git'
