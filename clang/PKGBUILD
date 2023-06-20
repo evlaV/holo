@@ -3,8 +3,8 @@
 
 pkgbase=clang
 pkgname=(clang clang-libs)
-pkgver=14.0.6
-pkgrel=3.1
+pkgver=15.0.7
+pkgrel=9.1
 pkgdesc="C language family frontend for LLVM"
 arch=('x86_64')
 url="https://clang.llvm.org/"
@@ -15,19 +15,25 @@ _source_base=https://github.com/llvm/llvm-project/releases/download/llvmorg-$pkg
 source=($_source_base/$pkgbase-$pkgver.src.tar.xz{,.sig}
         $_source_base/clang-tools-extra-$pkgver.src.tar.xz{,.sig}
         $_source_base/llvm-$pkgver.src.tar.xz{,.sig}
-        clang-coroutines-ubsan.patch
-        clang-tidy-fix-standalone-build.patch
+        $_source_base/cmake-$pkgver.src.tar.xz{,.sig}
+        $pkgbase-linker-wrapper-tool.patch::https://github.com/llvm/llvm-project/commit/c2aabcfc8395.patch
+        $pkgbase-structured-bindings-r1.patch::https://github.com/llvm/llvm-project/commit/127bf4438542.patch
+        $pkgbase-bitfield-value-capture.patch::https://github.com/llvm/llvm-project/commit/a1a71b7dc97b.patch
         enable-fstack-protector-strong-by-default.patch)
-sha256sums=('2b5847b6a63118b9efe5c85548363c81ffe096b66c3b3675e953e26342ae4031'
+sha256sums=('a6b673ef15377fb46062d164e8ddc4d05c348ff8968f015f7f4af03f51000067'
             'SKIP'
-            '7cf3b8ff56c65c4d1eae3c56883fc4a6cbc3ff9f3a1530a74d66e45d27271866'
+            '809a2ef46d46be3b83ca389356404ac041fa6d8f5496cb02ec35d252afb64fd1'
             'SKIP'
-            '050922ecaaca5781fdf6631ea92bc715183f202f9d2f15147226f023414f619a'
+            '4ad8b2cc8003c86d0078d15d987d84e3a739f24aae9033865c027abae93ee7a4'
             'SKIP'
-            '2c25ddf0ba6be01949842873fef4d285456321aaccd4ba95db61b69a4c580106'
-            '081a7ebc1ae524b13fc6be3dc73feb2c9eb7cf4b99f7f13d9ed37a688311f58a'
+            '8986f29b634fdaa9862eedda78513969fe9788301c9f2d938f4c10a3e7a3e7ea'
+            'SKIP'
+            '640ac4858c68cc6d52226afe01a67ad017f95511636b631d826b791c5b11a47e'
+            '6092fa872e2a706de12d1efb0626a4e9ef9854014edc68edb5ebac2ad27e2d9f'
+            'd432e706fd99e7817ea0cbb02795918a781a11e4f5e6d304d53fffec9856b6f4'
             '7a9ce949579a3b02d4b91b6835c4fb45adc5f743007572fb0e28e6433e48f3a5')
-validpgpkeys=('474E22316ABF4785A88C6E8EA2C794A986419D8A') # Tom Stellard <tstellar@redhat.com>
+validpgpkeys=('474E22316ABF4785A88C6E8EA2C794A986419D8A'  # Tom Stellard <tstellar@redhat.com>
+              'D574BD5D1D0E98895E3BF90044F2485E45D59042') # Tobias Hieta <tobias@hieta.se>
 
 # Utilizing LLVM_DISTRIBUTION_COMPONENTS to avoid
 # installing static libraries; inspired by Gentoo
@@ -52,16 +58,21 @@ _get_distribution_components() {
 }
 
 prepare() {
+  mv cmake{-$pkgver.src,}
   cd "$srcdir/$pkgbase-$pkgver.src"
   mkdir build
   mv "$srcdir/clang-tools-extra-$pkgver.src" tools/extra
   patch -Np2 -i ../enable-fstack-protector-strong-by-default.patch
 
-  # https://github.com/llvm/llvm-project/issues/49689
-  patch -Np2 -i ../clang-coroutines-ubsan.patch
+  # https://reviews.llvm.org/D145862
+  patch -Np2 -l -i ../$pkgname-linker-wrapper-tool.patch
 
-  # https://github.com/llvm/llvm-project/issues/54116
-  patch -Np0 -i ../clang-tidy-fix-standalone-build.patch
+  # https://reviews.llvm.org/D122768 (needed for Chromium 113)
+  sed 's|clang-tools-extra|clang/tools/extra|g' \
+    ../$pkgname-structured-bindings-r1.patch | patch -Np2
+
+  # https://reviews.llvm.org/D131202 (regression caused by the above)
+  patch -Np2 -i ../$pkgname-bitfield-value-capture.patch
 
   # Attempt to convert script to Python 3
   2to3 -wn --no-diffs \
@@ -70,6 +81,10 @@ prepare() {
 
 build() {
   cd "$srcdir/$pkgbase-$pkgver.src/build"
+
+  # Build only minimal debug info to reduce size
+  CFLAGS=${CFLAGS/-g /-g1 }
+  CXXFLAGS=${CXXFLAGS/-g /-g1 }
 
   local cmake_args=(
     -G Ninja
