@@ -3,15 +3,15 @@
 pkgbase=steamos-customizations-git
 #pkgname=('steamos-customizations-git' 'holo-desync' 'holo-pacman' 'holo-pipewire' 'holo-sudo' 'holo-wireplumber')
 pkgname=('steamos-customizations-git' 'holo-desync' 'holo-pipewire' 'holo-sudo' 'holo-wireplumber')
-_srctag=jupiter-20230426.1
+_srctag=jupiter-20230615.2
 _srcver=${_srctag#jupiter-}
-pkgver=r769.a4b0b45
-pkgrel=1
+pkgver=r815.c94b156
+pkgrel=2
 pkgdesc='SteamOS customizations - This package installs various SteamOS-specific files'
 arch=('any')
 url='http://repo.steampowered.com'
 license=('LGPLv2+')
-depends=('e2fsprogs' 'gptfdisk' 'rsync' 'util-linux')
+depends=('e2fsprogs' 'gptfdisk' 'rsync' 'util-linux' 'mkinitcpio')
 makedepends=('git')
 source=("${pkgbase%-git}::git+https://github.com/evlav/${pkgbase%-git}.git#tag=${_srctag}")
 md5sums=('SKIP')
@@ -27,6 +27,7 @@ package_steamos-customizations-git() {
 
 	cd "${pkgbase%-git}"
 	make DESTDIR="$pkgdir" prefix="/usr" sbindir="/usr/bin" libexecdir="/usr/lib" install
+	make DESTDIR="$pkgdir" prefix="/usr" sbindir="/usr/bin" libexecdir="/usr/lib" -C mkinitcpio install
 
 	echo "Symlink grub binaries using steamos helpers from libdir..."
 	ln -sf "/usr/lib/steamos/steamos-grub-install" "${pkgdir}/usr/bin/grub-install"
