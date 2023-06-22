@@ -9,7 +9,7 @@ pkgver=22.02.122
 # Scaling fixes
 # - explicit workaround DeviceScale=1, since our kernel is missing rotation
 # Disable on start, allow deactivate to fail
-pkgrel=1.4
+pkgrel=1.5
 pkgdesc="A graphical boot splash screen with kernel mode-setting support"
 url="https://www.freedesktop.org/wiki/Software/Plymouth/"
 arch=('i686' 'x86_64')
@@ -36,7 +36,6 @@ source=("https://gitlab.freedesktop.org/${pkgname}/${pkgname}/-/archive/${pkgver
        'plymouth.initcpio_install'
        'sd-plymouth.initcpio_install'
        'plymouth-quit.service.in.patch'
-       'plymouth-update-initrd.patch'
        'plymouth-systemd-units.patch'          # SteamOS: disable on startup
        'plymouthd.conf.patch'
        '0001-defaults-set-DeviceScale-1.patch' # SteamOS: explicit DeviceScale=1
@@ -55,7 +54,6 @@ sha256sums=('8921cd61a9f32f5f8903ceffb9ab0defaef8326253e1549ef85587c19b7f2ab6'
             'd2201253d9f4a1f7e556e60a04401237273a4577e157a8c4471d5c81bff88ccd'
             'd254f3d01631024ed4563d39fcaa631b0ace097faf7ed05de382859ccfa48a08'
             'dec28b86ddea93704f8479d33e08f81cd7ff4ccaad57e9053c23bd046db2278a'
-            '9484a109825526974305ae6f5428c1054da3ea3be32f9614ba6852b3dab06faa'
             '5b51b1c4f8ab74fd25a1a2a48e4d2a4e752b816531581c255455d08dca85ab4c'
             '71d34351b4313da01e1ceeb082d9776599974ce143c87e93f0a465f342a74fd2'
             '5be4e85480db4fbd0acf81855500ea3275cd06eaabd5553e39ff694b85dab9bc'
@@ -63,7 +61,9 @@ sha256sums=('8921cd61a9f32f5f8903ceffb9ab0defaef8326253e1549ef85587c19b7f2ab6'
 
 prepare() {
 	cd "$srcdir"/${pkgname}-${pkgver}
-	patch -p1 -i $srcdir/plymouth-update-initrd.patch
+
+	sed -i 's/dracut -f/mkinitcpio -P/' scripts/plymouth-update-initrd
+
 	patch -p1 -i $srcdir/plymouth-quit.service.in.patch
 	patch -p1 -i $srcdir/plymouthd.conf.patch
 	patch -p1 -i $srcdir/0001-defaults-set-DeviceScale-1.patch
