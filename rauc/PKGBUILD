@@ -2,7 +2,7 @@
 
 pkgname=rauc
 pkgver=1.8
-pkgrel=1
+pkgrel=1.1
 pkgdesc="RAUC controls the update process on embedded linux systems. It is both a target application that runs as an update client and a host/target tool that allows you to create, inspect and modify installation artifacts."
 arch=('i686' 'x86_64')
 url="https://github.com/rauc/rauc"
