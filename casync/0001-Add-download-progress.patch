@@ -1,0 +1,72 @@
+From 494e4993cff95dd64a6e4fc71020103578908cfe Mon Sep 17 00:00:00 2001
+From: Arnaud Rebillout <arnaud.rebillout@collabora.com>
+Date: Thu, 30 May 2019 09:08:22 +0700
+Subject: [PATCH 1/2] Add download progress
+
+Signed-off-by: Arnaud Rebillout <arnaud.rebillout@collabora.com>
+---
+ src/caremote.c | 20 +++++++++++++++++---
+ 1 file changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/src/caremote.c b/src/caremote.c
+index 8ece8f7..cfce8bc 100644
+--- a/src/caremote.c
++++ b/src/caremote.c
+@@ -91,6 +91,8 @@ struct CaRemote {
+         uint64_t n_request_bytes;
+ 
+         CaCompressionType compression_type;
++
++        unsigned next_perc;
+ };
+ 
+ CaRemote* ca_remote_new(void) {
+@@ -807,7 +809,7 @@ finish:
+         return r;
+ }
+ 
+-static int ca_remote_dequeue_request(CaRemote *rr, int only_high_priority, CaChunkID *ret, bool *ret_high_priority) {
++static int ca_remote_dequeue_request(CaRemote *rr, int only_high_priority, CaChunkID *ret, bool *ret_high_priority, bool log) {
+         const char *queue_name;
+         uint64_t position;
+         char *ids;
+@@ -821,6 +823,18 @@ static int ca_remote_dequeue_request(CaRemote *rr, int only_high_priority, CaChu
+         if (rr->cache_fd < 0)
+                 return -ENODATA;
+ 
++        if (log) {
++                uint64_t total_start, total_end, prog;
++
++                total_start = rr->queue_start_high + rr->queue_start_low;
++                total_end = rr->queue_end_high + rr->queue_end_low;
++                prog = total_start * 100.0 / total_end;
++                if (prog > rr->next_perc) {
++                        log_info("downloading chunks... %u%%", rr->next_perc);
++                        rr->next_perc += 10;
++                }
++        }
++
+         for (;;) {
+                 char *qpos;
+ 
+@@ -1869,7 +1883,7 @@ static int ca_remote_send_request(CaRemote *rr) {
+                 CaChunkID id;
+                 void *p;
+ 
+-                r = ca_remote_dequeue_request(rr, only_high_priority, &id, &high_priority);
++                r = ca_remote_dequeue_request(rr, only_high_priority, &id, &high_priority, false);
+                 if (r == -ENODATA)
+                         break;
+                 if (r < 0)
+@@ -2176,7 +2190,7 @@ int ca_remote_next_request(CaRemote *rr, CaChunkID *ret) {
+         if (rr->state == CA_REMOTE_EOF)
+                 return -EPIPE;
+ 
+-        return ca_remote_dequeue_request(rr, -1, ret, NULL);
++        return ca_remote_dequeue_request(rr, -1, ret, NULL, true);
+ }
+ 
+ int ca_remote_can_put_chunk(CaRemote *rr) {
+-- 
+2.20.1
+

@@ -1,0 +1,43 @@
+From af90d6f09bd14c953557d4c559561c0ce2047b50 Mon Sep 17 00:00:00 2001
+From: Arnaud Rebillout <arnaud.rebillout@collabora.com>
+Date: Thu, 30 May 2019 10:40:42 +0700
+Subject: [PATCH 2/2] Add seeding progress
+
+Signed-off-by: Arnaud Rebillout <arnaud.rebillout@collabora.com>
+---
+ src/caencoder.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/src/caencoder.c b/src/caencoder.c
+index 0262a36..1453185 100644
+--- a/src/caencoder.c
++++ b/src/caencoder.c
+@@ -202,6 +202,8 @@ struct CaEncoder {
+         bool want_archive_digest:1;
+         bool want_payload_digest:1;
+         bool want_hardlink_digest:1;
++
++        unsigned next_perc;
+ };
+ 
+ #define CA_ENCODER_AT_ROOT(e) ((e)->node_idx == 0)
+@@ -2132,6 +2134,16 @@ static int ca_encoder_step_node(CaEncoder *e, CaEncoderNode *n) {
+                 if (r < 0)
+                         return r;
+ 
++                {
++                        uint64_t prog;
++
++                        prog = e->payload_offset * 100.0 / size;
++                        if (prog > e->next_perc) {
++                                log_info("seeding... %u%%", e->next_perc);
++                                e->next_perc += 10;
++                        }
++                }
++
+                 if (e->payload_offset >= size) {
+                         ca_encoder_enter_state(e, CA_ENCODER_FINALIZE);
+ 
+-- 
+2.20.1
+

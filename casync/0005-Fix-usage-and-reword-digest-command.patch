@@ -1,0 +1,76 @@
+From f24eec2d60ed76ce412edf27258b43081218555a Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?Ga=C3=ABl=20PORTAY?= <gael.portay@collabora.com>
+Date: Thu, 20 Jun 2019 07:55:09 -0400
+Subject: [PATCH 5/5] Fix usage and reword digest command
+
+Since commit 0d9092c (casync: add seeking in archives), the command
+digest can take a second parameter that is optional when the first
+parameter is either an index or an archive (not blob index).
+
+This rewording is inspired on the stat command section that is section
+the most up-to-date.
+
+This commit fixes the help usage, the man page for commands digest and
+a typo in an error message.
+---
+ doc/casync.rst    | 13 +++++++++----
+ src/casync-tool.c |  4 ++--
+ 2 files changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/doc/casync.rst b/doc/casync.rst
+index 4e16f02..6b561a3 100644
+--- a/doc/casync.rst
++++ b/doc/casync.rst
+@@ -13,7 +13,7 @@ Synopsis
+ | **casync** [*OPTIONS*...] list [*ARCHIVE* | *ARCHIVE_INDEX* | *DIRECTORY*] [*PATH*]
+ | **casync** [*OPTIONS*...] mtree [*ARCHIVE* | *ARCHIVE_INDEX* | *DIRECTORY*] [*PATH*]
+ | **casync** [*OPTIONS*...] stat [*ARCHIVE* | *ARCHIVE_INDEX* | *DIRECTORY*] [*PATH*]
+-| **casync** [*OPTIONS*...] digest [*ARCHIVE* | *BLOB* | *ARCHIVE_INDEX* | *BLOB_INDEX* | *DIRECTORY*]
++| **casync** [*OPTIONS*...] digest [*ARCHIVE* | *BLOB* | *ARCHIVE_INDEX* | *BLOB_INDEX* | *DIRECTORY*] [PATH]
+ | **casync** [*OPTIONS*...] mount [*ARCHIVE* | *ARCHIVE_INDEX*] *PATH*
+ | **casync** [*OPTIONS*...] mkdev [*BLOB* | *BLOB_INDEX*] [*NODE*]
+ | **casync** [*OPTIONS*...] gc *BLOB_INDEX* | *ARCHIVE_INDEX* ...
+@@ -101,10 +101,15 @@ Example output::
+      Group: zbyszek (1000)
+ 
+ |
+-| **casync** **digest** [*ARCHIVE* | *BLOB* | *ARCHIVE_INDEX* | *BLOB_INDEX* | *DIRECTORY*]
++| **casync** **digest** [*BLOB* | *BLOB_INDEX* | *DIRECTORY*]
++| **casync** **digest** *ARCHIVE* | *ARCHIVE_INDEX* [PATH]
+ 
+-This will compute and print the checksum of the argument.
+-The argument is optional and defaults to the current directory::
++This will compute and print the checksum of the file or directory, or the given
++*PATH* as found in either *ARCHIVE* or *ARCHIVE_INDEX*. Both arguments are
++optional. The first default to the current directory. The second defaults to
++the top-level path of the archive (``/``).
++
++Example::
+ 
+   $ casync digest
+   d1698b0c4c27163284abea5d1e369b92e89dd07cb74378638849800e0406baf7
+diff --git a/src/casync-tool.c b/src/casync-tool.c
+index a08e8c4..89eaf2c 100644
+--- a/src/casync-tool.c
++++ b/src/casync-tool.c
+@@ -80,7 +80,7 @@ static void help(void) {
+                "%1$s [OPTIONS...] list [ARCHIVE|ARCHIVE_INDEX|DIRECTORY] [PATH]\n"
+                "%1$s [OPTIONS...] mtree [ARCHIVE|ARCHIVE_INDEX|DIRECTORY] [PATH]\n"
+                "%1$s [OPTIONS...] stat [ARCHIVE|ARCHIVE_INDEX|DIRECTORY] [PATH]\n"
+-               "%1$s [OPTIONS...] digest [ARCHIVE|BLOB|ARCHIVE_INDEX|BLOB_INDEX|DIRECTORY]\n"
++               "%1$s [OPTIONS...] digest [ARCHIVE|BLOB|ARCHIVE_INDEX|BLOB_INDEX|DIRECTORY] [PATH]\n"
+ #if HAVE_FUSE
+                "%1$s [OPTIONS...] mount [ARCHIVE|ARCHIVE_INDEX] PATH\n"
+ #endif
+@@ -2449,7 +2449,7 @@ static int verb_digest(int argc, char *argv[]) {
+         else if (arg_what == WHAT_DIRECTORY)
+                 operation = DIGEST_DIRECTORY;
+         else if (arg_what != _WHAT_INVALID) {
+-                log_error("\"make\" operation may only be combined with --what=archive, --what=blob, --what=archive-index, --what=blob-index or --what=directory.");
++                log_error("\"digest\" operation may only be combined with --what=archive, --what=blob, --what=archive-index, --what=blob-index or --what=directory.");
+                 return -EINVAL;
+         }
+ 
+-- 
+2.27.0
+

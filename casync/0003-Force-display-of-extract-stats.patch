@@ -1,0 +1,28 @@
+From 048fdc5171679025af83c660eec375be5e2948e2 Mon Sep 17 00:00:00 2001
+From: Arnaud Rebillout <arnaud.rebillout@collabora.com>
+Date: Thu, 30 May 2019 11:23:16 +0700
+Subject: [PATCH] Force display of extract stats
+
+Signed-off-by: Arnaud Rebillout <arnaud.rebillout@collabora.com>
+---
+ src/casync-tool.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/casync-tool.c b/src/casync-tool.c
+index f920688..fd87ee9 100644
+--- a/src/casync-tool.c
++++ b/src/casync-tool.c
+@@ -1001,8 +1001,8 @@ static int verbose_print_done_extract(CaSync *s) {
+         uint64_t nsec = 0, runtime_nsec = 0;
+         int r;
+ 
+-        if (!arg_verbose)
+-                return 0;
++        //if (!arg_verbose)
++        //        return 0;
+ 
+         r = ca_sync_get_punch_holes_bytes(s, &n_bytes);
+         if (!IN_SET(r, -ENODATA, -ENOTTY)) {
+-- 
+2.20.1
+

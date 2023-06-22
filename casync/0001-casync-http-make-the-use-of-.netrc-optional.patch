@@ -1,0 +1,33 @@
+From 1ab3163267be11c04944b44f014e61514f35abb6 Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?Ga=C3=ABl=20PORTAY?= <gael.portay@collabora.com>
+Date: Thu, 30 Jul 2020 17:02:44 -0400
+Subject: [PATCH] casync-http: make the use of .netrc optional
+
+libcurl ignores the ~/.netrc file by default.
+
+This makes the use of the ~/.netrc file optional; the information in the
+URL is preferred.
+---
+ src/casync-http.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/casync-http.c b/src/casync-http.c
+index e92f987..f285e5e 100644
+--- a/src/casync-http.c
++++ b/src/casync-http.c
+@@ -259,6 +259,12 @@ static int make_curl_easy_handle(CURL **ret,
+                 return -EIO;
+         }
+ 
++        c = curl_easy_setopt(handle, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
++        if (c != CURLE_OK) {
++                log_error_curle(c, "Failed to set CURL netrc preference");
++                return -EIO;
++        }
++
+         if (private) {
+                 c = curl_easy_setopt(handle, CURLOPT_PRIVATE, private);
+                 if (c != CURLE_OK) {
+-- 
+2.27.0
+
