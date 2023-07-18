@@ -1,0 +1,78 @@
+From b736f07e2ed490b5e7b71fb5b8937c7b5949c1cd Mon Sep 17 00:00:00 2001
+From: James Prestwood <prestwoj@gmail.com>
+Date: Thu, 13 Jul 2023 07:42:37 -0700
+Subject: netdev: relax requirement for OWE AKM in assoc reply
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Some APs don't include the RSNE in the associate reply during
+the OWE exchange. This causes IWD to be incompatible since it has
+a hard requirement on the AKM being included.
+
+This relaxes the requirement for the AKM and instead warns if it
+is not included.
+
+Below is an example of an association reply without the RSN element
+
+IEEE 802.11 Association Response, Flags: ........
+     Type/Subtype: Association Response (0x0001)
+     Frame Control Field: 0x1000
+     .000 0000 0011 1100 = Duration: 60 microseconds
+     Receiver address: 64:c4:03:88:ff:26
+     Destination address: 64:c4:03:88:ff:26
+     Transmitter address: fc:34:97:2b:1b:48
+     Source address: fc:34:97:2b:1b:48
+     BSS Id: fc:34:97:2b:1b:48
+     .... .... .... 0000 = Fragment number: 0
+     0001 1100 1000 .... = Sequence number: 456
+IEEE 802.11 wireless LAN
+     Fixed parameters (6 bytes)
+     Tagged parameters (196 bytes)
+         Tag: Supported Rates 6(B), 9, 12(B), 18, 24(B), 36, 48, 54, [Mbit/sec]
+         Tag: RM Enabled Capabilities (5 octets)
+         Tag: Extended Capabilities (11 octets)
+         Ext Tag: HE Capabilities (IEEE Std 802.11ax/D3.0)
+         Ext Tag: HE Operation (IEEE Std 802.11ax/D3.0)
+         Ext Tag: MU EDCA Parameter Set
+         Ext Tag: HE 6GHz Band Capabilities
+         Ext Tag: OWE Diffie-Hellman Parameter
+             Tag Number: Element ID Extension (255)
+             Ext Tag length: 51
+             Ext Tag Number: OWE Diffie-Hellman Parameter (32)
+             Group: 384-bit random ECP group (20)
+             Public Key: 14ba9d8abeb2ecd5d95e6c12491b16489d1bcc303e7a7fbd…
+         Tag: Vendor Specific: Broadcom
+         Tag: Vendor Specific: Microsoft Corp.: WMM/WME: Parameter Element
+
+Reported-By: Wen Gong <quic_wgong@quicinc.com>
+Tested-By: Wen Gong <quic_wgong@quicinc.com>
+---
+ src/netdev.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/src/netdev.c b/src/netdev.c
+index f5c5fc511..56c6ebd26 100644
+--- a/src/netdev.c
++++ b/src/netdev.c
+@@ -2911,11 +2911,15 @@ process_resp_ies:
+ 		}
+ 
+ 		if (netdev->owe_sm) {
+-			if (!owe_dh || !owe_akm_found) {
+-				l_error("OWE DH element/RSN not found");
++			if (!owe_dh) {
++				l_error("OWE DH element not found");
+ 				goto deauth;
+ 			}
+ 
++			if (!owe_akm_found)
++				l_warn("OWE AKM was not included in the RSNE. "
++					"This AP is out of spec!");
++
+ 			if (L_WARN_ON(owe_process_dh_ie(netdev->owe_sm, owe_dh,
+ 							owe_dh_len) != 0))
+ 				goto deauth;
+-- 
+cgit 
+
