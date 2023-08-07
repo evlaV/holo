@@ -4,7 +4,7 @@
 pkgname=filesystem
 pkgver=2021.12.07
 # https://bugs.archlinux.org/task/72284
-pkgrel=1.9
+pkgrel=1.10
 pkgdesc='Base SteamOS Linux files'
 arch=('x86_64')
 license=('GPL')
@@ -49,7 +49,7 @@ sha256sums=('e03bede3d258d680548696623d5979c6edf03272e801a813c81ba5a5c64f4f82'
             '87e07d0a4413de7894a7e7afba180350fd283f35370f62f134f473a8406be44a'
             '073e8484c77bfec866f2446a05d8d4070d65377ee8b2f3aff0a8b8758105af08'
             '0c695976070be67822551215fc74a4c2d4e0892665c3cb0c8c64a58b8644b2a3'
-            'b45a835a33106f678f6431925d46d7b55426f825ddd6c7c00585a428c02c86d2'
+            '53a6531a05b7337617568bae69d39c5c8f45a17eb4f17e7284f41e03e97a5a1f'
             '5660b669eea8739dd7c671aa92300c15c6f836e0df3402476d53e88bad99446b')
 
 package() {
@@ -174,7 +174,7 @@ package() {
   install -D -m644 "$srcdir"/tmpfiles-steamos usr/lib/tmpfiles.d/steamos.conf
   # Factory entries for the "C" tmpfiles entries
   install -d -m750 usr/share/factory/root
-  for d in dkms modules pacman; do
+  for d in dkms modules; do
     install -d -m755 usr/share/factory/var/lib/$d
   done
 

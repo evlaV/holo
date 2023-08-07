@@ -6,7 +6,6 @@
 C /root 0750
 C /var/lib/dkms
 C /var/lib/modules
-C /var/lib/pacman
 
 # Standard var hierarchy, as seen in our PKGBUILD
 #
