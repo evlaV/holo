@@ -1,0 +1,111 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 2; -*-
+# vim: et sts=2 sw=2
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2023 Valve Corporation.
+#
+#  This file is part of holo.
+##
+## Collects useful information about the current state of the system, for
+## reporting issues, debug, etc.
+##
+set -euo pipefail
+
+usage() {
+    cat <<EOF
+Usage: ${0##*/} [--steam-mode]
+
+Print system information, useful for debug.
+
+Options:
+ --steam-mode            Skip collection of duplicate information
+EOF
+}
+
+steam_mode=false
+
+while [[ "$#" -ne 0 ]]
+do
+  case "$1" in
+    -h|--help)
+      usage
+      exit
+      ;;
+    --steam-mode)
+      steam_mode=true
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+# Run a given command, and handle any failure so that this script doesn't fail.
+# This allows the script to continue running other commands to dump
+# information. It prints a message if the given command fails.
+# $1: string, command + args to run
+function run {
+  echo "---------------------------------------------------"
+  echo "Command: $1"
+  echo
+  bash -c "$1 2>&1" || echo "Unable to run command!"
+}
+
+# Check flag set by steamos-readonly when the rootfs has been mounted RW
+echo "---------------------------------------------------"
+echo -n "Root filesystem has been mounted RW: "
+if [ -f /.ROOTFS_RW ]; then
+  echo "YES"
+  cat /.ROOTFS_RW
+else
+  echo "NO"
+fi
+
+run 'steamos-readonly status'
+
+# dumps info about firmwre/BIOS, os-release
+run amd_system_info
+
+# show running processes, sorted by RSS since that seems like the most useful
+# metric to sort by
+run 'ps aux k-rss'
+
+if ! "$steam_mode"; then
+  run 'lspci -tv'
+  run 'lsusb -t'
+  run 'coredumpctl -r --since -10d'
+  run 'journalctl --no-pager -b 0'
+  run 'journalctl --no-pager -b -1'
+fi
+
+# WiFi connection info
+run 'iwctl station wlan0 show | grep -E "State|Frequency|RSSI|Mode|MCS|Bitrate"'
+
+# Network connectivity info
+run 'ip addr'
+run 'ping -4 -c4 1.1.1.1'
+run 'ping -4 -c4 8.8.8.8'
+run 'ping -6 -c4 2001:4860:4860::8888'
+run 'ping -6 -c4 2606:4700:4700::1111'
+run 'getent ahostsv4 test.steampowered.com'
+run 'getent ahostsv6 test.steampowered.com'
+
+# Battery / power info
+run 'upower -d'
+
+# Print out changed files in the /etc overlayfs.
+# Note: NetworkManager profile files, which contain Wifi SSIDs, are exlcuded
+run 'find /var/lib/overlays/etc/upper \
+  -path /var/lib/overlays/etc/upper/NetworkManager/system-connections -prune \
+  -o -print'
+
+# Display EDID, as hex
+while IFS= read -r conn; do
+  run "cat $conn | hexdump"
+done < <(find /sys/class/drm/card0/ -iname edid)
+
+run 'drm_info'
