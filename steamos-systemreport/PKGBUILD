@@ -2,16 +2,15 @@
 
 pkgname='steamos-systemreport'
 pkgver=0.1
-pkgrel=1
+pkgrel=2
 pkgdesc='System report collection tool'
 arch=('any')
 license=('LGPL2.1')
-depends=(pciutils upower usbutils)
 url='https://github.com/evlav/holo'
 source=(steamos-systemreport)
 sha256sums=('d494e0134b2644978f05c0486ae5ef5a70304c82801fc7e44d7779beec2e55a1')
 
 package() {
-	install -Dm755 steamos-systemreport \
-		-t "$pkgdir"/usr/bin/
+  depends=(pciutils upower usbutils)
+  install -Dm755 steamos-systemreport -t "$pkgdir"/usr/bin/
 }
