@@ -74,14 +74,12 @@ new file mode 100644
 index 000000000..e80d66672
 --- /dev/null
 +++ b/grub-core/commands/efi/steamenv.c
-@@ -0,0 +1,1825 @@
+@@ -0,0 +1,1858 @@
 +/*
 + *  steamenv.mod  --  GRand Unified Bootloader SteamOS 3 boot module
 + *
-+ *  Copyright © 2018-2019,2021  Collabora Ltd.
-+ *  Copyright © 2018-2019,2021  Valve Corporation
-+ *  Copyright © 2018-2019,2021  Vivek Das Mohapatra <vivek@etla.org>,
-+ *                                                  <vivek@collabora.com>
++ *  Copyright © 2018-2023  Collabora Ltd.
++ *  Copyright © 2018-2023  Valve Corporation
 + *
 + *  This file is NOT part of GRUB, but is distributed under the same terms.
 + *
@@ -130,6 +128,8 @@ index 000000000..e80d66672
 +#define PARTSET_DIR  L"\\SteamOS\\partsets"
 +#define CONF_EXT     L".conf"
 +
++#define VERBOSE_BOOT_ONCE 0xff
++
 +#ifdef DEBUG_TO_KERNEL_CMDLINE
 +// HACKY DEBUG MECHANISM
 +// some vars to support a debug output accumulator so we can get
@@ -163,7 +163,8 @@ index 000000000..e80d66672
 +    "loglevel=3 quiet splash "                          \
 +    "plymouth.ignore-serial-consoles "                  \
 +    "fbcon=vc:4-6"
-+#define DEFAULT_NOISY "loglevel=4 splash=verbose fbcon=nodefer"
++#define DEFAULT_NOISY "loglevel=5 splash=verbose fbcon=nodefer " \
++    "sysrq_always_enabled"
 +
 +static int mode_grub_menu = 0;
 +static int mode_os_update = 0;
@@ -375,6 +376,7 @@ index 000000000..e80d66672
 +    { .type = cfg_uint  , .name = "boot-count"          },
 +    { .type = cfg_stamp , .name = "boot-time"           },
 +    { .type = cfg_bool  , .name = "image-invalid"       },
++    { .type = cfg_uint  , .name = "verbose"             },
 +    { .type = cfg_bool  , .name = "update"              },
 +    { .type = cfg_bool  , .name = "update-disabled"     },
 +    { .type = cfg_stamp , .name = "update-window-start" },
@@ -684,6 +686,21 @@ index 000000000..e80d66672
 +  return none;
 +}
 +
++static void
++get_root_partuuid (grub_efi_guid_t *guid)
++{
++  if( !guid )
++    return;
++
++  grub_efi_guid_t dp_guid = GRUB_EFI_DEVICE_PATH_GUID;
++  grub_efi_loaded_image_t *image =
++    grub_efi_get_loaded_image( grub_efi_image_handle );
++  grub_efi_device_path_t *dp =
++    get_handle_protocol( image->device_handle, &dp_guid );
++
++  *guid = device_path_partition_uuid( dp );
++}
++
 +// get an efi file handle for the root of the filesystem on which
 +// grub's EFI binary (ie this program) resides:
 +static efi_file_protocol_t *efi_mount_current_root (grub_efi_guid_t *guid)
@@ -703,13 +720,7 @@ index 000000000..e80d66672
 +    return NULL;
 +
 +  if( guid )
-+    {
-+      grub_efi_guid_t dp_guid = GRUB_EFI_DEVICE_PATH_GUID;
-+      grub_efi_device_path_t *dp =
-+        get_handle_protocol( image->device_handle, &dp_guid );
-+
-+      *guid = device_path_partition_uuid( dp );
-+    }
++    get_root_partuuid( guid );
 +
 +  return efi_mount( fs );
 +}
@@ -1616,6 +1627,54 @@ index 000000000..e80d66672
 +}
 +
 +static grub_err_t
++process_boot_config (void)
++{
++  grub_efi_guid_t uuid = NULL_GUID;
++  efi_file_protocol_t *cfg_file = NULL;
++  efi_file_protocol_t *cfg_root = NULL;
++  efi_file_protocol_t *root = NULL;
++  cfg_entry_t *cfg = NULL;
++  grub_err_t rv;
++
++  root = efi_mount_current_root( &uuid );
++
++  if( !root )
++    return grub_error( GRUB_ERR_IO, N_("can't mount root") );
++
++  rv = load_steamenv( &cfg, &uuid, root, &cfg_root, &cfg_file );
++
++  if( rv == GRUB_ERR_NONE )
++    {
++      cfg_entry_t *bc = get_conf_item( cfg, "boot-attempts" );
++      cfg_entry_t *verb = get_conf_item( cfg, "verbose" );
++
++      if( bc )
++        bc->value.number.u++;
++
++      if( verb && verb->value.number.u > 0 )
++        {
++          mode_verbose = 1;
++
++          // magic verbose flag value means we wanted to turn this off:
++          if( verb->value.number.u == VERBOSE_BOOT_ONCE )
++            verb->value.number.u = 0;
++        }
++
++      // We leave this decision up to the stage 1 bootloader now
++      // (it tells us via the EFI command line): update_scheduled_now (cfg))
++
++      save_steamenv( cfg, cfg_file );
++      free_steamenv( &cfg );
++    }
++
++  efi_close( cfg_file );
++  efi_close( cfg_root );
++  efi_close( root );
++
++  return GRUB_ERR_NONE;
++}
++
++static grub_err_t
 +grub_cmd_steamenv_init (grub_command_t cmd __attribute__ ((unused)),
 +                        int argc __attribute__ ((unused)),
 +                        char **argv __attribute__ ((unused)))
@@ -1629,6 +1688,8 @@ index 000000000..e80d66672
 +    efi_parse_image_arglist( image_argc, image_argv );
 +
 +  efi_free_image_arglist( image_argv );
++
++  process_boot_config();
 +
 +  if( mode_grub_menu )
 +    {
@@ -1686,12 +1747,8 @@ index 000000000..e80d66672
 +                        char **argv)
 +{
 +  grub_efi_guid_t chainloader = GRUB_EFI_CHAINLOADER_VARIABLE_GUID;
-+  efi_file_protocol_t *cfg_file = NULL;
-+  efi_file_protocol_t *cfg_root = NULL;
 +  grub_command_t cmd_next = { 0 };
-+  efi_file_protocol_t *root = NULL;
 +  grub_efi_guid_t uuid = NULL_GUID;
-+  cfg_entry_t *cfg = NULL;
 +  char **next_argv = NULL;
 +  static char args[4096];
 +  grub_size_t datasize;
@@ -1736,29 +1793,6 @@ index 000000000..e80d66672
 +      data = NULL;
 +    }
 +
-+  root = efi_mount_current_root( &uuid );
-+
-+  if( !root )
-+    return grub_error( GRUB_ERR_IO, N_("can't mount root") );
-+
-+  rv = load_steamenv( &cfg, &uuid, root, &cfg_root, &cfg_file );
-+
-+  if( rv == GRUB_ERR_NONE )
-+    {
-+      cfg_entry_t *bc = get_conf_item( cfg, "boot-attempts" );
-+      if( bc )
-+        bc->value.number.u++;
-+
-+      // We leave this decision up to the stage 1 bootloader now
-+      // (it tells us via the EFI command line): update_scheduled_now (cfg))
-+
-+      save_steamenv( cfg, cfg_file );
-+      free_steamenv( &cfg );
-+    }
-+
-+  efi_close( cfg_file );
-+  efi_close( cfg_root );
-+
 +  image_argv = efi_make_image_arglist( &image_argc );
 +
 +  _DBG("A%d", mode_verbose);
@@ -1771,8 +1805,6 @@ index 000000000..e80d66672
 +  // against the current time to see if we should update on a scheduled
 +  // rather than ad-hoc basis.
 +  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>> NOTE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-+
-+  efi_close( root );
 +
 +  if( image_argc || argc )
 +    {
@@ -1817,6 +1849,7 @@ index 000000000..e80d66672
 +      // SteamOS initramfs needs to know the partition the efi for this
 +      // image is on (it uses this to find the rest of the partition set,
 +      // set up /dev/disk/by-partuuid etc).
++      get_root_partuuid( &uuid );
 +      efi_uuid = efi_guid_to_str( &uuid );
 +
 +      if( (efi_uuid != NULL) && (cmp_guids( &none, &uuid ) != 0) )

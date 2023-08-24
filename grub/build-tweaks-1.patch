@@ -1,0 +1,77 @@
+--- a/configure.ac	2023-06-28 16:56:11.954407194 +0100
++++ b/configure.ac	2023-06-28 17:17:04.112723646 +0100
+@@ -41,6 +41,9 @@
+ # We don't want -g -O2 by default in CFLAGS
+ : ${CFLAGS=""}
+ 
++AC_USE_SYSTEM_EXTENSIONS
++AC_CONFIG_AUX_DIR([build-aux])
++
+ # Checks for build, host and target systems.
+ AC_CANONICAL_BUILD
+ AC_CANONICAL_HOST
+@@ -51,7 +54,7 @@
+ AM_INIT_AUTOMAKE([1.11])
+ AC_PREREQ(2.63)
+ AC_CONFIG_SRCDIR([include/grub/dl.h])
+-AC_CONFIG_HEADER([config-util.h])
++AC_CONFIG_HEADERS([config-util.h])
+ 
+ # Explicitly check for pkg-config early on, since otherwise conditional
+ # calls are problematic.
+@@ -333,7 +336,7 @@
+ AC_PROG_RANLIB
+ AC_PROG_INSTALL
+ AC_PROG_AWK
+-AC_PROG_LEX
++AC_PROG_LEX([noyywrap])
+ AC_PROG_YACC
+ AC_PROG_MAKE_SET
+ AC_PROG_MKDIR_P
+@@ -369,7 +372,6 @@
+ 
+ AC_CHECK_PROG(HAVE_CXX, $CXX, yes, no)
+ 
+-AC_GNU_SOURCE
+ AM_GNU_GETTEXT([external])
+ AM_GNU_GETTEXT_VERSION([0.18.3])
+ AC_SYS_LARGEFILE
+@@ -1647,7 +1649,7 @@
+ CPP="$BUILD_CPP"
+ CFLAGS="$BUILD_CFLAGS"
+ CPPFLAGS="$BUILD_CPPFLAGS"
+-LDFLAGS="$BUILD_LDFAGS"
++LDFLAGS="$BUILD_LDFLAGS"
+ 
+ unset ac_cv_c_bigendian
+ unset ac_cv_header_ft2build_h
+--- a/bootstrap.conf	2023-06-28 16:42:15.563268469 +0000
++++ b/bootstrap.conf	2023-06-28 16:55:15.749959439 +0000
+@@ -66,7 +66,7 @@
+ 
+ # Build prerequisites
+ buildreq="\
+-autoconf   2.63
++autoconf   2.71
+ automake   1.11
+ gettext    0.18.3
+ git        1.5.5
+@@ -92,6 +92,7 @@
+     patch -d po -p3 \
+       < "po/gettext-patches/$patchname.patch"
+   done
++  patch -p1 < ../build-tweaks-2.patch
+   FROM_BOOTSTRAP=1 ./autogen.sh
+   set +e  # bootstrap expects this
+ }
+--- a/grub-core/lib/libgcrypt/src/libgcrypt.m4	2023-06-28 18:52:17.857454517 +0100
++++ b/grub-core/lib/libgcrypt/src/libgcrypt.m4	2023-06-28 18:50:53.033611805 +0100
+@@ -22,7 +22,7 @@
+ dnl
+ AC_DEFUN([AM_PATH_LIBGCRYPT],
+ [ AC_ARG_WITH(libgcrypt-prefix,
+-            AC_HELP_STRING([--with-libgcrypt-prefix=PFX],
++            AS_HELP_STRING([--with-libgcrypt-prefix=PFX],
+                            [prefix where LIBGCRYPT is installed (optional)]),
+      libgcrypt_config_prefix="$withval", libgcrypt_config_prefix="")
+   if test x$libgcrypt_config_prefix != x ; then

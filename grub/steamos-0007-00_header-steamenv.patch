@@ -18,7 +18,7 @@ Date:   Thu Jun 16 20:15:00 2022 +0100
 +steamenv_loader_mode=${GRUB_GFXMODE}
 +steamenv_kernel_mode=${GRUB_GFXPAYLOAD_LINUX:-keep}
 +steamenv_quiet="loglevel=3 splash quiet plymouth.ignore-serial-consoles fbcon=vc:4-6"
-+steamenv_noisy="loglevel=4 splash=verbose fbcon=nodefer"
++steamenv_noisy="loglevel=5 sysrq_always_enabled splash=verbose fbcon=nodefer"
 +steamenv_verbosity=""
 +timeout=0
 +timeout_style=menu

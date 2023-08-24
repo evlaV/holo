@@ -23,7 +23,7 @@ _gnulib_commit='be584c56eb1311606e5ea1a36363b97bddb6eed3'
 _unifont_ver='14.0.01'
 _pkgver=2.06
 pkgver=${_pkgver/-/}
-pkgrel=4.6
+pkgrel=4.7
 url='https://www.gnu.org/software/grub/'
 arch=('x86_64')
 license=('GPL3')
@@ -126,6 +126,8 @@ source=("git+https://git.savannah.gnu.org/git/grub.git#tag=${_tag}?signed"
         'steamos-0003-Patch-grub-install-to-support-a-custom-grub-mkimage.patch'
         'steamos-0006-10_linux-always-hide-the-Loading-messages-in-quiet-m.patch'
         'steamos-0007-00_header-steamenv.patch'
+        'build-tweaks-1.patch'
+        'build-tweaks-2.patch' # applied via bootstrap by build-tweaks-1.patch
         'grub.default')
 
 sha256sums=('SKIP'
@@ -192,11 +194,13 @@ sha256sums=('SKIP'
             '77bc269851a5ef01db256a745b93bb191936a2c9018884f88a9a7b0d657741b9'
             '5dee6628c48eef79812bb9e86ee772068d85e7fcebbd2b2b8d1e19d24eda9dab'
             '06f756f57fe017188c53bd363bd367ea2ea0cef0aef4253469f7017802a7bf63'
-            'e6d9fb71295a96ff5c7f4971cc6d14f1eac72db2473a1084ec7c8116a657f5d4'
+            '5600e800ceb9c146601c2d6ce12d78f8f208dd419f0d40adb3475b0c31b5a584'
             'c2b46fa4f3c43161de12ebd0ff4e12da37eeae07fcb3ffb487e0c194630d9ee6'
             'bb3f5f2729ed7ab35d749fae3c15b229cc719b189f94224a685742230595db86'
             'cca890f4be9a2c58fc290b488b4ef9eeb490066726297e4fda5ec87215d9e7a9'
-            '49aaae59d5dc51c90860c94ad94074918f35f131bd1e56a737b86d18ad67a5d4'
+            '7fa584f8047c11c3d43495deaa189ab2b6f7277769a26739aafaed4a781e3534'
+            'bf0683e8416d845a3f35441bc5ffdae0e37d74f583ad6fe93140b64d3773f19d'
+            '7caac232189069e46cd3dd68e615c68712625d287cdbce34fe9169b51b0070ea'
             '9f6fad49d082d7e1372563a971c7d1221df7603dca3fb6de16324ee7c10528e9')
 
 _backports=(
@@ -316,7 +320,10 @@ prepare() {
         patch -Np1 -i "${srcdir}/steamos-0007-00_header-steamenv.patch"
 	echo
 
-	echo "Revert patch that handle the Debian kernel version numbers..."
+        echo "Build system fixes (fewer warnings)..."
+        patch -Np1 -i "${srcdir}/build-tweaks-1.patch"
+
+        echo "Revert patch that handle the Debian kernel version numbers..."
 	patch -Rp1 -i "${srcdir}/debian-dpkg-version-comparison.patch"
 	echo
 
