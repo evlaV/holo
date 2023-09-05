@@ -94,6 +94,9 @@ run 'ping -6 -c4 2606:4700:4700::1111'
 run 'getent ahostsv4 test.steampowered.com'
 run 'getent ahostsv6 test.steampowered.com'
 
+# Audio info
+run 'wpctl status'
+
 # Battery / power info
 run 'upower -d'
 
