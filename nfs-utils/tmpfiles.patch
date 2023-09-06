@@ -1,0 +1,46 @@
+From: Alberto Garcia <berto@igalia.com>
+Subject: systemd: Ensure that statdpath exists using systemd-tmpfiles
+Forwarded: https://marc.info/?l=linux-nfs&m=168924387828205&w=2
+diff --git a/configure.ac b/configure.ac
+index 4ade528..5568f58 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -700,6 +700,7 @@ AC_CONFIG_COMMANDS_PRE([eval eval _rpc_pipefsmount=$rpc_pipefsmount])
+ 
+ AC_CONFIG_FILES([
+ 	Makefile
++	systemd/nfs-utils.conf
+ 	systemd/rpc-gssd.service
+ 	systemd/rpc_pipefs.target
+ 	systemd/var-lib-nfs-rpc_pipefs.mount
+diff --git a/systemd/Makefile.am b/systemd/Makefile.am
+index b448322..6127986 100644
+--- a/systemd/Makefile.am
++++ b/systemd/Makefile.am
+@@ -5,6 +5,9 @@ MAINTAINERCLEANFILES = Makefile.in
+ udev_rulesdir = /usr/lib/udev/rules.d/
+ udev_files = 60-nfs.rules
+ 
++sdtmpfilesdir = /usr/lib/tmpfiles.d/
++sdtmpfiles_files = nfs-utils.conf
++
+ unit_files =  \
+     nfs-client.target \
+     rpc_pipefs.target \
+@@ -85,4 +88,6 @@ install-data-hook: $(unit_files) $(udev_files)
+ 	cp $(rpc_pipefs_mount_file) $(DESTDIR)/$(unitdir)/$(rpc_pipefsmount)
+ 	mkdir -p $(DESTDIR)/$(udev_rulesdir)
+ 	cp $(udev_files) $(DESTDIR)/$(udev_rulesdir)
++	mkdir -p $(DESTDIR)/$(sdtmpfilesdir)
++	cp $(sdtmpfiles_files) $(DESTDIR)/$(sdtmpfilesdir)
+ endif
+diff --git a/systemd/nfs-utils.conf.in b/systemd/nfs-utils.conf.in
+new file mode 100644
+index 0000000..a44c337
+--- /dev/null
++++ b/systemd/nfs-utils.conf.in
+@@ -0,0 +1,4 @@
++# This is a systemd-tmpfiles configuration file
++# type path			mode	uid	gid	age	argument
++d      @statdpath@/sm		0700	@statduser@	:root	-       -
++d      @statdpath@/sm.bak	0700	@statduser@	:root	-	-
