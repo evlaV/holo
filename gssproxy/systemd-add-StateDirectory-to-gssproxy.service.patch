@@ -1,0 +1,29 @@
+From ec463454c1f6e89bf8a1671bf0ef00fef2491f86 Mon Sep 17 00:00:00 2001
+From: Alberto Garcia <berto@igalia.com>
+Date: Mon, 10 Jul 2023 18:48:02 +0200
+Subject: [PATCH] systemd: add StateDirectory to gssproxy.service
+
+gssproxy won't start if /var/lib/gssproxy is missing ("Failed to
+create Unix Socket!"). systemd provides a directive to ensure that all
+necessary state directories exist so we can use it in this case.
+
+Signed-off-by: Alberto Garcia <berto@igalia.com>
+---
+ systemd/gssproxy.service.in | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/systemd/gssproxy.service.in b/systemd/gssproxy.service.in
+index fc819dc..14d2185 100644
+--- a/systemd/gssproxy.service.in
++++ b/systemd/gssproxy.service.in
+@@ -5,6 +5,7 @@ After=syslog.target network.target
+ Before=rpc-gssd.service
+ 
+ [Service]
++StateDirectory=gssproxy/clients gssproxy/rcache
+ Environment=KRB5RCACHEDIR=/var/lib/gssproxy/rcache
+ ExecStart=@sbindir@/gssproxy -D
+ # These two should be used with traditional UNIX forking daemons
+-- 
+2.39.2
+
