@@ -1,0 +1,22 @@
+#  SPDX-License-Identifier: LGPL-2.1-or-later
+#
+#  Copyright (c) 2023 Valve.
+#  Maintainer: Guilherme G. Piccoli <gpiccoli@igalia.com>
+#
+
+[Unit]
+Description=SteamOS kdumpst tiny layer service
+ConditionPathExistsGlob=/home/.steamos/offload/var/kdumpst/logs/*
+After=basic.target kdumpst-init.service
+
+[Service]
+Type=oneshot
+Environment=KDUMPST_FLD="/home/.steamos/offload/var/kdumpst/logs/"
+Environment=SUBMITTER_FLD="/var/lib/steamos-log-submitter/pending/kdump/"
+ExecStart=/bin/sh -c "mv ${KDUMPST_FLD}/*zip ${SUBMITTER_FLD} && chown steamos-log-submitter:steamos-log-submitter ${SUBMITTER_FLD}/*"
+ExecStartPost=/bin/echo "Moved kdumpst logs to ${SUBMITTER_FLD}"
+StandardOutput=journal
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

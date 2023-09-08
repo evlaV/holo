@@ -1,0 +1,15 @@
+#  SPDX-License-Identifier: LGPL-2.1-or-later
+#
+#  Copyright (c) 2023 Valve.
+#  Maintainer: Guilherme G. Piccoli <gpiccoli@igalia.com>
+#
+
+post_install() {
+	systemctl enable kdumpst-init.service
+	systemctl enable steamos-kdumpst-layer.service
+}
+
+pre_remove() {
+	systemctl disable steamos-kdumpst-layer.service
+	systemctl disable kdumpst-init.service
+}
