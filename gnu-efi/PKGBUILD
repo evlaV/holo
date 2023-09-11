@@ -1,0 +1,46 @@
+# Maintainer: David Runge <dvzrv@archlinux.org>
+
+pkgname=gnu-efi
+pkgver=3.0.15
+pkgrel=1
+pkgdesc="Develop EFI applications using the GNU toolchain and the EFI development environment"
+arch=(x86_64)
+url="https://sourceforge.net/projects/gnu-efi/"
+license=(BSD)
+conflicts=(gnu-efi-libs)
+provides=(gnu-efi-libs)
+replaces=(gnu-efi-libs)
+source=(https://download.sourceforge.net/$pkgname/$pkgname-$pkgver.tar.bz2)
+options=(!strip)
+sha512sums=('64d408b6d115bdc6eebae12fbd6cd907ed5f847f54e506c1e8f8ea5de38a95cf6fac66ab1009bd1d0bd2d54ad45ad598d29bcc303926a5899bf5cc25448cbb2f')
+b2sums=('0df93d8cacfa1e6d4b7731e32287d4386da9375c5e5c5847df8a29c99d70f5c24b14abc5e44ab9d0a39a6ec96682eb2b5e84d81a5a142d44a50a522a4ae0e3c2')
+
+prepare() {
+  # -Werror, not even once
+  sed -e 's/-Werror//g' -i $pkgname-$pkgver/Make.defaults
+}
+
+build() {
+  cd $pkgname-$pkgver
+  # NOTE: apply only minimal CFLAGS, as gnu-efi does not provide userspace
+  # libs, but may be used in unitialized machine state and should therefore not
+  # be architecture optmized
+  # NOTE: fat-lto-objects is required for non-mangled (static) object files
+  CFLAGS="-O2 -flto -ffat-lto-objects"
+  make
+  make -C lib
+  make -C gnuefi
+  make -C inc
+  # unset LDFLAGS for custom linker used in apps, as we have patched our
+  # LDFLAGS in manually in prepare()
+  LDFLAGS=""
+  make -C apps
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make INSTALLROOT="$pkgdir" PREFIX=/usr install
+  install -vDm 644 apps/*.efi -t "$pkgdir/usr/share/$pkgname/apps/$CARCH/"
+  install -vDm 644 README.efilib -t "$pkgdir/usr/share/licenses/$pkgname/"
+  install -vDm 644 {ChangeLog,README.{gnuefi,git,elilo}} -t "$pkgdir/usr/share/doc/$pkgname/"
+}
