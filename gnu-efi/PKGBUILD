@@ -2,13 +2,14 @@
 
 pkgname=gnu-efi
 pkgver=3.0.15
-pkgrel=1
+pkgrel=1.1
 pkgdesc="Develop EFI applications using the GNU toolchain and the EFI development environment"
 arch=(x86_64)
 url="https://sourceforge.net/projects/gnu-efi/"
 license=(BSD)
 conflicts=(gnu-efi-libs)
-provides=(gnu-efi-libs)
+# Holo: Specify exact provides version so steamos-efi can select against this
+provides=("gnu-efi-libs=$pkgver")
 replaces=(gnu-efi-libs)
 source=(https://download.sourceforge.net/$pkgname/$pkgname-$pkgver.tar.bz2)
 options=(!strip)
