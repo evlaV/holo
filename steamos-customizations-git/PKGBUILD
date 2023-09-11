@@ -3,9 +3,9 @@
 pkgbase=steamos-customizations-git
 #pkgname=('steamos-customizations-git' 'holo-desync' 'holo-pacman' 'holo-pipewire' 'holo-sudo' 'holo-wireplumber')
 pkgname=('steamos-customizations-git' 'holo-desync' 'holo-pipewire' 'holo-sudo' 'holo-wireplumber')
-_srctag=jupiter-20230817.1
+_srctag=jupiter-20230911.1
 _srcver=${_srctag#jupiter-}
-pkgver=r834.b021ef4
+pkgver=r835.be55fcc
 pkgrel=1
 pkgdesc='SteamOS customizations - This package installs various SteamOS-specific files'
 arch=('any')
