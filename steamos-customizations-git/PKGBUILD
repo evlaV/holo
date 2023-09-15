@@ -3,9 +3,9 @@
 pkgbase=steamos-customizations-git
 #pkgname=('steamos-customizations-git' 'holo-desync' 'holo-pacman' 'holo-pipewire' 'holo-sudo' 'holo-wireplumber')
 pkgname=('steamos-customizations-git' 'holo-desync' 'holo-pipewire' 'holo-sudo' 'holo-wireplumber')
-_srctag=jupiter-20230911.1
+_srctag=jupiter-20230915.2 
 _srcver=${_srctag#jupiter-}
-pkgver=r835.be55fcc
+pkgver=${_srcver}
 pkgrel=1
 pkgdesc='SteamOS customizations - This package installs various SteamOS-specific files'
 arch=('any')
@@ -15,11 +15,6 @@ depends=('e2fsprogs' 'gptfdisk' 'rsync' 'util-linux' 'mkinitcpio')
 makedepends=('git')
 source=("${pkgbase%-git}::git+https://github.com/evlav/${pkgbase%-git}.git#tag=${_srctag}")
 md5sums=('SKIP')
-
-pkgver() {
-	cd "${pkgbase%-git}"
-	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
-}
 
 package_steamos-customizations-git() {
 	provides=("${pkgbase%-git}")
