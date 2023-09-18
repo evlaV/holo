@@ -1,15 +1,15 @@
 # Maintainer: Ludovico de Nittis <ludovico.denittis@collabora.com>
 
 pkgname=atomupd-daemon-git
-pkgver=0.20230817.0.r0.g4925345
+pkgver=0.20230918.0.r0.g26f5afb
 pkgrel=1
-_tag=v0.20230817.0
+_tag=v0.20230918.0
 pkgdesc='Atomic updates daemon'
 arch=('x86_64')
 url='https://github.com/evlav/atomupd-daemon'
 license=('MIT')
-makedepends=('git' 'meson')
-depends=('dbus' 'glib2' 'json-glib' 'steamos-atomupd-client-git>=r157.4d50d6d' 'systemd')
+makedepends=('git' 'meson' 'python-dbusmock')
+depends=('dbus' 'glib2' 'json-glib' 'steamos-atomupd-client-git>=r157.4d50d6d' 'polkit' 'systemd')
 provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")
 source=("${pkgname%-git}::git+${url}.git#tag=$_tag")
@@ -28,6 +28,9 @@ build() {
 
 check() {
   export DBUS_SESSION_BUS_ADDRESS=`dbus-daemon --fork --config-file=/usr/share/dbus-1/session.conf --print-address`
+  # A new system bus is needed for the mock polkit
+  export DBUS_SYSTEM_BUS_ADDRESS=`dbus-daemon --fork --config-file="${pkgname%-git}"/ci/dbus_system.conf --print-address`
+
   # Do not run multiple tests in parallel because they all rely on the same
   # D-Bus path, so they'll conflict with each other
   meson test --num-processes 1 -C build --print-errorlogs
@@ -35,5 +38,6 @@ check() {
 
 package() {
   meson install -C build --destdir "$pkgdir"
+  install -d -o root -g 102 -m 750 "${pkgdir}"/usr/share/polkit-1/rules.d
 }
 
