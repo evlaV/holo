@@ -1,7 +1,7 @@
 # Maintainer: Vicki Pfau <vi@endrift.com>
 
 pkgname=steamos-log-submitter
-pkgver=0.2.1
+pkgver=0.2.2
 pkgrel=1
 pkgdesc="SteamOS Log Submitter"
 url="https://github.com/evlav/steamos-log-submitter"
@@ -9,7 +9,7 @@ arch=('any')
 license=('LGPL2.1')
 source=("git+https://github.com/evlav/steamos-log-submitter.git#tag=$pkgver")
 sha256sums=('SKIP')
-depends=('python' 'python-dbus-next' 'python-httpx' 'python-psutil' 'python-vdf' 'systemd' 'google-breakpad')
+depends=('python' 'python-dbus-next' 'python-httpx' 'python-psutil' 'python-pyalsa' 'python-vdf' 'systemd' 'google-breakpad')
 makedepends=('git' 'python-setuptools' 'python-wheel' 'python-pip')
 checkdepends=('python-pytest' 'python-pytest-asyncio')
 conflicts=('breakpad-hook')
