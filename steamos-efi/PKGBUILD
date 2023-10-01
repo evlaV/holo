@@ -1,7 +1,7 @@
 # Maintainer: Collabora Ltd <gael.portay@collabora.com>
 
 pkgname=steamos-efi
-_srctag=jupiter-20230911.2
+_srctag=jupiter-20230925.1
 pkgver=${_srctag#jupiter-}
 pkgrel=1
 arch=('x86_64')
@@ -9,7 +9,7 @@ url='https://github.com/evlav/steamos-efi'
 pkgdesc='Stage 1 bootloader for SteamOS 3+'
 license=('GPL2')
 depends=('efibootmgr' 'util-linux' 'coreutils')
-makedepends=('git' 'openssh' 'gnu-efi-libs=3.0.15')
+makedepends=('git' 'openssh' 'gnu-efi-libs' 'grub' 'fontconfig' 'noto-fonts')
 source=("git+https://github.com/evlav/${pkgname}.git#tag=$_srctag")
 sha512sums=('SKIP')
 
