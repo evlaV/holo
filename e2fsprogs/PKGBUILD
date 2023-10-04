@@ -4,7 +4,7 @@
 pkgbase=e2fsprogs
 pkgname=('e2fsprogs' 'fuse2fs')
 pkgver=1.47.0
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc='Ext2/3/4 filesystem utilities'
 arch=('x86_64')
 license=('GPL' 'LGPL' 'MIT')
@@ -12,10 +12,12 @@ url='http://e2fsprogs.sourceforge.net'
 makedepends=('systemd' 'util-linux' 'fuse')
 validpgpkeys=('3AB057B7E78D945C8C5591FBD36F769BC11804F0') # Theodore Ts'o <tytso@mit.edu>
 source=("https://www.kernel.org/pub/linux/kernel/people/tytso/${pkgbase}/v${pkgver}/${pkgbase}-${pkgver}.tar."{xz,sign}
-        'MIT-LICENSE')
+        'MIT-LICENSE'
+        'dont-set-orphan_file-by-default.patch') # Holo: disable orphan_file at build time
 sha256sums=('144af53f2bbd921cef6f8bea88bb9faddca865da3fbc657cc9b4d2001097d5db'
             'SKIP'
-            'cc45386c1d71f438ad648fd7971e49e3074ad9dbacf9dd3a5b4cb61fd294ecbb')
+            'cc45386c1d71f438ad648fd7971e49e3074ad9dbacf9dd3a5b4cb61fd294ecbb'
+            '8595de59d73a80750d5d884dff99a507d6bffd451824930e42ae7f85db61a1b5')
 
 
 prepare() {
@@ -27,6 +29,8 @@ prepare() {
 
 build() {
   cd "${srcdir}/${pkgbase}-${pkgver}"
+
+  patch -p1 < "${srcdir}/dont-set-orphan_file-by-default.patch"
 
   ./configure \
       --prefix=/usr \
@@ -62,10 +66,6 @@ package_e2fsprogs() {
   cd "${srcdir}/${pkgbase}-${pkgver}"
 
   make DESTDIR="${pkgdir}" install install-libs
-
-  # Holo: don't set 'orphan_file' by default in mke2fs, it causes
-  # problems with kernels < 5.15 if the fs is not cleanly unmounted.
-  sed -i -e 's/,orphan_file//' "${pkgdir}/etc/mke2fs.conf"
 
   sed -i -e 's/^AWK=.*/AWK=awk/' "${pkgdir}/usr/bin/compile_et"
 

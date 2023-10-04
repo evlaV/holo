@@ -1,0 +1,27 @@
+From 037047e18c3e73883a21fe7ff2d9abec426a3ec8 Mon Sep 17 00:00:00 2001
+From: Alberto Garcia <berto@igalia.com>
+Date: Mon, 2 Oct 2023 13:08:11 +0200
+Subject: [PATCH] Don't set orphan_file by default in mkfs.ext4
+
+Filesystems created with this feature cannot be mounted in SteamOS 3.4
+if they were used in SteamOS 3.5 but were not unmounted cleanly.
+---
+ misc/mke2fs.conf.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/misc/mke2fs.conf.in b/misc/mke2fs.conf.in
+index b7fc95d..d1637f8 100644
+--- a/misc/mke2fs.conf.in
++++ b/misc/mke2fs.conf.in
+@@ -11,7 +11,7 @@
+ 		features = has_journal
+ 	}
+ 	ext4 = {
+-		features = has_journal,extent,huge_file,flex_bg,metadata_csum,metadata_csum_seed,64bit,dir_nlink,extra_isize,orphan_file
++		features = has_journal,extent,huge_file,flex_bg,metadata_csum,metadata_csum_seed,64bit,dir_nlink,extra_isize
+ 	}
+ 	small = {
+ 		blocksize = 1024
+-- 
+2.39.2
+
