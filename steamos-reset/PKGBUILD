@@ -1,13 +1,13 @@
 # Author : Vivek Das Mohapatra <vivek@collabora.com>
 
 pkgname=('steamos-reset' 'steamos-reset-ui')
-_srctag=jupiter-20230628.1
+_srctag=jupiter-20231006.1
 pkgver=${_srctag#jupiter-}
 pkgrel=1
 arch=('x86_64')
 license=('GPL')
 makedepends=('git' 'qt5-base' 'qt5-quickcontrols2')
-depends=(curl libxslt bash steamos-efi steamos-atomupd-client-git jq)
+depends=(curl bash steamos-efi steamos-atomupd-client-git jq)
 url='https://github.com/evlav/steamos-reset'
 source=("${pkgname}::git+${url}#tag=${_srctag}")
 sha256sums=('SKIP')
