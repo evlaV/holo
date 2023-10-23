@@ -4,7 +4,7 @@
 # Contributor: Keshav Amburay <(the ddoott ridikulus ddoott rat) (aatt) (gemmaeiil) (ddoott) (ccoomm)>
 
 ## "1" to enable IA32-EFI build in Arch x86_64, "0" to disable
-_IA32_EFI_IN_ARCH_X64="1"
+_IA32_EFI_IN_ARCH_X64="0"
 
 ## "1" to enable EMU build, "0" to disable
 _GRUB_EMU_BUILD="0"
@@ -23,7 +23,7 @@ _gnulib_commit='be584c56eb1311606e5ea1a36363b97bddb6eed3'
 _unifont_ver='14.0.01'
 _pkgver=2.06
 pkgver=${_pkgver/-/}
-pkgrel=4.7
+pkgrel=4.8
 url='https://www.gnu.org/software/grub/'
 arch=('x86_64')
 license=('GPL3')
@@ -126,6 +126,7 @@ source=("git+https://git.savannah.gnu.org/git/grub.git#tag=${_tag}?signed"
         'steamos-0003-Patch-grub-install-to-support-a-custom-grub-mkimage.patch'
         'steamos-0006-10_linux-always-hide-the-Loading-messages-in-quiet-m.patch'
         'steamos-0007-00_header-steamenv.patch'
+        '0001-Disable-EFI-1.0-UGA-Support.patch'
         'build-tweaks-1.patch'
         'build-tweaks-2.patch' # applied via bootstrap by build-tweaks-1.patch
         'grub.default')
@@ -199,6 +200,7 @@ sha256sums=('SKIP'
             'bb3f5f2729ed7ab35d749fae3c15b229cc719b189f94224a685742230595db86'
             'cca890f4be9a2c58fc290b488b4ef9eeb490066726297e4fda5ec87215d9e7a9'
             '7fa584f8047c11c3d43495deaa189ab2b6f7277769a26739aafaed4a781e3534'
+            'b44f10d3f30a0bc0aff94617cce0570593d408b09e3cc5f05d7d97a4888169b0'
             'bf0683e8416d845a3f35441bc5ffdae0e37d74f583ad6fe93140b64d3773f19d'
             '7caac232189069e46cd3dd68e615c68712625d287cdbce34fe9169b51b0070ea'
             '9f6fad49d082d7e1372563a971c7d1221df7603dca3fb6de16324ee7c10528e9')
@@ -318,6 +320,7 @@ prepare() {
 	patch -Np1 -i "${srcdir}/steamos-0003-Patch-grub-install-to-support-a-custom-grub-mkimage.patch"
 	patch -Np1 -i "${srcdir}/steamos-0006-10_linux-always-hide-the-Loading-messages-in-quiet-m.patch"
         patch -Np1 -i "${srcdir}/steamos-0007-00_header-steamenv.patch"
+        patch -Np1 -i "${srcdir}/0001-Disable-EFI-1.0-UGA-Support.patch"
 	echo
 
         echo "Build system fixes (fewer warnings)..."

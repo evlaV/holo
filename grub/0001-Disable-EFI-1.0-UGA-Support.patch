@@ -1,0 +1,25 @@
+From fe7f7db0536fc523b3431dbcdbb6a19e07fbad50 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Vivek=20Das=C2=A0Mohapatra?= <vivek@collabora.co.uk>
+Date: Mon, 25 Sep 2023 13:14:33 +0100
+Subject: [PATCH] Disable EFI 1.0 UGA Support
+
+This module triggers a display glitch when it probes for UGA support.
+---
+ grub-core/Makefile.core.def | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
+index 8022e1c0a..e3cd17e84 100644
+--- a/grub-core/Makefile.core.def
++++ b/grub-core/Makefile.core.def
+@@ -2220,7 +2220,6 @@ module = {
+   name = efi_uga;
+   efi = video/efi_uga.c;
+   enable = i386_efi;
+-  enable = x86_64_efi;
+ };
+ 
+ module = {
+-- 
+2.30.2
+
