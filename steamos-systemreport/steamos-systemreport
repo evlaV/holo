@@ -130,3 +130,13 @@ while IFS= read -r conn; do
 done < <(find /sys/class/drm/card0/ -iname edid)
 
 run 'drm_info'
+
+# Fan Control Info
+run 'pacman -Q jupiter-fan-control'
+run 'systemctl status jupiter-fan-control'
+
+echo 'jupiter-fan-control log, latest:'
+run 'cat /var/log/jupiter-fan-control.log'
+
+echo 'jupiter-fan-control log, previous:'
+run 'cat /var/log/jupiter-fan-control.old.log'
