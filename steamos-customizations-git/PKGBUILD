@@ -1,10 +1,10 @@
 # Maintainer: Collabora Ltd <gael.portay@collabora.com>
 
 pkgbase=steamos-customizations-git
-#pkgname=('steamos-customizations-git' 'holo-desync' 'holo-pacman' 'holo-pipewire' 'holo-sudo' 'holo-wireplumber')
-pkgname=('steamos-customizations-git' 'holo-desync' 'holo-pipewire' 'holo-sudo' 'holo-wireplumber')
-_srctag=jupiter-20230915.2 
-_srcver=${_srctag#jupiter-}
+#pkgname=('steamos-customizations-git' 'holo-desync' 'holo-pacman' 'holo-sudo')
+pkgname=('steamos-customizations-git' 'holo-desync' 'holo-sudo')
+_srctag=jupiter-20231113.1
+_srcver=${_srctag#*-}
 pkgver=${_srcver}
 pkgrel=1
 pkgdesc='SteamOS customizations - This package installs various SteamOS-specific files'
@@ -47,15 +47,6 @@ package_holo-pacman() {
 	make DESTDIR="$pkgdir" prefix="/usr" sbindir="/usr/bin" libexecdir="/usr/lib" install-pacman
 }
 
-package_holo-pipewire() {
-	pkgdesc='Holo customizations - pipewire settings'
-	depends=()
-	groups=(holo-base)
-
-	cd "${pkgbase%-git}"
-	make DESTDIR="$pkgdir" prefix="/usr" sbindir="/usr/bin" libexecdir="/usr/lib" install-pipewire
-}
-
 package_holo-sudo() {
 	pkgdesc='Holo customizations - sudo settings'
 	depends=()
@@ -65,11 +56,3 @@ package_holo-sudo() {
 	make DESTDIR="$pkgdir" prefix="/usr" sbindir="/usr/bin" libexecdir="/usr/lib" install-sudo
 }
 
-package_holo-wireplumber() {
-	pkgdesc='Holo customizations - wireplumber settings'
-	depends=()
-	groups=(holo-base)
-
-	cd "${pkgbase%-git}"
-	make DESTDIR="$pkgdir" prefix="/usr" sbindir="/usr/bin" libexecdir="/usr/lib" install-wireplumber
-}
