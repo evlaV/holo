@@ -6,7 +6,7 @@
 pkgname=iwd
 pkgver=2.7
 # Holo: backport OWE AKM fix
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc='Internet Wireless Daemon'
 arch=('x86_64')
 url='https://git.kernel.org/cgit/network/wireless/iwd.git/'
