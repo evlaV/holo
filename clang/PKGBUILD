@@ -4,7 +4,7 @@
 pkgbase=clang
 pkgname=(clang clang-libs)
 pkgver=15.0.7
-pkgrel=9.1
+pkgrel=9.2
 pkgdesc="C language family frontend for LLVM"
 arch=('x86_64')
 url="https://clang.llvm.org/"
@@ -28,9 +28,9 @@ sha256sums=('a6b673ef15377fb46062d164e8ddc4d05c348ff8968f015f7f4af03f51000067'
             'SKIP'
             '8986f29b634fdaa9862eedda78513969fe9788301c9f2d938f4c10a3e7a3e7ea'
             'SKIP'
-            '640ac4858c68cc6d52226afe01a67ad017f95511636b631d826b791c5b11a47e'
-            '6092fa872e2a706de12d1efb0626a4e9ef9854014edc68edb5ebac2ad27e2d9f'
-            'd432e706fd99e7817ea0cbb02795918a781a11e4f5e6d304d53fffec9856b6f4'
+            '75f220b68622a57b49a9480fe2ee321c7ff9b5ce643091b6cb510b9e38400e92'
+            '2b613e392b00aebbef27639d8f5c4a3252983e5497f9cff4eca44286ac692aa4'
+            '0ae44d6e6f080364c74238b2960a3f23ecdc355ea96997eb2e8180a708007d39'
             '7a9ce949579a3b02d4b91b6835c4fb45adc5f743007572fb0e28e6433e48f3a5')
 validpgpkeys=('474E22316ABF4785A88C6E8EA2C794A986419D8A'  # Tom Stellard <tstellar@redhat.com>
               'D574BD5D1D0E98895E3BF90044F2485E45D59042') # Tobias Hieta <tobias@hieta.se>
