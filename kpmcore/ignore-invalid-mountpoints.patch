@@ -1,0 +1,26 @@
+commit 00e079381b52f72f5b51b89f7e5725a407688a53 (HEAD -> release/23.08)
+Author: Arjen Hiemstra <ahiemstra@heimr.nl>
+Date:   Mon Nov 20 17:49:49 2023 +0100
+
+    Reject "none" or empty mount points when writing fstab
+
+    These are only valid for swap partitions. Anything else can actually
+    cause the system to misbehave, so completely reject them from being
+    written to the swap file.
+
+diff --git a/src/core/fstab.cpp b/src/core/fstab.cpp
+index 116e1d4..7d1d764 100644
+--- a/src/core/fstab.cpp
++++ b/src/core/fstab.cpp
+@@ -284,6 +284,11 @@ static void writeEntry(QTextStream& s, const FstabEntry& entry, std::array<unsig
+         return;
+     }
+
++    // "none" is only valid as mount point for swap partitions
++    if ((entry.mountPoint().isEmpty() || entry.mountPoint() == QStringLiteral("none")) && entry.type() != QStringLiteral("swap")) {
++        return;
++    }
++
+     s.setFieldAlignment(QTextStream::AlignLeft);
+     s.setFieldWidth(columnWidth[0]);
+     s << entry.fsSpec()
