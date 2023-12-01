@@ -1,0 +1,12 @@
+# https://github.com/ValveSoftware/SteamOS/issues/1208
+[Unit]
+Description=Disable invalid SD card entries in /etc/fstab
+Wants=etc.mount
+After=etc.mount
+ConditionPathExists=/var/lib/overlays/etc/upper/fstab
+
+[Service]
+ExecStart=/usr/lib/steamos/holo-fstab-repair
+
+[Install]
+WantedBy=local-fs.target
