@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# Disable all lines in fstab where the device is an SD card (/dev/mmcblk*)
+# and the mount point is 'none'.
+# These are invalid and are preventing UDisks from mounting the cards correctly.
+# https://github.com/ValveSoftware/SteamOS/issues/1208
+
+if test -f /etc/fstab && grep -q "^\s*/dev/mmcblk[0-9a-z]*\s\+none\s" /etc/fstab; then
+    sed -f - -i /etc/fstab <<-EOF
+	\,^\s*/dev/mmcblk[0-9a-z]*\s\+none\s,{
+		i\
+		### The following line was disabled by $0
+		s/^/#/
+	}
+	EOF
+fi
