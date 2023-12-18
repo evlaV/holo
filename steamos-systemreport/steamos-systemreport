@@ -13,6 +13,8 @@
 ##
 set -euo pipefail
 
+declare -r HELPER=/usr/bin/steamos-polkit-helpers/steamos-systemreport-privileged
+
 usage() {
     cat <<EOF
 Usage: ${0##*/} [--steam-mode]
@@ -55,6 +57,10 @@ function run {
   bash -c "$1 2>&1" || echo "Unable to run command!"
 }
 
+function super () {
+  pkexec "$HELPER" $1
+}
+
 # Check flag set by steamos-readonly when the rootfs has been mounted RW
 echo "---------------------------------------------------"
 echo -n "Root filesystem has been mounted RW: "
@@ -65,10 +71,9 @@ else
   echo "NO"
 fi
 
-run 'steamos-readonly status'
+super readonly
 
-# dumps info about firmwre/BIOS, os-release
-run amd_system_info
+super firmware
 
 # show running processes, sorted by RSS since that seems like the most useful
 # metric to sort by
@@ -79,8 +84,21 @@ if ! "$steam_mode"; then
   run 'lsusb -t'
   run 'coredumpctl -r --since -10d'
   run 'journalctl --no-pager -b 0'
+  # NOTE: These journals are from _this_ OS slot.
+  # At present, both slots actually put their journals in a shared offload
+  # on the /home partition, so this works as a result - but if the offloads
+  # are ever split by partition set then this will become inaccurate:
   run 'journalctl --no-pager -b -1'
 fi
+
+super partitions
+
+# filter out the ANSI colour/bold/etc escape sequences
+run 'rauc status' | sed -re 's/\x1b\[[0-9;]*[mG]//g'
+
+super bootconfig
+
+super storage-health
 
 # WiFi connection info
 run 'iwctl station wlan0 show | grep -E "State|Frequency|RSSI|Mode|MCS|Bitrate"'
@@ -112,3 +130,13 @@ while IFS= read -r conn; do
 done < <(find /sys/class/drm/card0/ -iname edid)
 
 run 'drm_info'
+
+# Fan Control Info
+run 'pacman -Q jupiter-fan-control'
+run 'systemctl status jupiter-fan-control'
+
+echo 'jupiter-fan-control log, latest:'
+run 'cat /var/log/jupiter-fan-control.log'
+
+echo 'jupiter-fan-control log, previous:'
+run 'cat /var/log/jupiter-fan-control.old.log'

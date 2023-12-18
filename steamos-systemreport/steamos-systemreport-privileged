@@ -1,0 +1,68 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 2; -*-
+# vim: et sts=2 sw=2
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2023 Valve Corporation.
+#
+#  This file is part of holo.
+##
+## Collects useful information about the current state of the system, for
+## reporting issues, debug, etc. - specifically information that requires
+## superuser privileges to read.
+##
+set -euo pipefail
+
+function run {
+  echo "---------------------------------------------------"
+  echo "Command: $1"
+  echo
+
+  if [ ${EUID:-1000} -ne 0 ]; then
+    echo "Unable to run command: root privileges required"
+  else
+    bash -c "$1 2>&1" || echo "Unable to run command!"
+  fi
+}
+
+case ${1:-all} in
+  all|readonly)
+    run '(steamos-readonly status || :)'
+    ;;&
+
+  all|firmware)
+    # dumps info about firmware/BIOS, os-release
+    run amd_system_info
+    ;;&
+
+  all|partitions)
+    # partset status
+    ###################################################################
+    # trigger the automounts so that lsblk can show which
+    # partitions get mounted at /esp and /efi
+    # NOTE: it doesn't matter if we don't have permission to do this,
+    # the attempt to read is enough.
+    ls /esp /efi >/dev/null 2>&1 || :
+    ###################################################################
+    run 'lsblk -nro name,partuuid,size,fstype,label,mountpoint'
+    run 'parted -l'
+    run 'cat /efi/steamos/partsets/A'
+    run 'cat /efi/steamos/partsets/B'
+    run 'cat /efi/steamos/partsets/shared'
+    run 'cat /efi/steamos/partsets/self'
+    run 'cat /efi/steamos/partsets/other'
+    run 'cat /efi/steamos/partsets/all'
+    ;;&
+
+  all|bootconfig)
+    # boot conf status
+    run 'steamos-dump-info'
+    ;;&
+
+  all|storage-health)
+    # storage health
+    (lsblk -nrd || :) | \
+      while read dev x; do run 'smartctl -a "/dev/'"$dev"\"; done
+    ;;&
+esac
