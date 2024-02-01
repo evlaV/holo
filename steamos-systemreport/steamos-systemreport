@@ -4,7 +4,7 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2023 Valve Corporation.
+#  Copyright © 2023-2024 Valve Corporation.
 #
 #  This file is part of holo.
 ##
@@ -71,7 +71,8 @@ else
   echo "NO"
 fi
 
-super readonly
+# "|| :" because the command exits with status 1 if read-only is 'disabled'
+run '(steamos-readonly status || :)'
 
 super firmware
 

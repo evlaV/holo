@@ -4,7 +4,7 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2023 Valve Corporation.
+#  Copyright © 2023-2024 Valve Corporation.
 #
 #  This file is part of holo.
 ##
@@ -27,10 +27,6 @@ function run {
 }
 
 case ${1:-all} in
-  all|readonly)
-    run '(steamos-readonly status || :)'
-    ;;&
-
   all|firmware)
     # dumps info about firmware/BIOS, os-release
     run amd_system_info
