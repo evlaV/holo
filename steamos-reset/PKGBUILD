@@ -1,7 +1,7 @@
 # Author : Vivek Das Mohapatra <vivek@collabora.com>
 
 pkgname=('steamos-reset' 'steamos-reset-ui')
-_srctag=jupiter-20231006.1
+_srctag=jupiter-20240125.1
 pkgver=${_srctag#jupiter-}
 pkgrel=1
 arch=('x86_64')
