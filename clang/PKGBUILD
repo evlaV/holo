@@ -4,7 +4,7 @@
 pkgbase=clang
 pkgname=(clang clang-libs)
 pkgver=15.0.7
-pkgrel=9.2
+pkgrel=9.3
 pkgdesc="C language family frontend for LLVM"
 arch=('x86_64')
 url="https://clang.llvm.org/"
@@ -16,9 +16,9 @@ source=($_source_base/$pkgbase-$pkgver.src.tar.xz{,.sig}
         $_source_base/clang-tools-extra-$pkgver.src.tar.xz{,.sig}
         $_source_base/llvm-$pkgver.src.tar.xz{,.sig}
         $_source_base/cmake-$pkgver.src.tar.xz{,.sig}
-        $pkgbase-linker-wrapper-tool.patch::https://github.com/llvm/llvm-project/commit/c2aabcfc8395.patch
-        $pkgbase-structured-bindings-r1.patch::https://github.com/llvm/llvm-project/commit/127bf4438542.patch
-        $pkgbase-bitfield-value-capture.patch::https://github.com/llvm/llvm-project/commit/a1a71b7dc97b.patch
+        $pkgbase-linker-wrapper-tool.patch
+        $pkgbase-structured-bindings-r1.patch
+        $pkgbase-bitfield-value-capture.patch
         enable-fstack-protector-strong-by-default.patch)
 sha256sums=('a6b673ef15377fb46062d164e8ddc4d05c348ff8968f015f7f4af03f51000067'
             'SKIP'
@@ -28,9 +28,9 @@ sha256sums=('a6b673ef15377fb46062d164e8ddc4d05c348ff8968f015f7f4af03f51000067'
             'SKIP'
             '8986f29b634fdaa9862eedda78513969fe9788301c9f2d938f4c10a3e7a3e7ea'
             'SKIP'
-            '75f220b68622a57b49a9480fe2ee321c7ff9b5ce643091b6cb510b9e38400e92'
-            '2b613e392b00aebbef27639d8f5c4a3252983e5497f9cff4eca44286ac692aa4'
-            '0ae44d6e6f080364c74238b2960a3f23ecdc355ea96997eb2e8180a708007d39'
+            'f82449f41c8258f9ae13bd0c311e940711430d2c979eeb8255b36e0e63cda18c'
+            '6092fa872e2a706de12d1efb0626a4e9ef9854014edc68edb5ebac2ad27e2d9f'
+            '52b6e09270e08a943b4adf326475ef8ee4fc4cdf4a8c380adeca12a106066cda'
             '7a9ce949579a3b02d4b91b6835c4fb45adc5f743007572fb0e28e6433e48f3a5')
 validpgpkeys=('474E22316ABF4785A88C6E8EA2C794A986419D8A'  # Tom Stellard <tstellar@redhat.com>
               'D574BD5D1D0E98895E3BF90044F2485E45D59042') # Tobias Hieta <tobias@hieta.se>
