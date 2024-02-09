@@ -2,7 +2,7 @@
 
 pkgname=atomupd-daemon-git
 pkgver=0.20231006.2.r0.g0b004d9
-pkgrel=1
+pkgrel=2
 _tag=v0.20231006.2
 pkgdesc='Atomic updates daemon'
 arch=('x86_64')

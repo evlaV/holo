@@ -2,7 +2,7 @@
 
 pkgname=calamares-settings-steamos-git
 pkgver=r323.d0d0ce2
-pkgrel=2
+pkgrel=3
 pkgdesc='SteamOS theme and settings for the Calamares Installer'
 arch=('any')
 url=""
