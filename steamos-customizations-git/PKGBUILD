@@ -3,7 +3,7 @@
 pkgbase=steamos-customizations-git
 #pkgname=('steamos-customizations-git' 'holo-desync' 'holo-pacman' 'holo-sudo')
 pkgname=('steamos-customizations-git' 'holo-desync' 'holo-sudo')
-_srctag=jupiter-20231122.1
+_srctag=jupiter-20240219.1
 _srcver=${_srctag#*-}
 pkgver=${_srcver}
 pkgrel=2
