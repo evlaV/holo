@@ -61,4 +61,11 @@ case ${1:-all} in
     (lsblk -nrd || :) | \
       while read dev x; do run 'smartctl -a "/dev/'"$dev"\"; done
     ;;&
+
+  all|dri-debugfs)
+    # kernel debugfs dri info
+    run 'tail -vn+1 /sys/kernel/debug/dri/0/*/link_settings'
+    run 'find /sys/kernel/debug/dri/0 \( -name amdgpu_current_bpc -o -name amdgpu_current_colorspace \) -print -exec hexdump -C {} \;'
+    run 'grep -e"^crtc.*" -A12 /sys/kernel/debug/dri/0/state'
+    ;;&
 esac

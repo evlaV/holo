@@ -130,6 +130,8 @@ while IFS= read -r conn; do
   run "cat $conn | hexdump"
 done < <(find /sys/class/drm/card0/ -iname edid)
 
+super dri-debugfs
+
 run 'drm_info'
 
 # Fan Control Info
