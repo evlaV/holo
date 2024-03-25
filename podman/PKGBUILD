@@ -4,14 +4,14 @@
 # Maintainer (Holo): Alberto Garcia <berto@igalia.com>
 
 pkgbase=podman
-pkgname=podman # Holo: build only podman and not podman-docker
-pkgver=4.5.1
-_commit=9eef30051c83f62816a1772a743e5f1271b196d7  #refs/tags/v4.5.0^{}
-pkgrel=1.1
+pkgname=podman
+pkgver=4.9.3
+_commit=bd1b4a96544e6199f369feef8cb19c2e8f803b1f	#refs/tags/v4.9.3
+pkgrel=1.2 # Holo: build only podman and not podman-docker, disable PGP signature
 pkgdesc='Tool and library for running OCI-based containers in pods'
 arch=(x86_64)
 url='https://github.com/containers/podman'
-license=(Apache)
+license=(Apache-2.0)
 makedepends=(
   apparmor
   btrfs-progs
@@ -26,9 +26,12 @@ makedepends=(
 )
 # https://github.com/containers/podman/issues/13297
 options=(!lto)
+# Holo: disable PGP signature check until we have a patched pacman
+# https://gitlab.archlinux.org/pacman/pacman/-/issues/92
+# https://gitlab.archlinux.org/archlinux/packaging/packages/pacman/-/merge_requests/9
 source=(
-  git+$url#commit=$_commit?signed
-  $pkgname-4.2.0-defaultinitpath.patch
+  git+$url#tag=$_commit
+  $pkgname-4.6.0-defaultinitpath.patch
 )
 # See the release-keys repository
 # https://github.com/containers/release-keys
@@ -38,7 +41,7 @@ validpgpkeys=(
   9E33DD8704CC03E2DEB84D9A1C1EDD7CC7C3A0DD  # Lokesh Mandvekar <lsm5@redhat.com>
 )
 sha256sums=('SKIP'
-            'e4d15d2cf45237ddff64d149956e9f9c0ce366bd0bdf8d98de65269f53d4885d')
+            'eeacf654707b9b8d6a6c08453b5625d9cf31010d666f82f4851aa34433b97700')
 
 pkgver() {
   cd $pkgname
@@ -49,7 +52,7 @@ prepare() {
   # set default init_path to /usr/lib/podman/catatonit
   # https://bugs.archlinux.org/task/75493
   # https://github.com/containers/common/issues/1110
-  patch -Np1 -d $pkgname -i ../$pkgname-4.2.0-defaultinitpath.patch
+  patch -Np1 -d $pkgname -i ../$pkgname-4.6.0-defaultinitpath.patch
 }
 
 build() {
@@ -62,8 +65,7 @@ build() {
   export GOFLAGS="-buildmode=pie"
   export GOPATH="${srcdir}"
 
-  # NOTE: fix silly ETCDIR (might get reverted): https://github.com/containers/podman/issues/18250
-  make -j1 ETCDIR=/etc EXTRA_LDFLAGS='-compressdwarf=false -linkmode=external' PREFIX=/usr -C $pkgbase
+  make -j1 EXTRA_LDFLAGS='-compressdwarf=false -linkmode=external' PREFIX=/usr -C $pkgbase
   make docker-docs -C $pkgbase
 }
 
