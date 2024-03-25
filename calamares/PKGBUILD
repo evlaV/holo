@@ -4,14 +4,14 @@ pkgname=calamares
 pkgver=3.2.37
 #patch applied to disable btrfs creating subvolumes. Remove patch
 #once https://github.com/evlav/tasks/-/issues/49 is fixed.
-pkgrel=6
+pkgrel=7
 epoch=1
 pkgdesc='Distribution-independent installer framework'
 arch=('i686' 'x86_64')
 url='https://calamares.io/'
 license=('GPL')
-depends=('ckbcomp' 'kconfig' 'kcoreaddons' 'kiconthemes' 'ki18n' 'kio' 'solid' 'yaml-cpp' 'kpmcore'
-         'boost-libs' 'hwinfo' 'qt5-svg' 'polkit-qt5' 'gtk-update-icon-cache' 'plasma-framework'
+depends=('ckbcomp' 'kconfig5' 'kcoreaddons5' 'kiconthemes5' 'ki18n5' 'kio5' 'solid5' 'yaml-cpp' 'kpmcore'
+         'boost-libs' 'hwinfo' 'qt5-svg' 'polkit-qt5' 'gtk-update-icon-cache' 'plasma-framework5'
          'qt5-xmlpatterns' 'squashfs-tools')
 makedepends=('extra-cmake-modules' 'qt5-tools' 'qt5-translations' 'git' 'boost')
 backup=('usr/share/calamares/modules/bootloader.conf'
