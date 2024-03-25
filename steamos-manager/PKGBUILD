@@ -3,7 +3,7 @@
 pkgname=steamos-manager
 _srctag=v0.20240208.0
 pkgver=${_srctag//-/./}
-pkgrel=1
+pkgrel=2
 pkgdesc='SteamOS Manager daemon - Exposses steamos scripts via dbus for steam client to use.'
 arch=('x86_64')
 url='https://store.steampowered.com/steamos/'

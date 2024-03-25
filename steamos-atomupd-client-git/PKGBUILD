@@ -1,9 +1,9 @@
-# Maintainer: Gaël PORTAY <gael.portay@collabora.com>
+# Maintainer: Ludovico de Nittis <ludovico.denittis@collabora.com>
 
 pkgname=steamos-atomupd-client-git
-_srctag=v0.20230609.0
-pkgver=r301.e0c2c4d
-pkgrel=3
+_srctag=v0.20240322.1
+pkgver=r415.dc043be
+pkgrel=1
 pkgdesc='SteamOS Atomic Update (client) - Atomic update client for SteamOS.'
 arch=('any')
 url='https://store.steampowered.com/steamos/'

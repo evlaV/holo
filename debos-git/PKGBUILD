@@ -1,13 +1,13 @@
 pkgname=debos-git
 epoch=1
 pkgver=1.0.0.r255.gf3759a5
-pkgrel=2
+pkgrel=3
 pkgdesc="OS images builder"
 arch=(x86_64)
 url="https://github.com/go-debos/${pkgname%-git}"
 license=('Apache')
-depends=('ostree' 'busybox' 'qemu-headless')
-makedepends=('git' 'go' 'golang-golang-x-sys' 'golang-gopkg-yaml.v3')
+depends=('ostree' 'busybox' 'qemu-base')
+makedepends=('git' 'go')
 provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")
 # NOTE: Keep the URL/branch in the README in sync

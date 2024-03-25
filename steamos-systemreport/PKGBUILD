@@ -2,7 +2,7 @@
 
 pkgname='steamos-systemreport'
 pkgver=0.6
-pkgrel=1
+pkgrel=2
 pkgdesc='System report collection tool'
 arch=('any')
 license=('LGPL2.1')

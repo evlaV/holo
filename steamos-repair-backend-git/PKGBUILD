@@ -1,7 +1,7 @@
 pkgname=steamos-repair-backend-git
 _tag=20220301.0
 pkgver=r27.6823918
-pkgrel=2
+pkgrel=3
 pkgdesc='Backend web services for steamos-repair tool'
 arch=('x86_64')
 url='https://github.com/evlav/steamos-repair-backend'

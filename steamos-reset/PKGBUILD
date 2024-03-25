@@ -3,7 +3,7 @@
 pkgname=('steamos-reset' 'steamos-reset-ui')
 _srctag=jupiter-20240125.1
 pkgver=${_srctag#jupiter-}
-pkgrel=1
+pkgrel=2
 arch=('x86_64')
 license=('GPL')
 makedepends=('git' 'qt5-base' 'qt5-quickcontrols2')

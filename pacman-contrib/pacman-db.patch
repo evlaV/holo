@@ -5,7 +5,7 @@ diff --git a/src/pactree.c b/src/pactree.c
 index f0cbf5c..b43e681 100644
 --- a/src/pactree.c
 +++ b/src/pactree.c
-@@ -612,6 +612,21 @@ int main(int argc, char *argv[])
+@@ -613,6 +613,21 @@ int main(int argc, char *argv[])
  	alpm_pkg_t *pkg;
  	alpm_list_t *dblist = NULL;
  
