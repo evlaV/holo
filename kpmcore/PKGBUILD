@@ -2,12 +2,12 @@
 
 pkgname=kpmcore
 pkgver=23.04.2
-pkgrel=2
+pkgrel=2.1 # Holo: Don't write fstab entries with invalid mountpoints
 pkgdesc='Library for managing partitions'
 arch=(x86_64)
 url='https://apps.kde.org/partitionmanager/'
 license=(GPL2)
-depends=(smartmontools kcoreaddons kwidgetsaddons ki18n polkit-qt5 qca-qt5)
+depends=(smartmontools kcoreaddons5 kwidgetsaddons5 ki18n5 polkit-qt5 qca-qt5)
 makedepends=(extra-cmake-modules)
 optdepends=('e2fsprogs: ext2/3/4 support'
 	    'xfsprogs: XFS support'

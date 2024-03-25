@@ -1,9 +1,9 @@
 # Maintainer: Ludovico de Nittis <ludovico.denittis@collabora.com>
 
 pkgname=atomupd-daemon-git
-pkgver=0.20231006.2.r0.g0b004d9
-pkgrel=2
-_tag=v0.20231006.2
+pkgver=0.20240212.1.r0.g486524b
+pkgrel=1
+_tag=v0.20240212.1
 pkgdesc='Atomic updates daemon'
 arch=('x86_64')
 url='https://github.com/evlav/atomupd-daemon'
