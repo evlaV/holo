@@ -3,8 +3,8 @@
 
 pkgbase=clang
 pkgname=(clang clang-libs)
-pkgver=15.0.7
-pkgrel=9.3
+pkgver=16.0.6
+pkgrel=2.1
 pkgdesc="C language family frontend for LLVM"
 arch=('x86_64')
 url="https://clang.llvm.org/"
@@ -16,22 +16,21 @@ source=($_source_base/$pkgbase-$pkgver.src.tar.xz{,.sig}
         $_source_base/clang-tools-extra-$pkgver.src.tar.xz{,.sig}
         $_source_base/llvm-$pkgver.src.tar.xz{,.sig}
         $_source_base/cmake-$pkgver.src.tar.xz{,.sig}
-        $pkgbase-linker-wrapper-tool.patch
-        $pkgbase-structured-bindings-r1.patch
-        $pkgbase-bitfield-value-capture.patch
+        $_source_base/third-party-$pkgver.src.tar.xz{,.sig}
+        clangd-handle-missing-ending-brace.patch::https://github.com/llvm/llvm-project/commit/9d1dada57741.patch
         enable-fstack-protector-strong-by-default.patch)
-sha256sums=('a6b673ef15377fb46062d164e8ddc4d05c348ff8968f015f7f4af03f51000067'
+sha256sums=('1186b6e6eefeadd09912ed73b3729e85b59f043724bb2818a95a2ec024571840'
             'SKIP'
-            '809a2ef46d46be3b83ca389356404ac041fa6d8f5496cb02ec35d252afb64fd1'
+            '174c7844db2590b18b2a59a9ce503f8fe439edc2de2f0f625006501c99736f31'
             'SKIP'
-            '4ad8b2cc8003c86d0078d15d987d84e3a739f24aae9033865c027abae93ee7a4'
+            'e91db44d1b3bb1c33fcea9a7d1f2423b883eaa9163d3d56ca2aa6d2f0711bc29'
             'SKIP'
-            '8986f29b634fdaa9862eedda78513969fe9788301c9f2d938f4c10a3e7a3e7ea'
+            '39d342a4161095d2f28fb1253e4585978ac50521117da666e2b1f6f28b62f514'
             'SKIP'
-            'f82449f41c8258f9ae13bd0c311e940711430d2c979eeb8255b36e0e63cda18c'
-            '6092fa872e2a706de12d1efb0626a4e9ef9854014edc68edb5ebac2ad27e2d9f'
-            '52b6e09270e08a943b4adf326475ef8ee4fc4cdf4a8c380adeca12a106066cda'
-            '7a9ce949579a3b02d4b91b6835c4fb45adc5f743007572fb0e28e6433e48f3a5')
+            '15f5b9aeeba938530af977d5f9205612737a091a7f0f6c8075df8723b7713f70'
+            'SKIP'
+            'c102e8a6a2adb0e8729865ffb8799b22bb8a9bdf0f421991880fa4393378370a'
+            '45da5783f4e89e4507a351ed0ffbbe6ec240e21ff7070797a89c5ccf434ac612')
 validpgpkeys=('474E22316ABF4785A88C6E8EA2C794A986419D8A'  # Tom Stellard <tstellar@redhat.com>
               'D574BD5D1D0E98895E3BF90044F2485E45D59042') # Tobias Hieta <tobias@hieta.se>
 
@@ -58,21 +57,15 @@ _get_distribution_components() {
 }
 
 prepare() {
-  mv cmake{-$pkgver.src,}
+  rename -v -- "-$pkgver.src" '' {cmake,third-party}-$pkgver.src
   cd "$srcdir/$pkgbase-$pkgver.src"
   mkdir build
   mv "$srcdir/clang-tools-extra-$pkgver.src" tools/extra
   patch -Np2 -i ../enable-fstack-protector-strong-by-default.patch
 
-  # https://reviews.llvm.org/D145862
-  patch -Np2 -l -i ../$pkgname-linker-wrapper-tool.patch
-
-  # https://reviews.llvm.org/D122768 (needed for Chromium 113)
-  sed 's|clang-tools-extra|clang/tools/extra|g' \
-    ../$pkgname-structured-bindings-r1.patch | patch -Np2
-
-  # https://reviews.llvm.org/D131202 (regression caused by the above)
-  patch -Np2 -i ../$pkgname-bitfield-value-capture.patch
+  # https://github.com/clangd/clangd/issues/1559
+  sed 's|clang-tools-extra|clang/tools/extra|' \
+    clangd-handle-missing-ending-brace.patch | patch -Np2
 
   # Attempt to convert script to Python 3
   2to3 -wn --no-diffs \
