@@ -1,41 +1,44 @@
 # Maintainer : Christian Rebischke <chris.rebischke@archlinux.org>
 # Maintainer: Levente Polyak <anthraxx[at]archlinux[dot]org>
 # Contributor: AndyRTR <andyrtr at archlinux.org>
-# Maintainer (Holo): Emil Velikov <emil.l.velikov@gmail.com>
 
 pkgname=iwd
-pkgver=2.7
-# Holo: backport OWE AKM fix
-pkgrel=1.2
+pkgver=2.14
+# HOLO: Added patch for 2.14 that wont be needed after we update to 2.17
+pkgrel=1.1
 pkgdesc='Internet Wireless Daemon'
 arch=('x86_64')
 url='https://git.kernel.org/cgit/network/wireless/iwd.git/'
-license=('LGPL')
+license=('LGPL-2.1-or-later')
 depends=('glibc' 'readline' 'libreadline.so' 'ell' 'gcc-libs')
 makedepends=('python-docutils' 'dbus' 'systemd')
 optdepends=('qrencode: for displaying QR code after DPP is started')
-source=("https://www.kernel.org/pub/linux/network/wireless/iwd-${pkgver}.tar"{.xz,.sign}
+source=(https://www.kernel.org/pub/linux/network/wireless/iwd-${pkgver}.tar{.xz,.sign}
+        0001-use-network-group-for-unprivileged-access.diff
+        0001-Register-EAPOL-frame-listeners-earlier.patch
+)
 # https://mirrors.edge.kernel.org/pub/linux/network/wireless/sha256sums.asc
-# Holo: backport OWE AKM fix
-        0001-netdev-relax-requirement-for-OWE-AKM-in-assoc-reply.patch)
-sha256sums=('289ff47a76fb854e7789c45c5e3e0f15de4adc5fd2e82e47ab08e3564d8961d9'
+sha256sums=('830184db5d3885ac68701cd8bb1c04d0bd8c8d3ab1c82b893b5e2bdf23329f28'
             'SKIP'
-            '561ba42ed2b3a03166bb68ba8b1273a8585c5c2a3eb603b89ad3f17bfab45876')
+            'd5fb4fb864b7a0632117aa2039df535ab5c1d024ae618a1f09e34dfab8ee0cc7'
+            '9a7d15b82f8837dc8ecb33b4e3c6a27b30cffd1adbb648bbba86bbf317f5dfe7')
 validpgpkeys=('E932D120BC2AEC444E558F0106CA9F5D1DCF2659')
-changelog=ChangeLog
-install=iwd.install
+# https://lore.kernel.org/iwd/20240122104541.74f1a697@workstation64.local/T/#u
+options=('!lto')
 
 prepare() {
   cd ${pkgname}-${pkgver}
+  # replace Debian "netdev" group with existing "network" group
+  # for unprivileged access to iwd - avoid also log spam
+  # https://gitlab.archlinux.org/archlinux/packaging/packages/iwd/-/issues/2 + #3
+  patch -Np1 -i ../0001-use-network-group-for-unprivileged-access.diff
+  patch -Np1 -i ../0001-Register-EAPOL-frame-listeners-earlier.patch
 
-  local src
-  for src in "${source[@]}"; do
-    src="${src%%::*}"
-    src="${src##*/}"
-    [[ $src = *.patch ]] || continue
-    echo "Applying patch $src..."
-    patch -Np1 < "../$src"
-  done
+  # https://lore.kernel.org/iwd/20240122105312.66fb4dbf@workstation64.local/T/#u
+  # disable one expected test failure - requires a kernel module we cannot load
+  # from inside the chroot
+  sed -i "s:unit/test-wsc::" Makefile.am
+  autoreconf -vfi
 }
 
 build() {
@@ -54,11 +57,7 @@ build() {
 
 check() {
   cd ${pkgname}-${pkgver}
-  # pass broken tests - should reported upstream
-  # One test fail because we need kernel capabilities that
-  # we don't have inside of systemd-nspawn
-  # this could only be fixed via changing our build environment
-  make -k check || /bin/true
+  make check
 }
 
 package() {
@@ -66,5 +65,3 @@ package() {
   make install DESTDIR="${pkgdir}"
   install -Dm 644 README -t "${pkgdir}/usr/share/doc/${pkgname}"
 }
-
-# vim: ts=2 sw=2 et:
