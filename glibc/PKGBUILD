@@ -1,4 +1,3 @@
-# Holo maintainer: Emil Velikov <emil.l.velikov@gmail.com>
 # Maintainer: Giancarlo Razzolini <grazzolini@archlinux.org>
 # Maintainer: Frederik Schwan <freswa at archlinux dot org>
 # Contributor: Bartłomiej Piotrowski <bpiotrowski@archlinux.org>
@@ -8,23 +7,20 @@
 # NOTE: valgrind requires rebuilt with each major glibc version
 
 pkgbase=glibc
-pkgname=(glibc lib32-glibc)
-pkgver=2.37
-_commit=7c32cb7dd88cf100b0b412163896e30aa2ee671a
-pkgrel=3.2 # Holo: backport fix for BZ #30579 and CVE-2023-4911
+pkgname=(glibc lib32-glibc glibc-locales)
+pkgver=2.39
+_commit=31da30f23cddd36db29d5b6a1c7619361b271fb4 # Holo: include fix for CVE-2024-2961
+pkgrel=1.1
 arch=(x86_64)
 url='https://www.gnu.org/software/libc'
-license=(GPL LGPL)
+license=(GPL-2.0-or-later LGPL-2.1-or-later)
 makedepends=(git gd lib32-gcc-libs python)
 options=(staticlibs !lto)
-source=(git://sourceware.org/git/glibc.git#commit=${_commit}
+source=(git+https://sourceware.org/git/glibc.git#commit=${_commit}
         locale.gen.txt
         locale-gen
         lib32-glibc.conf
         sdt.h sdt-config.h
-        realloc-Limit-chunk-reuse-to.patch # Holo: https://sourceware.org/bugzilla/show_bug.cgi?id=30579
-        750a45a783906a19591fb8ff6b7841470f1f5701.patch # Holo: CVE-2023-4911 aka Looney Tunables
-        reenable_DT_HASH.patch
 )
 validpgpkeys=(7273542B39962DF7B299931416792B4EA25340F8 # Carlos O'Donell
               BC7C7372637EC10C57D7AA6579C43DFBF1CF2187) # Siddhesh Poyarekar
@@ -33,10 +29,7 @@ b2sums=('SKIP'
         '04fbb3b0b28705f41ccc6c15ed5532faf0105370f22133a2b49867e790df0491f5a1255220ff6ebab91a462f088d0cf299491b3eb8ea53534cb8638a213e46e3'
         '7c265e6d36a5c0dff127093580827d15519b6c7205c2e1300e82f0fb5b9dd00b6accb40c56581f18179c4fbbc95bd2bf1b900ace867a83accde0969f7b609f8a'
         'a6a5e2f2a627cc0d13d11a82458cfd0aa75ec1c5a3c7647e5d5a3bb1d4c0770887a3909bfda1236803d5bc9801bfd6251e13483e9adf797e4725332cd0d91a0e'
-        '214e995e84b342fe7b2a7704ce011b7c7fc74c2971f98eeb3b4e677b99c860addc0a7d91b8dc0f0b8be7537782ee331999e02ba48f4ccc1c331b60f27d715678'
-        '2799813550ff8d6558cff8fe8090569a2769d952bd2b11d3d365a6b093c9d1dc5d88314c954f02e9188efd828bb639655a14e31aa3f8784dcc588c2a7a29005c'
-        '6ac0a6490c49285c693eb622577ab825523ee3bafd1fd21cc44764b9ee2ed3acede23a2fd25f0a5c14697f6d34749d5f6a21ad01735a3a765ce0f0ec51cad903'
-        '5fdd133c367af2f5454ea1eea7907de12166fb95eb59dbe33eae16aa9e26209b6585972bc1c80e36a0af4bfb04296acaf940ee78cd624cdcbab9669dff46c051')
+        '214e995e84b342fe7b2a7704ce011b7c7fc74c2971f98eeb3b4e677b99c860addc0a7d91b8dc0f0b8be7537782ee331999e02ba48f4ccc1c331b60f27d715678')
 
 prepare() {
   mkdir -p glibc-build lib32-glibc-build
@@ -44,98 +37,83 @@ prepare() {
   [[ -d glibc-$pkgver ]] && ln -s glibc-$pkgver glibc
   cd glibc
 
-  # Holo: https://sourceware.org/bugzilla/show_bug.cgi?id=30579
-  patch -Np1 -i "${srcdir}"/realloc-Limit-chunk-reuse-to.patch
-
-  # Re-enable `--hash-style=both` for building shared objects due to issues with EPIC's EAC
-  # which relies on DT_HASH to be present in these libs.
-  # reconsider 2023-01
-  patch -Np1 -i "${srcdir}"/reenable_DT_HASH.patch
 }
 
 build() {
   local _configure_flags=(
       --prefix=/usr
       --with-headers=/usr/include
-      --with-bugurl=https://bugs.archlinux.org/
+      --with-bugurl=https://gitlab.archlinux.org/archlinux/packaging/packages/glibc/-/issues
       --enable-bind-now
-      --enable-cet
+      --enable-fortify-source
       --enable-kernel=4.4
       --enable-multi-arch
       --enable-stack-protector=strong
       --enable-systemtap
-      --disable-crypt
+      --disable-nscd
       --disable-profile
       --disable-werror
   )
 
-  cd "${srcdir}"/glibc-build
+  (
+    cd glibc-build
 
-  echo "slibdir=/usr/lib" >> configparms
-  echo "rtlddir=/usr/lib" >> configparms
-  echo "sbindir=/usr/bin" >> configparms
-  echo "rootsbindir=/usr/bin" >> configparms
+    echo "slibdir=/usr/lib" >> configparms
+    echo "rtlddir=/usr/lib" >> configparms
+    echo "sbindir=/usr/bin" >> configparms
+    echo "rootsbindir=/usr/bin" >> configparms
 
-  # Credits @allanmcrae
-  # https://github.com/allanmcrae/toolchain/blob/f18604d70c5933c31b51a320978711e4e6791cf1/glibc/PKGBUILD
-  # remove fortify for building libraries
-  CFLAGS=${CFLAGS/-Wp,-D_FORTIFY_SOURCE=2/}
+    # Credits @allanmcrae
+    # https://github.com/allanmcrae/toolchain/blob/f18604d70c5933c31b51a320978711e4e6791cf1/glibc/PKGBUILD
+    # remove fortify for building libraries
+    # CFLAGS=${CFLAGS/-Wp,-D_FORTIFY_SOURCE=2/}
 
-  "${srcdir}"/glibc/configure \
-      --libdir=/usr/lib \
-      --libexecdir=/usr/lib \
-      "${_configure_flags[@]}"
+    "${srcdir}"/glibc/configure \
+        --libdir=/usr/lib \
+        --libexecdir=/usr/lib \
+        --enable-cet \
+        "${_configure_flags[@]}"
 
-  # build libraries with fortify disabled
-  echo "build-programs=no" >> configparms
-  make -O
+    make -O
 
-  # re-enable fortify for programs
-  sed -i "/build-programs=/s#no#yes#" configparms
-  echo "CFLAGS += -Wp,-D_FORTIFY_SOURCE=2" >> configparms
-  make -O
+    # build info pages manually for reproducibility
+    make info
+  )
 
-  # build info pages manually for reproducibility
-  make info
+  (
+    cd lib32-glibc-build
+    export CC="gcc -m32 -mstackrealign"
+    export CXX="g++ -m32 -mstackrealign"
 
-  cd "${srcdir}"/lib32-glibc-build
-  export CC="gcc -m32 -mstackrealign"
-  export CXX="g++ -m32 -mstackrealign"
+    echo "slibdir=/usr/lib32" >> configparms
+    echo "rtlddir=/usr/lib32" >> configparms
+    echo "sbindir=/usr/bin" >> configparms
+    echo "rootsbindir=/usr/bin" >> configparms
 
-  echo "slibdir=/usr/lib32" >> configparms
-  echo "rtlddir=/usr/lib32" >> configparms
-  echo "sbindir=/usr/bin" >> configparms
-  echo "rootsbindir=/usr/bin" >> configparms
+    "${srcdir}"/glibc/configure \
+        --host=i686-pc-linux-gnu \
+        --libdir=/usr/lib32 \
+        --libexecdir=/usr/lib32 \
+        "${_configure_flags[@]}"
 
-  "${srcdir}"/glibc/configure \
-      --host=i686-pc-linux-gnu \
-      --libdir=/usr/lib32 \
-      --libexecdir=/usr/lib32 \
-      "${_configure_flags[@]}"
+    make -O
+  )
 
-  # build libraries with fortify disabled
-  echo "build-programs=no" >> configparms
-  make -O
-
-  # re-enable fortify for programs
-  sed -i "/build-programs=/s#no#yes#" configparms
-  echo "CFLAGS += -Wp,-D_FORTIFY_SOURCE=2" >> configparms
-  make -O
-
-  # pregenerate C.UTF-8 locale until it is built into glibc
-  # (https://sourceware.org/glibc/wiki/Proposals/C.UTF-8, FS#74864)-
-  elf/ld.so --library-path "$PWD" locale/localedef -c -f ../glibc/localedata/charmaps/UTF-8 -i ../glibc/localedata/locales/C ../C.UTF-8/
+  # pregenerate locales here instead of in package
+  # functions because localedef does not like fakeroot
+  make -C "${srcdir}"/glibc/localedata objdir="${srcdir}"/glibc-build \
+    DESTDIR="${srcdir}"/locales install-locale-files
 }
 
-# Credits for skip_test() and check() @allanmcrae
+# Credits for _skip_test() and check() @allanmcrae
 # https://github.com/allanmcrae/toolchain/blob/f18604d70c5933c31b51a320978711e4e6791cf1/glibc/PKGBUILD
-skip_test() {
+_skip_test() {
   test=${1}
   file=${2}
-  sed -i "s/\b${test}\b//" "${srcdir}"/glibc/${file}
+  sed -i "/\b${test} /d" "${srcdir}"/glibc/${file}
 }
 
-NOcheck() {
+check() (
   cd glibc-build
 
   # adjust/remove buildflags that cause false-positive testsuite failures
@@ -143,23 +121,21 @@ NOcheck() {
   sed -i 's/-Werror=format-security/-Wformat-security/' config.make   # failure to build testsuite
   sed -i '/CFLAGS/s/-fno-plt//' config.make                           # 16 failures
   sed -i '/CFLAGS/s/-fexceptions//' config.make                       # 1 failure
-  LDFLAGS=${LDFLAGS/,-z,now/}                                         # 10 failures
 
   # The following tests fail due to restrictions in the Arch build system
   # The correct fix is to add the following to the systemd-nspawn call:
   # --system-call-filter="@clock @memlock @pkey"
-  skip_test test-errno-linux        sysdeps/unix/sysv/linux/Makefile
-  skip_test tst-mlock2              sysdeps/unix/sysv/linux/Makefile
-  skip_test tst-ntp_gettime         sysdeps/unix/sysv/linux/Makefile
-  skip_test tst-ntp_gettimex        sysdeps/unix/sysv/linux/Makefile
-  skip_test tst-pkey                sysdeps/unix/sysv/linux/Makefile
-  skip_test tst-process_mrelease    sysdeps/unix/sysv/linux/Makefile
-  skip_test tst-ttyname             sysdeps/unix/sysv/linux/Makefile
-  skip_test tst-adjtime             time/Makefile
-  skip_test tst-clock2              time/Makefile
+  _skip_test test-errno-linux        sysdeps/unix/sysv/linux/Makefile
+  _skip_test tst-mlock2              sysdeps/unix/sysv/linux/Makefile
+  _skip_test tst-ntp_gettime         sysdeps/unix/sysv/linux/Makefile
+  _skip_test tst-ntp_gettimex        sysdeps/unix/sysv/linux/Makefile
+  _skip_test tst-pkey                sysdeps/unix/sysv/linux/Makefile
+  _skip_test tst-process_mrelease    sysdeps/unix/sysv/linux/Makefile
+  _skip_test tst-shstk-legacy-1g     sysdeps/x86_64/Makefile
+  _skip_test tst-adjtime             time/Makefile
 
   make -O check
-}
+)
 
 package_glibc() {
   pkgdesc='GNU C Library'
@@ -168,10 +144,9 @@ package_glibc() {
               'perl: for mtrace')
   install=glibc.install
   backup=(etc/gai.conf
-          etc/locale.gen
-          etc/nscd.conf)
+          etc/locale.gen)
 
-  make -C glibc-build install_root="${pkgdir}" install
+  make -C glibc-build DESTDIR="${pkgdir}" install
   rm -f "${pkgdir}"/etc/ld.so.cache
 
   # Shipped in tzdata
@@ -180,10 +155,6 @@ package_glibc() {
   cd glibc
 
   install -dm755 "${pkgdir}"/usr/lib/{locale,systemd/system,tmpfiles.d}
-  install -m644 nscd/nscd.conf "${pkgdir}"/etc/nscd.conf
-  install -m644 nscd/nscd.service "${pkgdir}"/usr/lib/systemd/system
-  install -m644 nscd/nscd.tmpfiles "${pkgdir}"/usr/lib/tmpfiles.d/nscd.conf
-  install -dm755 "${pkgdir}"/var/db/nscd
 
   install -m644 posix/gai.conf "${pkgdir}"/etc/gai.conf
 
@@ -192,15 +163,18 @@ package_glibc() {
   # Create /etc/locale.gen
   install -m644 "${srcdir}"/locale.gen.txt "${pkgdir}"/etc/locale.gen
   sed -e '1,3d' -e 's|/| |g' -e 's|\\| |g' -e 's|^|#|g' \
-    "${srcdir}"/glibc/localedata/SUPPORTED >> "${pkgdir}"/etc/locale.gen
+    localedata/SUPPORTED >> "${pkgdir}"/etc/locale.gen
 
   # Add SUPPORTED file to pkg
   sed -e '1,3d' -e 's|/| |g' -e 's| \\||g' \
-    "${srcdir}"/glibc/localedata/SUPPORTED > "${pkgdir}"/usr/share/i18n/SUPPORTED
+    localedata/SUPPORTED > "${pkgdir}"/usr/share/i18n/SUPPORTED
 
   # install C.UTF-8 so that it is always available
+  # should be built into glibc eventually
+  # https://sourceware.org/glibc/wiki/Proposals/C.UTF-8
+  # https://bugs.archlinux.org/task/74864
   install -dm755 "${pkgdir}"/usr/lib/locale
-  cp -r "${srcdir}"/C.UTF-8 -t "${pkgdir}"/usr/lib/locale
+  cp -r "${srcdir}"/locales/usr/lib/locale/C.utf8 -t "${pkgdir}"/usr/lib/locale
   sed -i '/#C\.UTF-8 /d' "${pkgdir}"/etc/locale.gen
 
   # Provide tracing probes to libstdc++ for exceptions, possibly for other
@@ -216,7 +190,7 @@ package_lib32-glibc() {
 
   cd lib32-glibc-build
 
-  make install_root="${pkgdir}" install
+  make DESTDIR="${pkgdir}" install
   rm -rf "${pkgdir}"/{etc,sbin,usr/{bin,sbin,share},var}
 
   # We need to keep 32 bit specific header files
@@ -231,4 +205,15 @@ package_lib32-glibc() {
 
   # Symlink /usr/lib32/locale to /usr/lib/locale
   ln -s ../lib/locale "${pkgdir}"/usr/lib32/locale
+}
+
+package_glibc-locales() {
+  pkgdesc='Pregenerated locales for GNU C Library'
+  depends=("glibc=$pkgver")
+
+  cp -r locales/* -t "${pkgdir}"
+  rm -r "${pkgdir}"/usr/lib/locale/C.utf8
+
+  # deduplicate locale data
+  hardlink -c "${pkgdir}"/usr/lib/locale
 }
