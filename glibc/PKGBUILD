@@ -11,7 +11,7 @@ pkgbase=glibc
 pkgname=(glibc lib32-glibc)
 pkgver=2.37
 _commit=7c32cb7dd88cf100b0b412163896e30aa2ee671a
-pkgrel=3.2 # Holo: backport fix for BZ #30579 and CVE-2023-4911
+pkgrel=3.3 # Holo: backport fix for BZ #30579, CVE-2023-4911 and CVE-2024-2961
 arch=(x86_64)
 url='https://www.gnu.org/software/libc'
 license=(GPL LGPL)
@@ -23,7 +23,8 @@ source=(git://sourceware.org/git/glibc.git#commit=${_commit}
         lib32-glibc.conf
         sdt.h sdt-config.h
         realloc-Limit-chunk-reuse-to.patch # Holo: https://sourceware.org/bugzilla/show_bug.cgi?id=30579
-        750a45a783906a19591fb8ff6b7841470f1f5701.patch # Holo: CVE-2023-4911 aka Looney Tunables
+        cve-2023-4911.patch # Holo: CVE-2023-4911 aka Looney Tunables
+        cve-2024-2961.patch # Holo: https://sourceware.org/git/?p=glibc.git;a=blob;f=advisories/GLIBC-SA-2024-0004
         reenable_DT_HASH.patch
 )
 validpgpkeys=(7273542B39962DF7B299931416792B4EA25340F8 # Carlos O'Donell
@@ -35,7 +36,8 @@ b2sums=('SKIP'
         'a6a5e2f2a627cc0d13d11a82458cfd0aa75ec1c5a3c7647e5d5a3bb1d4c0770887a3909bfda1236803d5bc9801bfd6251e13483e9adf797e4725332cd0d91a0e'
         '214e995e84b342fe7b2a7704ce011b7c7fc74c2971f98eeb3b4e677b99c860addc0a7d91b8dc0f0b8be7537782ee331999e02ba48f4ccc1c331b60f27d715678'
         '2799813550ff8d6558cff8fe8090569a2769d952bd2b11d3d365a6b093c9d1dc5d88314c954f02e9188efd828bb639655a14e31aa3f8784dcc588c2a7a29005c'
-        '6ac0a6490c49285c693eb622577ab825523ee3bafd1fd21cc44764b9ee2ed3acede23a2fd25f0a5c14697f6d34749d5f6a21ad01735a3a765ce0f0ec51cad903'
+        '22ef97c3f5ec86b8a33094629349c44cb9b13ffd095785d6733ccf9e0ecb8e43b83938c8d2078412ccaa40f48a7d9dffc096c5440e85c4da26cc1d2a0245667d'
+        '26db256e032be6c501d25595457e9ba910299b788a820548e1dd2add3890124527e2211aed0b9f58c736814aaf0d25b50b4197b9c630841335bfb253abf686dd'
         '5fdd133c367af2f5454ea1eea7907de12166fb95eb59dbe33eae16aa9e26209b6585972bc1c80e36a0af4bfb04296acaf940ee78cd624cdcbab9669dff46c051')
 
 prepare() {
@@ -46,6 +48,12 @@ prepare() {
 
   # Holo: https://sourceware.org/bugzilla/show_bug.cgi?id=30579
   patch -Np1 -i "${srcdir}"/realloc-Limit-chunk-reuse-to.patch
+
+  # Holo: https://www.openwall.com/lists/oss-security/2023/10/03/2
+  patch -Np1 -i "${srcdir}"/cve-2023-4911.patch
+
+  # Holo: https://sourceware.org/git/?p=glibc.git;a=blob;f=advisories/GLIBC-SA-2024-0004
+  patch -Np1 -i "${srcdir}"/cve-2024-2961.patch
 
   # Re-enable `--hash-style=both` for building shared objects due to issues with EPIC's EAC
   # which relies on DT_HASH to be present in these libs.
