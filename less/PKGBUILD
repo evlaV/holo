@@ -1,0 +1,49 @@
+# Maintainer: Sébastien "Seblu" Luttringer <seblu@archlinux.org>
+# Contributor: Allan McRae <allan@archlinux.org>
+# Contributor: judd <jvinet@zeroflux.org>
+
+pkgname=less
+pkgver=643
+pkgrel=1.1 # Holo: This is identical to 643-2 from Arch. Fixes CVE-2024-32487
+epoch=1
+pkgdesc='A terminal based program for viewing text files'
+license=('GPL-3.0-or-later')
+arch=('x86_64')
+url='https://www.greenwoodsoftware.com/less/'
+depends=('glibc' 'ncurses' 'pcre2')
+validpgpkeys=('AE27252BD6846E7D6EAE1DD6F153A7C833235259') # Mark Nudelman
+source=("https://www.greenwoodsoftware.com/$pkgname/$pkgname-$pkgver.tar.gz"
+        "$pkgname-$pkgver.tar.gz.sig::https://www.greenwoodsoftware.com/$pkgname/$pkgname-$pkgver.sig"
+        "backport-007521ac3c95bc76.patch")
+sha256sums=('2911b5432c836fa084c8a2e68f6cd6312372c026a58faaa98862731c8b6052e8'
+            'SKIP'
+            '2fb1552faecfd9956966819e19ef699a20370596f4f04370ac19fee60e1bd412')
+
+prepare() {
+  cd $pkgname-$pkgver
+  # apply patch from the source array (should be a pacman feature)
+  local src
+  for src in "${source[@]}"; do
+    src="${src%%::*}"
+    src="${src##*/}"
+    [[ $src = *.patch ]] || continue
+    echo "Applying patch $src..."
+    # https://www.openwall.com/lists/oss-security/2024/04/12/5
+    # https://github.com/gwsw/less/commit/007521ac3c95bc76.patch
+    # backport by tpowa@archlinux.org for less-643
+    patch -Np1 < "../$src"
+  done
+}
+
+build() {
+  cd $pkgname-$pkgver
+  sh configure --prefix=/usr --sysconfdir=/etc --with-regex=pcre2
+  make
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
+}
+
+# vim:set ts=2 sw=2 et:
