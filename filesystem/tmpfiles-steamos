@@ -3,7 +3,9 @@
 # actually need to be present, so it must be copied
 # from the factory on first boot)
 
-C /root 0750
+# provision.conf creates this before us, only set the mode here
+z- /root 0750
+
 C /var/lib/dkms
 C /var/lib/modules
 
@@ -14,7 +16,6 @@ C /var/lib/modules
 #   systemd-analyze cat-config tmpfiles.d
 
 #d /var/cache				# var.conf
-d /var/cache
 d /var/local
 d /var/opt
 d /var/log/old
@@ -23,7 +24,6 @@ d /var/lib/misc
 d /var/empty
 d /var/spool/mail 1777
 #d /var/tmp 1777			# tmp.conf
-d /var/tmp 1777
 d /var/games 0775 - 50
 L /var/mail - - - - spool/mail
 #L /var/run - - - - ../run		# var.conf
