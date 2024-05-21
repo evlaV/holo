@@ -1,0 +1,34 @@
+From 6f5967d3a5aa604a677f4aed411128a0a5b2bf2f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Vivek=20Das=C2=A0Mohapatra?= <vivek@collabora.com>
+Date: Thu, 16 May 2024 19:48:23 +0100
+Subject: [PATCH] Make the /tmp and /var/tmp reapers fire only during boot
+
+As the device is likely to be suspened/resumed often it is quite
+normal for files there to be over 10 wall-clock days old - but
+that doesn't mean they're stale and can be erased.
+
+Altering the rule to fire only during boot means any old files
+that get reaped are genuinely stale and safe to erase.
+---
+ tmpfiles.d/tmp.conf | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/tmpfiles.d/tmp.conf b/tmpfiles.d/tmp.conf
+index fe5225d751..3055e99a29 100644
+--- a/tmpfiles.d/tmp.conf
++++ b/tmpfiles.d/tmp.conf
+@@ -7,6 +7,8 @@
+ 
+ # See tmpfiles.d(5) for details
+ 
+-# Clear tmp directories separately, to make them easier to override
+-q /tmp 1777 root root 10d
+-q /var/tmp 1777 root root 30d
++# Cleaning of files will happen for files beyond the specified
++# cleanup-age (10/30 days), but only during boot (!) so as not
++# to break running systems
++q! /tmp 1777 root root 10d
++q! /var/tmp 1777 root root 30d
+-- 
+2.30.2
+
