@@ -2,12 +2,12 @@
 
 pkgname=calamares-settings-steamos-git
 pkgver=r323.d0d0ce2
-pkgrel=3
+pkgrel=3.1
 pkgdesc='SteamOS theme and settings for the Calamares Installer'
 arch=('any')
 url=""
 license=('custom:ISC')
-depends=('calamares' 'python' 'hicolor-icon-theme'
+depends=('calamares' 'python>=3.11' 'python<3.12' 'hicolor-icon-theme'
          'efibootmgr' # for the bootsetup
         )
 makedepends=('git')
