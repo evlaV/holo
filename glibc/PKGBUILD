@@ -10,11 +10,11 @@ pkgbase=glibc
 pkgname=(glibc lib32-glibc glibc-locales)
 pkgver=2.39
 _commit=31da30f23cddd36db29d5b6a1c7619361b271fb4 # Holo: include fix for CVE-2024-2961
-pkgrel=1.1
+pkgrel=1.2
 arch=(x86_64)
 url='https://www.gnu.org/software/libc'
 license=(GPL-2.0-or-later LGPL-2.1-or-later)
-makedepends=(git gd lib32-gcc-libs python)
+makedepends=(git gd lib32-gcc-libs 'python>=3.11' 'python<3.12')
 options=(staticlibs !lto)
 source=(git+https://sourceware.org/git/glibc.git#commit=${_commit}
         locale.gen.txt
