@@ -3,13 +3,13 @@
 pkgname=steamos-atomupd-client-git
 _srctag=v0.20240404.1
 pkgver=r419.20bcefb
-pkgrel=1
+pkgrel=1.1
 pkgdesc='SteamOS Atomic Update (client) - Atomic update client for SteamOS.'
 arch=('any')
 url='https://store.steampowered.com/steamos/'
 license=('LGPL2.1')
 makedepends=('git')
-depends=('python' 'rauc' 'python-semantic-version')
+depends=('python>=3.11' 'python<3.12' 'rauc' 'python-semantic-version')
 optdepends=('desync')
 provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")
