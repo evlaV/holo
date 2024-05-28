@@ -146,3 +146,6 @@ run 'cat /var/log/jupiter-fan-control.log'
 
 echo 'jupiter-fan-control log, previous:'
 run 'cat /var/log/jupiter-fan-control.old.log'
+
+# gamescope logs (should probably move to journal instead)
+run "tail --bytes=1073741824 $XDG_RUNTIME_DIR/gamescope-session.log"
