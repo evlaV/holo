@@ -1,7 +1,7 @@
 # Author : Clayton Craft <clayton@igalia.com>
 
 pkgname='steamos-systemreport'
-pkgver=0.9
+pkgver=0.10
 pkgrel=1
 pkgdesc='System report collection tool'
 arch=('any')
@@ -12,7 +12,7 @@ source=(
   'steamos-systemreport-privileged'
   'org.valve.steamos.systemreport.policy'
 )
-sha256sums=('230b918c6f05084b1f52b689c9f0c080d2105defa020d6bfa5b91fc040f858a7'
+sha256sums=('284622dcd63601a6823bdad68a0060ea8298d55b21525bf0e08c11968c107fcc'
             'cb8b682883810f0d3919ce9c2a906ebb458b7fa0a7db5148cff828fa55493fe8'
             'b36473e3b77307450e75c59e248dde34d95b69c6c765a425fc30d9e201e23067')
 

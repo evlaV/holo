@@ -130,7 +130,7 @@ run 'find /var/lib/overlays/etc/upper \
 
 # Display EDID, as hex
 while IFS= read -r conn; do
-  run "cat $conn | hexdump"
+  run "cat $conn | hexdump -Cv | cut -d '|' -f 1"
 done < <(find /sys/class/drm/card0/ -iname edid)
 
 super dri-debugfs
