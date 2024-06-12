@@ -68,4 +68,17 @@ case ${1:-all} in
     run 'grep -e"^crtc.*" -A12 /sys/kernel/debug/dri/*/state'
     run 'grep -e"^connector.*" /sys/kernel/debug/dri/*/state'
     ;;&
+
+  all|wakeup-info)
+    # Wake-up Info (Interrupts & other stuff)
+    WAKEUP_INTERRUPT_FILES=(
+      /sys/power/pm_wakeup_irq
+      /sys/kernel/debug/wakeup_sources
+      /proc/interrupts
+    )
+    for file in "${WAKEUP_INTERRUPT_FILES[@]}" ; do
+      run "cat '${file}' || true"
+      echo
+    done
+    ;;&
 esac

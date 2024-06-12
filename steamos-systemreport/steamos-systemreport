@@ -92,6 +92,9 @@ if ! "$steam_mode"; then
   run 'journalctl --no-pager -b -1'
 fi
 
+# wake-up information
+super wakeup-info
+
 super partitions
 
 # filter out the ANSI colour/bold/etc escape sequences
