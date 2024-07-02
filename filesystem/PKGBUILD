@@ -4,7 +4,7 @@
 pkgname=filesystem
 pkgver=2021.12.07
 # https://bugs.archlinux.org/task/72284
-pkgrel=1.11
+pkgrel=1.12
 pkgdesc='Base SteamOS Linux files'
 arch=('x86_64')
 license=('GPL')
@@ -20,7 +20,7 @@ source=('crypttab' 'env-generator' 'fstab' 'group' 'gshadow' 'host.conf' 'hosts'
         'sysusers' 'tmpfiles' 'archlinux-logo.svg' 'archlinux-logo.png'
         'archlinux-logo-text.svg' 'archlinux-logo-text-dark.svg'
         'hosts-steamos' 'issue-steamos' 'os-release-steamos' 'tmpfiles-steamos'
-        'steamos.png')
+        'steamos.png' '01-steamos-enforce-UID-GID.conf')
 sha256sums=('e03bede3d258d680548696623d5979c6edf03272e801a813c81ba5a5c64f4f82'
             'ed0cb4f1db4021f8c3b5ce78fdf91d2c0624708f58f36c9cf867f4d93c3bc6da'
             'e54626e74ed8fee4173b62a545ab1c3a3a069e4217a0ee8fc398d9933e9c1696'
@@ -50,7 +50,8 @@ sha256sums=('e03bede3d258d680548696623d5979c6edf03272e801a813c81ba5a5c64f4f82'
             '073e8484c77bfec866f2446a05d8d4070d65377ee8b2f3aff0a8b8758105af08'
             '0c695976070be67822551215fc74a4c2d4e0892665c3cb0c8c64a58b8644b2a3'
             'c3e409ac247f13c47c0d3f5627e9544ffe9a4aa9403dab079f695025d9c76fee'
-            '5660b669eea8739dd7c671aa92300c15c6f836e0df3402476d53e88bad99446b')
+            '5660b669eea8739dd7c671aa92300c15c6f836e0df3402476d53e88bad99446b'
+            'e239755c288be214b0d86dc8989e27dc21a6be9d2d68906a81481eedeefe7aea')
 
 package() {
   cd "$pkgdir"
@@ -181,6 +182,9 @@ package() {
   # Swap the logos
   rm usr/share/pixmaps/archlinux-logo{.png,.svg,-text.svg,-text-dark.svg}
   install -D -m644 "$srcdir"/steamos.png usr/share/pixmaps
+
+  # Install the sysusers file to enforce consistent UIDs and GIDs
+  install -D -m644 "$srcdir"/01-steamos-enforce-UID-GID.conf usr/lib/sysusers.d/01-steamos-enforce-UID-GID.conf
 }
 
 # vim:set ts=2 sw=2 et:
