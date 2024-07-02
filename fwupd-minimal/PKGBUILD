@@ -3,12 +3,9 @@
 # Maintainer: Frederik Schwan <freswa at archlinux dot org>
 # Contributor: Mirco Tischler <mt-ml at gmx dot de>
 
-pkgbase=fwupd-minimal
-pkgname=(
-  fwupd_minimal
-)
+pkgname=fwupd-minimal
 pkgver=1.9.19
-pkgrel=1
+pkgrel=2
 pkgdesc="Simple daemon to allow session software to update firmware"
 arch=(x86_64)
 url='https://github.com/fwupd/fwupd'
@@ -107,7 +104,7 @@ _pick() {
   done
 }
 
-package_fwupd_minimal() {
+package() {
   depends+=(
     libarchive.so
     libcbor.so
