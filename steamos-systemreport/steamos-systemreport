@@ -81,8 +81,8 @@ super firmware
 run 'ps aux k-rss'
 
 if ! "$steam_mode"; then
-  run 'lspci -tv'
-  run 'lsusb -t'
+  run 'lspci -tv -nn'
+  run 'lsusb -t -v'
   run 'coredumpctl -r --since -10d'
   run 'journalctl --no-pager -b 0'
   # NOTE: These journals are from _this_ OS slot.
