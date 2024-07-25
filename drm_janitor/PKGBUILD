@@ -1,6 +1,6 @@
 # Maintainer: Vlad Zahorodnii <vladzzag@gmail.com>
 pkgname=drm_janitor
-pkgver=0.0.3
+pkgver=0.0.4
 pkgrel=1
 pkgdesc="A helper that resets the DRM state to reasonable defaults"
 arch=(x86_64)
@@ -10,7 +10,7 @@ depends=(libdrm)
 makedepends=(meson)
 source=("$pkgname-$pkgver.tar.gz"::"https://github.com/zzag/$pkgname/archive/$pkgver.tar.gz"
         drm_janitor.conf)
-sha256sums=('8a735afcd1117a6dadd083cfa532b66f57d09e4996846fa7a25f563dcffb8656'
+sha256sums=('712702f131a246d369e766563548bf46355aecaf4a51517fbad01c7af4df0516'
             'SKIP')
 
 build() {
