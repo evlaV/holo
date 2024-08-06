@@ -3,7 +3,7 @@
 pkgname=steamos-manager
 _srctag=v24.5.1
 pkgver=${_srctag##v}
-pkgrel=1
+pkgrel=2
 pkgdesc='SteamOS Manager daemon for running various tasks as root'
 arch=('x86_64')
 url='https://store.steampowered.com/steamos/'
@@ -18,6 +18,7 @@ optdepends=('steamos-customizations-jupiter: jupiter support'  # Needed for stea
             'steamos-log-submitter: ftrace logging')
 makedepends=('git' 'cargo' 'holo-rust-packaging-tools')
 source=("$pkgname-$pkgver::git+https://github.com/evlav/$pkgname.git#tag=${_srctag}"
+        'disable-split-lock-warn.patch'
         'addr2line-0.21.0.tar.gz::https://crates.io/api/v1/crates/addr2line/0.21.0/download'
         'adler-1.0.2.tar.gz::https://crates.io/api/v1/crates/adler/1.0.2/download'
         'anstyle-1.0.7.tar.gz::https://crates.io/api/v1/crates/anstyle/1.0.7/download'
@@ -166,6 +167,7 @@ source=("$pkgname-$pkgver::git+https://github.com/evlav/$pkgname.git#tag=${_srct
         'zvariant_derive-4.1.0.tar.gz::https://crates.io/api/v1/crates/zvariant_derive/4.1.0/download'
         'zvariant_utils-1.1.1.tar.gz::https://crates.io/api/v1/crates/zvariant_utils/1.1.1/download')
 sha256sums=('SKIP'
+            '3459c2555f78c3b167063164b572970c760b60a95dc4146189fb854281bae9ff'
             '8a30b2e23b9e17a9f90641c7ab1549cd9b44f296d3ccbf309d2863cfe398a0cb'
             'f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe'
             '038dfcf04a5feb68e9c60b21c9625a54c2c0616e79b72b0fd87075a056ae1d1b'
@@ -332,6 +334,8 @@ prepare() {
 	[source.vendored-sources]
 	directory = "${srcdir}/vendored"
 EOF
+
+    patch -p1 < "$srcdir/disable-split-lock-warn.patch"
 }
 
 build() {
