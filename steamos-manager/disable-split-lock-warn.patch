@@ -1,0 +1,13 @@
+diff --git a/src/sls/ftrace.rs b/src/sls/ftrace.rs
+index 629ee5f..1f1eab0 100644
+--- a/src/sls/ftrace.rs
++++ b/src/sls/ftrace.rs
+@@ -35,8 +35,6 @@ where
+ 
+ async fn setup_traces(path: &Path) -> Result<()> {
+     fs::write(path.join("events/oom/mark_victim/enable"), "1").await?;
+-    fs::write(path.join("set_ftrace_filter"), "split_lock_warn").await?;
+-    fs::write(path.join("current_tracer"), "function").await?;
+     Ok(())
+ }
+ 
