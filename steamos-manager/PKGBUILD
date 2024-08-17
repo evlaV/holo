@@ -1,13 +1,14 @@
+# Maintainer: Vicki Pfau <vi@endrift.com>
 # Maintainer: Jeremy Whiting <jeremy.whiting@collabora.com>
 
 pkgname=steamos-manager
 _srctag=v24.5.1
 pkgver=${_srctag##v}
-pkgrel=2
+pkgrel=3
 pkgdesc='SteamOS Manager daemon for running various tasks as root'
 arch=('x86_64')
 url='https://store.steampowered.com/steamos/'
-license=('LGPL2.1')
+license=('MIT')
 depends=('dbus'
          'steamos-networking-tools'  # For steamos-wifi-set-backend
          'systemd'
