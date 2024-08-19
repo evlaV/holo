@@ -1,7 +1,7 @@
 # Maintainer: Vlad Zahorodnii <vladzzag@gmail.com>
 pkgname=drm_janitor
 pkgver=0.0.4
-pkgrel=1
+pkgrel=2
 pkgdesc="A helper that resets the DRM state to reasonable defaults"
 arch=(x86_64)
 url="https://github.com/zzag/drm_janitor"
