@@ -5,13 +5,16 @@
 pkgname=iwd
 pkgver=2.14
 # HOLO: Added patch for 2.14 that wont be needed after we update to 2.17
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc='Internet Wireless Daemon'
 arch=('x86_64')
 url='https://git.kernel.org/cgit/network/wireless/iwd.git/'
 license=('LGPL-2.1-or-later')
 depends=('glibc' 'readline' 'libreadline.so' 'ell' 'gcc-libs')
-makedepends=('python-docutils' 'dbus' 'systemd')
+makedepends=('python-docutils' 'dbus' 'systemd'
+  'python>=3.11'
+  'python<3.12'
+)
 optdepends=('qrencode: for displaying QR code after DPP is started')
 source=(https://www.kernel.org/pub/linux/network/wireless/iwd-${pkgver}.tar{.xz,.sign}
         0001-use-network-group-for-unprivileged-access.diff
