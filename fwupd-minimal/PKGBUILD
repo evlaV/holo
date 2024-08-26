@@ -5,7 +5,7 @@
 
 pkgname=fwupd-minimal
 pkgver=1.9.19
-pkgrel=2
+pkgrel=3
 pkgdesc="Simple daemon to allow session software to update firmware"
 arch=(x86_64)
 url='https://github.com/fwupd/fwupd'
@@ -28,7 +28,8 @@ depends=(
   libjcat
   libxmlb
   polkit
-  python
+  'python>=3.11'
+  'python<3.12'
   shared-mime-info
   sqlite
   systemd-libs

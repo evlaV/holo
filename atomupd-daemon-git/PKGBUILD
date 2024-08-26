@@ -2,13 +2,16 @@
 
 pkgname=atomupd-daemon-git
 pkgver=0.20240626.1.r0.gf8ad510
-pkgrel=1
+pkgrel=2
 _tag=v0.20240626.1
 pkgdesc='Atomic updates daemon'
 arch=('x86_64')
 url='https://github.com/evlav/atomupd-daemon'
 license=('MIT')
-makedepends=('git' 'meson' 'python-dbusmock')
+makedepends=('git' 'meson' 'python-dbusmock'
+  'python>=3.11'
+  'python<3.12'
+)
 depends=('dbus' 'glib2' 'json-glib' 'steamos-atomupd-client-git>=r157.4d50d6d' 'polkit' 'systemd')
 provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")

@@ -2,12 +2,15 @@
 
 pkgname=steamos-media-creation-git
 pkgver=r115.dca5287
-pkgrel=4
+pkgrel=5
 pkgdesc='SteamOS Media Creation'
 arch=('x86_64')
 url='http://repo.steampowered.com'
 license=('LGPL2.1')
-depends=('python-dbus' 'python-tzlocal' 'qt5-base')
+depends=('python-dbus' 'python-tzlocal' 'qt5-base'
+  'python>=3.11'
+  'python<3.12'
+)
 makedepends=('git')
 provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")
