@@ -1,0 +1,32 @@
+From 57e896aa41c25c3c3468bb026f0b799ff2479a72 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Vivek=20Das=C2=A0Mohapatra?= <vivek@collabora.com>
+Date: Wed, 21 Aug 2024 19:01:24 +0000
+Subject: [PATCH] Use SteamOS-specific kernel command line settings if present
+
+Provided by jupiter-hw-support in /etc/default/grub-steamos and applied
+after, and in addition to, /etc/default/grub, by sourcing those files.
+
+Note that in the next sync of grub to 2.12+ this will change again to a
+drop-in grub.d directory as adopted by both Arch and Debian.
+---
+ util/grub-mkconfig.in | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/util/grub-mkconfig.in b/util/grub-mkconfig.in
+index 5007d087a..f888cef40 100644
+--- a/util/grub-mkconfig.in
++++ b/util/grub-mkconfig.in
+@@ -166,6 +166,10 @@ if test -f ${sysconfdir}/default/grub ; then
+   . ${sysconfdir}/default/grub
+ fi
+ 
++if test -f ${sysconfdir}/default/grub-steamos ; then
++  . ${sysconfdir}/default/grub-steamos
++fi
++
+ if [ "x${GRUB_DISABLE_UUID}" = "xtrue" ]; then
+   if [ -z "${GRUB_DISABLE_LINUX_UUID}" ]; then
+     GRUB_DISABLE_LINUX_UUID="true"
+-- 
+2.39.2
+
