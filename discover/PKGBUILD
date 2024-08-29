@@ -4,7 +4,7 @@
 pkgname=discover
 pkgver=5.27.10.1
 _dirver=$(echo $pkgver | cut -d. -f1-3)
-pkgrel=1.1 # Holo change to enable steamos backend.
+pkgrel=1.2 # Holo change to enable steamos backend.
 pkgdesc='KDE and Plasma resources management GUI'
 arch=(x86_64)
 url='https://kde.org/plasma-desktop/'
@@ -33,6 +33,6 @@ build() {
 }
 
 package() {
-  depends+=(atomupd-daemon-git) # the steamos updater talks to it via dbus
+  depends+=(atomupd-daemon) # the steamos updater talks to it via dbus
   DESTDIR="$pkgdir" cmake --install build
 }
