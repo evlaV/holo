@@ -1,0 +1,66 @@
+From 73d4a3b062429f331c6062d39c57d6b7dbd1f19a Mon Sep 17 00:00:00 2001
+From: Chris Williams <chrisawign@gmail.com>
+Date: Wed, 21 Feb 2024 13:24:26 -0500
+Subject: [PATCH] appdata: exclude <name> element inside <developer>
+
+<developer_name> has been deprecated in favor of <developer> with a
+<name> child. We need to ensure that this developer name isn't parsed
+as the application name.
+
+Fixes: #5700
+---
+ common/flatpak-appdata.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/common/flatpak-appdata.c b/common/flatpak-appdata.c
+index 5a14b1a027..968e6812dc 100644
+--- a/common/flatpak-appdata.c
++++ b/common/flatpak-appdata.c
+@@ -43,6 +43,7 @@ typedef struct
+   gboolean   in_text;
+   gboolean   in_component;
+   gboolean   in_content_rating;
++  gboolean   in_developer;
+   char      *lang;
+   guint64    timestamp;
+   const char *id;  /* interned */
+@@ -119,7 +120,7 @@ start_element (GMarkupParseContext *context,
+     {
+       data->in_text = TRUE;
+     }
+-  else if (g_str_equal (element_name, "name") ||
++  else if ((!data->in_developer && g_str_equal (element_name, "name")) ||
+            g_str_equal (element_name, "summary"))
+     {
+       const char *lang = NULL;
+@@ -259,6 +260,10 @@ start_element (GMarkupParseContext *context,
+           g_warning ("Ignoring content attribute missing id attribute");
+         }
+     }
++  else if (g_str_equal (element_name, "developer"))
++    {
++      data->in_developer = TRUE;
++    }
+ }
+ 
+ static void
+@@ -294,7 +299,7 @@ end_element (GMarkupParseContext *context,
+     {
+       component->id = g_steal_pointer (&text);
+     }
+-  else if (g_str_equal (element_name, "name"))
++  else if (!data->in_developer && g_str_equal (element_name, "name"))
+     {
+       g_hash_table_insert (component->names, g_steal_pointer (&data->lang), g_steal_pointer (&text));
+     }
+@@ -316,6 +321,10 @@ end_element (GMarkupParseContext *context,
+       g_assert (component->content_rating != NULL);
+       g_hash_table_insert (component->content_rating, (gpointer) data->id, (gpointer) g_intern_string (text));
+     }
++  else if (g_str_equal (element_name, "developer"))
++    {
++      data->in_developer = FALSE;
++    }
+ }
+ 
+ static void

@@ -1,0 +1,50 @@
+From 886462b8118c1ea4f16957553acfb6625df9e002 Mon Sep 17 00:00:00 2001
+From: Chris Williams <chrisawign@gmail.com>
+Date: Wed, 21 Feb 2024 17:12:52 -0500
+Subject: [PATCH] tests: Check appdata name parsing via flatpak info
+
+Add a basic test for the extraction of appdata name and summary values
+that are displayed in the flatpak UI. Also use the new developer name
+syntax in the test app. This tests the fix made in previous commit.
+---
+ tests/make-test-app.sh | 3 +++
+ tests/test-info.sh     | 8 +++++++-
+ 2 files changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/tests/make-test-app.sh b/tests/make-test-app.sh
+index 06cae5f920..36df984b41 100755
+--- a/tests/make-test-app.sh
++++ b/tests/make-test-app.sh
+@@ -130,6 +130,9 @@ cat <<EOF > ${DIR}/files/share/metainfo/${APP_ID}.metainfo.xml
+     <name>Hello world test app: $APP_ID</name>
+     <summary>Print a greeting</summary>
+     <description><p>This is a test app.</p></description>
++    <developer>
++      <name>Developer name</name>
++    </developer>
+     <categories>
+       <category>Utility</category>
+     </categories>
+diff --git a/tests/test-info.sh b/tests/test-info.sh
+index 2158c11b10..03472a9d57 100644
+--- a/tests/test-info.sh
++++ b/tests/test-info.sh
+@@ -6,7 +6,7 @@ set -euo pipefail
+ 
+ skip_revokefs_without_fuse
+ 
+-echo "1..8"
++echo "1..9"
+ 
+ INCLUDE_SPECIAL_CHARACTER=1 setup_repo
+ install_repo
+@@ -62,3 +62,9 @@ ${FLATPAK} info --file-access=home org.test.Hello > info
+ assert_file_has_content info "^hidden$"
+ 
+ ok "info --file-access"
++
++${FLATPAK} info org.test.Hello > info
++
++assert_file_has_content info "^Hello world test app: org\.test\.Hello - Print a greeting$"
++
++ok "info (name header)"
