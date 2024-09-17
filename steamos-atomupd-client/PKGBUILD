@@ -1,7 +1,7 @@
 # Maintainer: Ludovico de Nittis <ludovico.denittis@collabora.com>
 
 pkgname=steamos-atomupd-client
-pkgver=0.20240827.1
+pkgver=0.20240906.1
 pkgrel=1
 pkgdesc='SteamOS Atomic Update (client) - Atomic update client for SteamOS.'
 arch=('any')
