@@ -12,7 +12,7 @@ pkgname=(
   flatpak-docs
 )
 pkgver=1.15.6
-pkgrel=2.1
+pkgrel=3.1
 epoch=1
 pkgdesc="Linux application sandboxing and distribution framework (formerly xdg-app)"
 url="https://flatpak.org"
@@ -68,6 +68,9 @@ source=(
   # Holo: Show app name instead of developer name in 'flatpak list' -- https://github.com/flatpak/flatpak/issues/5700
   show-app-name-fix.patch
   show-app-name-test.patch
+  # Holo: Fix and test case for CVE-2024-42472 -- https://github.com/flatpak/flatpak/security/advisories/GHSA-7hgv-f2j8-xw87
+  CVE-2024-42472-fix.patch
+  CVE-2024-42472-test.patch
 )
 b2sums=('SKIP'
         'SKIP'
@@ -80,7 +83,9 @@ b2sums=('SKIP'
         'c8ed25db884e2f92f3eb0d2b7089f3b81496e4334791662e6f2cb9926a0714aa6fff538be5ead6853ac548e5a5285aae9b9ec969806a148f41f8c2c227a7c119'
         '7540ade8bc582c41ad189fa2c6d3db64a4f84072ae184b54ac7045af70de808f2224ec3c2f81f4b536f275a2f166346e7bebeee0bfbcd20df39c9069c4d7d454'
         'a984e06a29459f8202e3d2a69c8045fc819640561a887e623d1e0f99ddc8ad44d84ef75f20c09f8a2db15b8d9d4ed732411d17217df7384a2a562a8ad835bb6f'
-        'abdb1c39fd7828c40c6a1a73f76595a3d8fd6698e0895a4a49a94059f1a99295489d8c06033797479858e37eeceff719aa1fea30de8aabfe40aaa95298c2a76a')
+        'abdb1c39fd7828c40c6a1a73f76595a3d8fd6698e0895a4a49a94059f1a99295489d8c06033797479858e37eeceff719aa1fea30de8aabfe40aaa95298c2a76a'
+        '4623ca74e49819875780491b58f33911776af77202ae301be4bf771594eb45296fcfb20e29b9fe945378ef8f4135fd90d41c4a934b57938c429dfeea9c51d560'
+        '7b7374f23ff41658f398c8717ed38e5d7c5dce9b5c5937114d179bc3a57a8514bee069d72224c6a913565011e0ae7e504bbe43b67b3cb647c63b23336e5a05f3')
 
 pkgver() {
   cd flatpak
@@ -101,6 +106,10 @@ prepare() {
   # Holo: Fix for flatpak#5700
   git apply -3 "$srcdir/show-app-name-fix.patch"
   git apply -3 "$srcdir/show-app-name-test.patch"
+
+  # Holo: fix for CVE-2024-42472
+  git apply -3 "$srcdir/CVE-2024-42472-fix.patch"
+  git apply -3 "$srcdir/CVE-2024-42472-test.patch"
 
   git submodule init
   git submodule set-url subprojects/libglnx "$srcdir/libglnx"
