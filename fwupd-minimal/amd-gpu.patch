@@ -1,0 +1,46 @@
+From 567a8ea236c8cde3631fa2a2c15b0f8a18cecd7c Mon Sep 17 00:00:00 2001
+From: Mario Limonciello <mario.limonciello@amd.com>
+Date: Fri, 20 Sep 2024 11:02:08 -0500
+Subject: [PATCH] trivial: amd-gpu: read 1 byte instead of 0 bytes
+
+This should help with failures triggering the write process in the kernel.
+
+Suggested-by: Richard Hughes <richard@hughsie.com>
+Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
+(cherry picked from commit adc581ccd5bc56e685fb53768f8b83a96fc21d2d)
+---
+ plugins/amd-gpu/fu-amd-gpu-device.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/plugins/amd-gpu/fu-amd-gpu-device.c b/plugins/amd-gpu/fu-amd-gpu-device.c
+index 1f75f4eef..73bb2e928 100644
+--- a/plugins/amd-gpu/fu-amd-gpu-device.c
++++ b/plugins/amd-gpu/fu-amd-gpu-device.c
+@@ -217,6 +217,7 @@ fu_amd_gpu_device_write_firmware(FuDevice *device,
+ 	g_autofree gchar *psp_vbflash = NULL;
+ 	g_autoptr(FuIOChannel) image_io = NULL;
+ 	g_autoptr(GBytes) fw = NULL;
++	g_autoptr(GError) error_read = NULL;
+ 	const gchar *base;
+ 
+ 	base = fu_udev_device_get_sysfs_path(FU_UDEV_DEVICE(device));
+@@ -236,8 +237,14 @@ fu_amd_gpu_device_write_firmware(FuDevice *device,
+ 		return FALSE;
+ 
+ 	/* trigger the update (this looks funny but amdgpu returns 0 bytes) */
+-	if (!fu_io_channel_read_raw(image_io, NULL, 0, NULL, 100, FU_IO_CHANNEL_FLAG_NONE, NULL))
+-		g_debug("triggered update");
++	if (!fu_io_channel_read_raw(image_io,
++				    NULL,
++				    1,
++				    NULL,
++				    100,
++				    FU_IO_CHANNEL_FLAG_NONE,
++				    &error_read))
++		g_debug("triggered update: %s", error_read->message);
+ 
+ 	/* poll for completion */
+ 	return fu_device_retry_full(device,
+-- 
+2.43.0
+
