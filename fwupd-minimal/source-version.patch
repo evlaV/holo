@@ -1,0 +1,102 @@
+From 6db86918a951d1c1da0719810e07bac904185bd6 Mon Sep 17 00:00:00 2001
+From: Mario Limonciello <mario.limonciello@amd.com>
+Date: Fri, 27 Sep 2024 11:08:39 -0500
+Subject: [PATCH 1/2] trivial: introduce a key for fwupdmgr --version to show
+ source version
+
+This will be useful to know what it was compiled against.
+
+(cherry picked from commit b969b1f6ddda53571c8ac0c4c9ba3552305c4be0)
+---
+ src/fu-engine.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/fu-engine.c b/src/fu-engine.c
+index 19706523a..c42064bf5 100644
+--- a/src/fu-engine.c
++++ b/src/fu-engine.c
+@@ -8861,6 +8861,12 @@ fu_engine_constructed(GObject *obj)
+ 		fu_context_add_compile_version(self->ctx, "org.freedesktop.gusb", version);
+ 	}
+ #endif
++#ifdef SOURCE_VERSION
++	if (g_strcmp0(SOURCE_VERSION, VERSION) != 0)
++		fu_context_add_compile_version(self->ctx,
++					       "org.freedesktop.fwupd.source",
++					       SOURCE_VERSION);
++#endif
+ #ifdef HAVE_PASSIM
+ 	{
+ 		g_autofree gchar *version = g_strdup_printf("%i.%i.%i",
+-- 
+2.43.0
+
+From 79ab04e655e1757f12b8beec56a5040608b7fe92 Mon Sep 17 00:00:00 2001
+From: Mario Limonciello <mario.limonciello@amd.com>
+Date: Fri, 27 Sep 2024 11:09:12 -0500
+Subject: [PATCH 2/2] Only use SOURCE_VERSION for displaying to a user in
+ --version output
+
+The SOURCE_VERSION key when used elsewhere can cause the wrong results
+for user agent or for comparisons of daemon vs client.
+
+(cherry picked from commit 7c8ec80660bca1adf1a783f18a6ed47fbb4e558f)
+---
+ meson.build     | 4 +---
+ src/fu-daemon.c | 2 +-
+ src/fu-util.c   | 4 ++--
+ 3 files changed, 4 insertions(+), 6 deletions(-)
+
+diff --git a/meson.build b/meson.build
+index 958606944..a9f63d77c 100644
+--- a/meson.build
++++ b/meson.build
+@@ -26,10 +26,8 @@ if git.found()
+     source_version = fwupd_version
+   endif
+   tag = run_command([git, 'describe', '--exact-match'], check: false).returncode() == 0
+-else
+-  source_version = fwupd_version
++  conf.set_quoted('SOURCE_VERSION', source_version)
+ endif
+-conf.set_quoted('SOURCE_VERSION', source_version)
+ 
+ # libtool versioning - this applies to libfwupd
+ #
+diff --git a/src/fu-daemon.c b/src/fu-daemon.c
+index 28580f945..0628e53dd 100644
+--- a/src/fu-daemon.c
++++ b/src/fu-daemon.c
+@@ -2106,7 +2106,7 @@ fu_daemon_daemon_get_property(GDBusConnection *connection_,
+ 	fu_engine_idle_reset(self->engine);
+ 
+ 	if (g_strcmp0(property_name, "DaemonVersion") == 0)
+-		return g_variant_new_string(SOURCE_VERSION);
++		return g_variant_new_string(PACKAGE_VERSION);
+ 
+ 	if (g_strcmp0(property_name, "HostBkc") == 0)
+ 		return g_variant_new_string(fu_engine_get_host_bkc(self->engine));
+diff --git a/src/fu-util.c b/src/fu-util.c
+index d60dfef1c..f8c90486c 100644
+--- a/src/fu-util.c
++++ b/src/fu-util.c
+@@ -4248,14 +4248,14 @@ fu_util_check_daemon_version(FuUtilPrivate *priv, GError **error)
+ 		return FALSE;
+ 	}
+ 
+-	if (g_strcmp0(daemon, SOURCE_VERSION) != 0) {
++	if (g_strcmp0(daemon, PACKAGE_VERSION) != 0) {
+ 		g_set_error(error,
+ 			    FWUPD_ERROR,
+ 			    FWUPD_ERROR_NOT_SUPPORTED,
+ 			    /* TRANSLATORS: error message */
+ 			    _("Unsupported daemon version %s, client version is %s"),
+ 			    daemon,
+-			    SOURCE_VERSION);
++			    PACKAGE_VERSION);
+ 		return FALSE;
+ 	}
+ 
+-- 
+2.43.0
+

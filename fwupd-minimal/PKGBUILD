@@ -5,7 +5,7 @@
 
 pkgname=fwupd-minimal
 pkgver=1.9.19
-pkgrel=4
+pkgrel=5
 pkgdesc="Simple daemon to allow session software to update firmware"
 arch=(x86_64)
 url='https://github.com/fwupd/fwupd'
@@ -55,20 +55,24 @@ checkdepends=(umockdev)
 source=(
   "https://github.com/fwupd/fwupd/releases/download/${pkgver}/fwupd-${pkgver}.tar.xz"{,.asc}
   amd-gpu.patch
+  source-version.patch
   fwupd.sysusers
 )
 sha512sums=('e20f16aa2cf528ecc6262a5c343287aef64fb37667f8d3972daa70f96364041daa0b23149acbd20cbeff059f6428c6c2a317973bc1dd40a39e239350b0eb011e'
             'SKIP'
-            'f7980dcd2d8106673844e6e5cec36813c16f82d60ac83f5d9af0ee23f7b58871cf1dc9f4dddd9396e0148a337c7e185b9b2d410d833e9ecee62c7e0c4cfd3b7e'
+            'b4e4f8c49990721027e0c3ee30a04711b6f9ffa99a2f808fe830f39d5de785869dc4592dc70ccae14e028aeb5335395d413fba0e60ae9b2e31a9089339585022'
+            '6460b8893b22069c64bc2dc44fcc0cf7161ebe2a82687b695e3284fce56da5f8c932c46521e5114d9226b8145059580cd4a9df233059f2f23310c042cdd4b07f'
             '637203080b55eda74a659f58c853a9a723a2dad5da70915b2b0e036c6145a649468ebec700cc83975d9cb5378b9dced8b3a3b26bdbcc75ddc774837355e75deb')
 b2sums=('7e092c0ba2b094fb2041121b7b04b5a5914e85f05213cca4eafeb1826a8291bf733d1b7f8738d35b4a336a0d2d1c0d42582d21831873fae8c7884dbf5d592ee4'
         'SKIP'
-        '3edb2da3e66c7d462873d9ea4b2b86545d9fe11fef63a6fb154124c619905d55fa9abaa112f8e14e58a92391d08e8df7602303f2d9e50f0ba83bf2e2caea8c1f'
+        '1d1b416ae2860cbee54125afcfbf194db48f58bc50c946083f630287f9edda92340255713d77c66776ceffc27c1b960be164f9744bc1fd097e0cd8e575a7c079'
+        'e8d80f12d379dc2d31b107c2bd7de0da28bb6da10cd85db4d85ecbe6d39d0cf875a1802b6184abd9fdbd90432783c72b11621594f00bca26b9ff050d5fa8a5b6'
         'e65ca7da22a20a40882cfc1fe4479643f9a38c90a4f2c3e71e6e5e3de1d6db212a0f17d600097619fe3cdb0a9b860422f8b0b9a9d45441518e51a7eb12a918bb')
 validpgpkeys=(163EB50119225DB3DF8F49EA17ACBA8DFA970E17) # Richard Hughes <richard@hughsie.com>
 
 prepare() {
   patch -d fwupd-${pkgver} -Np1 -i ../amd-gpu.patch
+  patch -d fwupd-${pkgver} -Np1 -i ../source-version.patch
 }
 
 build() {
