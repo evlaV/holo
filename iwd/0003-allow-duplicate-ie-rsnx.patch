@@ -1,0 +1,27 @@
+From: =?UTF-8?q?Vivek=20Das=C2=A0Mohapatra?= <vivek@collabora.com>
+Date: Wed, 02 Oct 2024 23:15:33 +0100
+Subject: [PATCH] Allow duplicate IE RSNX (for Quantum Fiber WiFi 7 pods)
+
+The WiFi 7 hardware in question sends duplicate IEs in its association
+response, and mpdu.c validate_mgmt_ies only allows a small subset of IEs
+to be duplicates. wpa_supplicant and whatever MS Windows uses allow
+this duplication, so in the interests of interop we're going to as well.
+
+  https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1419
+
+IWD upstream are not currently keen on this, discussions are ongoing:
+
+  https://lore.kernel.org/iwd/26febdbb-1184-46be-989b-45aace86f104@collabora.com/T/#u
+---
+ iwd-2.14/mpdu.c
+ 1 file changed, 1 insertion(+)
+
+--- a/src/mpdu.c	2022-01-24 21:28:47.000000000 +0000
++++ b/src/mpdu.c	2024-10-02 23:09:16.156353830 +0100
+@@ -393,6 +393,7 @@ static bool validate_mgmt_ies(const uint8_t *ies, size_t ies_len,
+ 				tag != IE_TYPE_MULTIPLE_BSSID &&
+ 				tag != IE_TYPE_NEIGHBOR_REPORT &&
+ 				tag != IE_TYPE_QUIET_CHANNEL &&
++				tag != IE_TYPE_RSNX &&
+ 				tag != IE_TYPE_FILS_HLP_CONTAINER) {
+ 			struct ie_tlv_iter clone;
