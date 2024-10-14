@@ -4,8 +4,8 @@
 # Contributor: Mirco Tischler <mt-ml at gmx dot de>
 
 pkgname=fwupd-minimal
-pkgver=1.9.19
-pkgrel=5
+pkgver=1.9.26
+pkgrel=1
 pkgdesc="Simple daemon to allow session software to update firmware"
 arch=(x86_64)
 url='https://github.com/fwupd/fwupd'
@@ -54,26 +54,15 @@ makedepends=(
 checkdepends=(umockdev)
 source=(
   "https://github.com/fwupd/fwupd/releases/download/${pkgver}/fwupd-${pkgver}.tar.xz"{,.asc}
-  amd-gpu.patch
-  source-version.patch
   fwupd.sysusers
 )
-sha512sums=('e20f16aa2cf528ecc6262a5c343287aef64fb37667f8d3972daa70f96364041daa0b23149acbd20cbeff059f6428c6c2a317973bc1dd40a39e239350b0eb011e'
+sha512sums=('04684f0be26c1daec9966e62c7db103cce923bb361657c66111e085e9a388e812250ac18774ef83eac672852489acc2ab21b9d7c94a28a8e5564e8bb7d67c0ba'
             'SKIP'
-            'b4e4f8c49990721027e0c3ee30a04711b6f9ffa99a2f808fe830f39d5de785869dc4592dc70ccae14e028aeb5335395d413fba0e60ae9b2e31a9089339585022'
-            '6460b8893b22069c64bc2dc44fcc0cf7161ebe2a82687b695e3284fce56da5f8c932c46521e5114d9226b8145059580cd4a9df233059f2f23310c042cdd4b07f'
             '637203080b55eda74a659f58c853a9a723a2dad5da70915b2b0e036c6145a649468ebec700cc83975d9cb5378b9dced8b3a3b26bdbcc75ddc774837355e75deb')
-b2sums=('7e092c0ba2b094fb2041121b7b04b5a5914e85f05213cca4eafeb1826a8291bf733d1b7f8738d35b4a336a0d2d1c0d42582d21831873fae8c7884dbf5d592ee4'
+b2sums=('11551c22bbce26cb1e7117e76f7d02077cf22889cdf21711a4dc2e523630335efcd20cf44dffecab74c04cd3dbd0cb5faa8277e220e193e613d75c4a9353e623'
         'SKIP'
-        '1d1b416ae2860cbee54125afcfbf194db48f58bc50c946083f630287f9edda92340255713d77c66776ceffc27c1b960be164f9744bc1fd097e0cd8e575a7c079'
-        'e8d80f12d379dc2d31b107c2bd7de0da28bb6da10cd85db4d85ecbe6d39d0cf875a1802b6184abd9fdbd90432783c72b11621594f00bca26b9ff050d5fa8a5b6'
         'e65ca7da22a20a40882cfc1fe4479643f9a38c90a4f2c3e71e6e5e3de1d6db212a0f17d600097619fe3cdb0a9b860422f8b0b9a9d45441518e51a7eb12a918bb')
 validpgpkeys=(163EB50119225DB3DF8F49EA17ACBA8DFA970E17) # Richard Hughes <richard@hughsie.com>
-
-prepare() {
-  patch -d fwupd-${pkgver} -Np1 -i ../amd-gpu.patch
-  patch -d fwupd-${pkgver} -Np1 -i ../source-version.patch
-}
 
 build() {
   local meson_options=(
