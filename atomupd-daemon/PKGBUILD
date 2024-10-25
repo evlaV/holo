@@ -1,7 +1,7 @@
 # Maintainer: Ludovico de Nittis <ludovico.denittis@collabora.com>
 
 pkgname=atomupd-daemon
-pkgver=0.20240827.1
+pkgver=0.20241018.1
 pkgrel=1
 pkgdesc='Atomic updates daemon'
 arch=('x86_64')
