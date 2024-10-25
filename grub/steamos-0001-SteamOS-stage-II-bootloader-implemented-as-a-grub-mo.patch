@@ -74,12 +74,12 @@ new file mode 100644
 index 000000000..e80d66672
 --- /dev/null
 +++ b/grub-core/commands/efi/steamenv.c
-@@ -0,0 +1,1858 @@
+@@ -0,0 +1,1871 @@
 +/*
 + *  steamenv.mod  --  GRand Unified Bootloader SteamOS 3 boot module
 + *
-+ *  Copyright © 2018-2023  Collabora Ltd.
-+ *  Copyright © 2018-2023  Valve Corporation
++ *  Copyright © 2018-2024  Collabora Ltd.
++ *  Copyright © 2018-2024  Valve Corporation
 + *
 + *  This file is NOT part of GRUB, but is distributed under the same terms.
 + *
@@ -113,6 +113,7 @@ index 000000000..e80d66672
 +#include <grub/parser.h>
 +#include <grub/reader.h>
 +#include <grub/normal.h>
++#include <grub/video.h>
 +
 +GRUB_MOD_LICENSE ("GPLv3+");
 +
@@ -252,45 +253,45 @@ index 000000000..e80d66672
 +struct efi_file_protocol
 +{
 +  grub_efi_uint64_t revision;
-+  grub_efi_status_t (*open) (efi_file_protocol_t *this,
-+                             efi_file_protocol_t **new_handle,
-+                             const grub_efi_char16_t *file_name,
-+                             grub_efi_uint64_t open_mode,
-+                             grub_efi_uint64_t attributes);
-+  grub_efi_status_t (*close) (efi_file_protocol_t *this);
-+  grub_efi_status_t (*delete) (efi_file_protocol_t *this);
-+  grub_efi_status_t (*read) (efi_file_protocol_t * this,
-+                             grub_efi_uintn_t *buffer_size,
-+                             void *buffer);
-+  grub_efi_status_t (*write) (efi_file_protocol_t *this,
-+                              grub_efi_uintn_t *buffer_size,
-+                              void *buffer);
-+  grub_efi_status_t (*get_position) (efi_file_protocol_t *this,
-+                                     grub_efi_uint64_t *position);
-+  grub_efi_status_t (*set_position) (efi_file_protocol_t *this,
-+                                     grub_efi_uint64_t position);
-+  grub_efi_status_t (*get_info) (efi_file_protocol_t *this,
-+                                 grub_efi_guid_t *information_type,
-+                                 grub_efi_uintn_t *buffer_size,
-+                                 void *buffer);
-+  grub_efi_status_t (*set_info) (efi_file_protocol_t *this,
-+                                 grub_efi_guid_t *information_type,
-+                                 grub_efi_uintn_t buffer_size,
-+                                 void *buffer);
-+  grub_efi_status_t (*flush) (efi_file_protocol_t *this);
++  grub_efi_status_t (__grub_efi_api *open) (efi_file_protocol_t *this,
++                                            efi_file_protocol_t **new_handle,
++                                            const grub_efi_char16_t *file_name,
++                                            grub_efi_uint64_t open_mode,
++                                            grub_efi_uint64_t attributes);
++  grub_efi_status_t (__grub_efi_api *close) (efi_file_protocol_t *this);
++  grub_efi_status_t (__grub_efi_api *delete) (efi_file_protocol_t *this);
++  grub_efi_status_t (__grub_efi_api *read) (efi_file_protocol_t * this,
++                                            grub_efi_uintn_t *buffer_size,
++                                            void *buffer);
++  grub_efi_status_t (__grub_efi_api *write) (efi_file_protocol_t *this,
++                                             grub_efi_uintn_t *buffer_size,
++                                             void *buffer);
++  grub_efi_status_t (__grub_efi_api *get_position) (efi_file_protocol_t *this,
++                                                    grub_efi_uint64_t *position);
++  grub_efi_status_t (__grub_efi_api *set_position) (efi_file_protocol_t *this,
++                                                    grub_efi_uint64_t position);
++  grub_efi_status_t (__grub_efi_api *get_info) (efi_file_protocol_t *this,
++                                                grub_guid_t *information_type,
++                                                grub_efi_uintn_t *buffer_size,
++                                                void *buffer);
++  grub_efi_status_t (__grub_efi_api *set_info) (efi_file_protocol_t *this,
++                                                grub_guid_t *information_type,
++                                                grub_efi_uintn_t buffer_size,
++                                                void *buffer);
++  grub_efi_status_t (__grub_efi_api *flush) (efi_file_protocol_t *this);
 +
-+  grub_efi_status_t (*openx) (efi_file_protocol_t *this,
-+                              efi_file_protocol_t **new_handle,
-+                              grub_efi_char16_t *file_name,
-+                              grub_efi_uint64_t open_mode,
-+                              grub_efi_uint64_t attributes,
-+                              efi_file_io_token_t *token);
-+  grub_efi_status_t (*readx) (efi_file_protocol_t *this,
-+                              efi_file_io_token_t *token);
-+  grub_efi_status_t (*writex) (efi_file_protocol_t *this,
-+                               efi_file_io_token_t *token);
-+  grub_efi_status_t (*flushx) (efi_file_protocol_t *this,
-+                               efi_file_io_token_t *token);
++  grub_efi_status_t (__grub_efi_api *openx) (efi_file_protocol_t *this,
++                                             efi_file_protocol_t **new_handle,
++                                             grub_efi_char16_t *file_name,
++                                             grub_efi_uint64_t open_mode,
++                                             grub_efi_uint64_t attributes,
++                                             efi_file_io_token_t *token);
++  grub_efi_status_t (__grub_efi_api *readx) (efi_file_protocol_t *this,
++                                             efi_file_io_token_t *token);
++  grub_efi_status_t (__grub_efi_api *writex) (efi_file_protocol_t *this,
++                                              efi_file_io_token_t *token);
++  grub_efi_status_t (__grub_efi_api *flushx) (efi_file_protocol_t *this,
++                                              efi_file_io_token_t *token );
 +} GRUB_PACKED;
 +
 +typedef struct efi_simple_file_system_protocol
@@ -299,7 +300,7 @@ index 000000000..e80d66672
 +struct efi_simple_file_system_protocol
 +{
 +  grub_uint64_t revision;
-+  grub_efi_status_t (*open_volume)
++  grub_efi_status_t (__grub_efi_api *open_volume)
 +    (efi_simple_file_system_protocol_t *this,
 +     efi_file_protocol_t **t);
 +} GRUB_PACKED;
@@ -318,20 +319,20 @@ index 000000000..e80d66672
 +#define TZ_LOCAL ((grub_efi_uint16_t) 0x07ff)
 +
 +static int
-+cmp_guids (grub_efi_guid_t *a, grub_efi_guid_t *b)
++cmp_guids (grub_guid_t *a, grub_guid_t *b)
 +{
-+  return grub_memcmp (a, b, sizeof(grub_efi_guid_t));
++  return grub_memcmp (a, b, sizeof(grub_guid_t));
 +}
 +
 +static void *
-+get_handle_protocol (grub_efi_handle_t handle, grub_efi_guid_t *id)
++get_handle_protocol (grub_efi_handle_t handle, grub_guid_t *id)
 +{
 +  return grub_efi_open_protocol (handle, id,
 +                                 GRUB_EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
 +}
 +
 +static void *
-+get_protocol_handles (grub_efi_guid_t *proto_guid, grub_efi_uintn_t *count)
++get_protocol_handles (grub_guid_t *proto_guid, grub_efi_uintn_t *count)
 +{
 +  return grub_efi_locate_handle( GRUB_EFI_BY_PROTOCOL, proto_guid, NULL, count );
 +}
@@ -548,8 +549,7 @@ index 000000000..e80d66672
 +  grub_efi_time_t now = { 0 };
 +  grub_efi_status_t res;
 +
-+  res = efi_call_2 (grub_efi_system_table->runtime_services->get_time,
-+                     &now, NULL);
++  res = grub_efi_system_table->runtime_services->get_time(&now, NULL);
 +
 +  if (res != GRUB_EFI_SUCCESS)
 +    return 0;
@@ -572,13 +572,13 @@ index 000000000..e80d66672
 +  void *mem = NULL;
 +  grub_efi_status_t res;
 +
-+  res = efi_call_3 (grub_efi_system_table->boot_services->allocate_pool,
-+                    GRUB_EFI_BOOT_SERVICES_DATA, size, &mem);
++  res = grub_efi_system_table->boot_services->allocate_pool(GRUB_EFI_BOOT_SERVICES_DATA,
++                                                            size, &mem);
 +
 +  if (res != GRUB_EFI_SUCCESS)
 +    return NULL;
 +
-+  efi_call_3 (grub_efi_system_table->boot_services->set_mem, mem, size, 0);
++  grub_efi_system_table->boot_services->set_mem(mem, size, 0);
 +
 +  return mem;
 +}
@@ -587,7 +587,7 @@ index 000000000..e80d66672
 +efi_free (void *mem)
 +{
 +  if (mem)
-+    efi_call_1 (grub_efi_system_table->boot_services->free_pool, mem);
++    grub_efi_system_table->boot_services->free_pool(mem);
 +}
 +// ============================================================================
 +// wide char/string utilities
@@ -648,16 +648,16 @@ index 000000000..e80d66672
 +  efi_file_protocol_t *root = NULL;
 +  grub_efi_status_t res;
 +
-+  res = efi_call_2 (fs->open_volume, fs, &root);
++  res = fs->open_volume(fs, &root);
 +  if (res != GRUB_EFI_SUCCESS)
 +    return NULL;
 +
 +  return root;
 +}
 +
-+static grub_efi_guid_t device_path_partition_uuid (grub_efi_device_path_t *dp)
++static grub_guid_t device_path_partition_uuid (grub_efi_device_path_t *dp)
 +{
-+  grub_efi_guid_t none = NULL_GUID;
++  grub_guid_t none = NULL_GUID;
 +
 +  if( !dp )
 +    return none;
@@ -668,14 +668,14 @@ index 000000000..e80d66672
 +           GRUB_EFI_DEVICE_PATH_SUBTYPE( dp ) ==
 +           GRUB_EFI_HARD_DRIVE_DEVICE_PATH_SUBTYPE )
 +        {
-+          grub_efi_guid_t *guid;
++          grub_guid_t *guid;
 +          grub_efi_hard_drive_device_path_t *hd =
 +            (grub_efi_hard_drive_device_path_t *)dp;
 +
 +          if( hd->signature_type != SIG_TYPE_GUID )
 +            break;
 +
-+          guid = (grub_efi_guid_t *)&hd->partition_signature[0];
++          guid = (grub_guid_t *)&hd->partition_signature[0];
 +
 +          return *guid;
 +        }
@@ -687,12 +687,12 @@ index 000000000..e80d66672
 +}
 +
 +static void
-+get_root_partuuid (grub_efi_guid_t *guid)
++get_root_partuuid (grub_guid_t *guid)
 +{
 +  if( !guid )
 +    return;
 +
-+  grub_efi_guid_t dp_guid = GRUB_EFI_DEVICE_PATH_GUID;
++  grub_guid_t dp_guid = GRUB_EFI_DEVICE_PATH_GUID;
 +  grub_efi_loaded_image_t *image =
 +    grub_efi_get_loaded_image( grub_efi_image_handle );
 +  grub_efi_device_path_t *dp =
@@ -703,10 +703,10 @@ index 000000000..e80d66672
 +
 +// get an efi file handle for the root of the filesystem on which
 +// grub's EFI binary (ie this program) resides:
-+static efi_file_protocol_t *efi_mount_current_root (grub_efi_guid_t *guid)
++static efi_file_protocol_t *efi_mount_current_root (grub_guid_t *guid)
 +{
 +  grub_efi_loaded_image_t *image;
-+  grub_efi_guid_t fs_guid = GRUB_EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
++  grub_guid_t fs_guid = GRUB_EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
 +  efi_simple_file_system_protocol_t *fs = NULL;
 +
 +  image = grub_efi_get_loaded_image( grub_efi_image_handle );
@@ -731,7 +731,7 @@ index 000000000..e80d66672
 +efi_close (efi_file_protocol_t *fh)
 +{
 +  if (fh)
-+    efi_call_1 (fh->close, fh);
++    fh->close(fh);
 +}
 +
 +static efi_file_protocol_t *
@@ -766,7 +766,7 @@ index 000000000..e80d66672
 +      return NULL;
 +    }
 +
-+  res = efi_call_5 (dir->open, dir, &fh, path, mode, attr);
++  res = dir->open(dir, &fh, path, mode, attr);
 +  if (res != GRUB_EFI_SUCCESS)
 +    return NULL;
 +
@@ -795,7 +795,7 @@ index 000000000..e80d66672
 +efi_stat_fh (efi_file_protocol_t *fh)
 +{
 +  grub_efi_uintn_t bufsize = 0;
-+  grub_efi_guid_t info_guid = EFI_FILE_INFO_ID;
++  grub_guid_t info_guid = EFI_FILE_INFO_ID;
 +  efi_file_info_t *info = NULL;
 +  grub_efi_status_t res;
 +
@@ -807,7 +807,7 @@ index 000000000..e80d66672
 +  if (!info)
 +    return NULL;
 +
-+  res = efi_call_4 (fh->get_info, fh, &info_guid, &bufsize, info);
++  res = fh->get_info(fh, &info_guid, &bufsize, info);
 +
 +  if (res != GRUB_EFI_SUCCESS)
 +    {
@@ -823,19 +823,19 @@ index 000000000..e80d66672
 +                 efi_file_info_t *info,
 +                 grub_efi_uintn_t bsize)
 +{
-+  grub_efi_guid_t info_guid = EFI_FILE_INFO_ID;
++  grub_guid_t info_guid = EFI_FILE_INFO_ID;
 +
 +  if (bsize == 0)
 +    bsize = EFI_FILE_INFO_SAFE_SIZE;
 +
-+  return efi_call_4 (fh->set_info, fh, &info_guid, bsize, info);
++  return fh->set_info(fh, &info_guid, bsize, info);
 +}
 +
 +static grub_efi_uintn_t
 +efi_write (efi_file_protocol_t *fh, const char *buf, grub_efi_uintn_t bytes)
 +{
 +  grub_efi_uintn_t written = bytes;
-+  grub_efi_status_t res = efi_call_3 (fh->write, fh, &written, (char *)buf);
++  grub_efi_status_t res = fh->write(fh, &written, (char *)buf);
 +
 +  switch (res)
 +    {
@@ -853,11 +853,11 @@ index 000000000..e80d66672
 +  grub_efi_status_t res = GRUB_ERR_NONE;
 +  grub_efi_uint64_t rv;
 +
-+  res = efi_call_2( fh->set_position, fh, (grub_efi_uint64_t)pos );
++  res = fh->set_position( fh, (grub_efi_uint64_t)pos );
 +  if( res != GRUB_EFI_SUCCESS )
 +    return -1;
 +
-+  res = efi_call_2( fh->get_position, fh, &rv );
++  res = fh->get_position( fh, &rv );
 +  if( res != GRUB_EFI_SUCCESS )
 +    return -1;
 +
@@ -894,7 +894,7 @@ index 000000000..e80d66672
 +
 +  data[alloc] = (char)0;
 +
-+  res = efi_call_3( fh->read, fh, &alloc, data );
++  res = fh->read( fh, &alloc, data );
 +  if( res != GRUB_EFI_SUCCESS )
 +    goto cleanup;
 +
@@ -919,7 +919,7 @@ index 000000000..e80d66672
 +  if (bufsize < sizeof(efi_file_info_t) + 4)
 +    return GRUB_EFI_BUFFER_TOO_SMALL;
 +
-+  res = efi_call_3( dir->read, dir, size, dirent );
++  res = dir->read( dir, size, dirent );
 +
 +  // 0 indicates EOD
 +  // Otherwise copy the fixed dirent size back in since we just want
@@ -963,8 +963,8 @@ index 000000000..e80d66672
 +    return 0;
 +  item->value.string.size = vsize;
 +
-+  efi_call_3( grub_efi_system_table->boot_services->copy_mem,
-+              item->value.string.bytes, start, vsize );
++  grub_efi_system_table->boot_services->copy_mem( item->value.string.bytes,
++                                                  start, vsize );
 +  item->value.string.bytes[vsize] = (char)0;
 +
 +  switch (item->type)
@@ -1083,7 +1083,7 @@ index 000000000..e80d66672
 +}
 +
 +static char *
-+efi_guid_to_str (const grub_efi_guid_t *uuid)
++efi_guid_to_str (const grub_guid_t *uuid)
 +{
 +  char str[GUID_STRLEN] = { 0 };
 +
@@ -1096,7 +1096,7 @@ index 000000000..e80d66672
 +// the efi partition uuid against the "efi" entry in
 +// each partset file in turn:
 +static grub_efi_char16_t *
-+get_os_image_name (efi_file_protocol_t *root, grub_efi_guid_t *uuid)
++get_os_image_name (efi_file_protocol_t *root, grub_guid_t *uuid)
 +{
 +  grub_efi_char16_t *image_name = NULL;
 +  efi_file_protocol_t *info_dir = NULL;
@@ -1207,17 +1207,17 @@ index 000000000..e80d66672
 +static efi_file_protocol_t *
 +get_esp_root (grub_efi_handle_t *handles,
 +              grub_efi_uintn_t n_handles,
-+              grub_efi_guid_t *efi_uuid,
++              grub_guid_t *efi_uuid,
 +              const char *esp_uuid)
 +{
 +  efi_file_protocol_t *esp_root = NULL;
-+  grub_efi_guid_t dp_guid = GRUB_EFI_DEVICE_PATH_GUID;
-+  grub_efi_guid_t fs_guid = GRUB_EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
++  grub_guid_t dp_guid = GRUB_EFI_DEVICE_PATH_GUID;
++  grub_guid_t fs_guid = GRUB_EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
 +
 +  // find the esp filesystem by matching its partition uuid with esp_uuid
 +  for( grub_efi_uintn_t i = 0; (i < n_handles) && (esp_root == NULL); i++ )
 +    {
-+      grub_efi_guid_t part_uuid = NULL_GUID;
++      grub_guid_t part_uuid = NULL_GUID;
 +      grub_efi_device_path_t *maybe_esp_dev = NULL;
 +      char *maybe_esp_uuid = NULL;
 +      efi_simple_file_system_protocol_t *esp_fs = NULL;
@@ -1280,12 +1280,12 @@ index 000000000..e80d66672
 +
 +static grub_err_t
 +load_steamenv (cfg_entry_t **cfg,
-+               grub_efi_guid_t *efi_uuid,
++               grub_guid_t *efi_uuid,
 +               efi_file_protocol_t *root,
 +               efi_file_protocol_t **cfg_root,
 +               efi_file_protocol_t **cfg_file)
 +{
-+  grub_efi_guid_t fs_guid = GRUB_EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
++  grub_guid_t fs_guid = GRUB_EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
 +  efi_file_protocol_t *cffile = NULL;
 +  efi_file_protocol_t *esp_root = NULL;
 +  grub_err_t rv = GRUB_ERR_NONE;
@@ -1353,8 +1353,7 @@ index 000000000..e80d66672
 +      goto cleanup;
 +    }
 +
-+  efi_call_3( grub_efi_system_table->boot_services->copy_mem,
-+              *cfg, bootspec, sizeof(bootspec) );
++  grub_efi_system_table->boot_services->copy_mem(*cfg, bootspec, sizeof(bootspec));
 +
 +  res = set_config_from_data( *cfg, data, size );
 +  if( res != GRUB_EFI_SUCCESS )
@@ -1629,7 +1628,7 @@ index 000000000..e80d66672
 +static grub_err_t
 +process_boot_config (void)
 +{
-+  grub_efi_guid_t uuid = NULL_GUID;
++  grub_guid_t uuid = NULL_GUID;
 +  efi_file_protocol_t *cfg_file = NULL;
 +  efi_file_protocol_t *cfg_root = NULL;
 +  efi_file_protocol_t *root = NULL;
@@ -1746,9 +1745,9 @@ index 000000000..e80d66672
 +grub_cmd_steamenv_boot (grub_command_t cmd __attribute__ ((unused)), int argc,
 +                        char **argv)
 +{
-+  grub_efi_guid_t chainloader = GRUB_EFI_CHAINLOADER_VARIABLE_GUID;
++  grub_guid_t chainloader = GRUB_EFI_CHAINLOADER_VARIABLE_GUID;
 +  grub_command_t cmd_next = { 0 };
-+  grub_efi_guid_t uuid = NULL_GUID;
++  grub_guid_t uuid = NULL_GUID;
 +  char **next_argv = NULL;
 +  static char args[4096];
 +  grub_size_t datasize;
@@ -1808,8 +1807,9 @@ index 000000000..e80d66672
 +
 +  if( image_argc || argc )
 +    {
-+      grub_efi_guid_t none = NULL_GUID;
++      grub_guid_t none = NULL_GUID;
 +      char *efi_uuid = NULL;
++      const char *video_mode = NULL;
 +
 +      _DBG("C%d", mode_verbose);
 +      // put args from this grub command call into the kernel command line:
@@ -1869,7 +1869,20 @@ index 000000000..e80d66672
 +      efi_free( efi_uuid );
 +      efi_uuid = NULL;
 +
++      // force the video mode here (cmd_next may alter it
++      // again but this is the one we expect at this point):
++      video_mode = grub_env_get ("steamenv_kernel_mode");
++      if( video_mode && *video_mode != '\0' )
++        {
++          char *tmp = grub_xasprintf ("%s; auto", video_mode);
++          grub_err_t vrc = grub_video_set_mode (tmp, 0, 0);
++          _DBG("V%s.%d", video_mode, vrc);
++          grub_free (tmp);
++        }
++      else
++          _DBG("Vnull");
 +#ifdef DEBUG_TO_KERNEL_CMDLINE
++      // last chance to append to kernel cmdline:
 +      len += grub_snprintf (&args[len], sizeof (args) - len,
 +                            " sdb=%s", &sedbg[0]);
 +#endif
@@ -1934,55 +1947,64 @@ index 000000000..e80d66672
 +  grub_unregister_command (boot);
 +}
 diff --git a/util/grub.d/10_linux.in b/util/grub.d/10_linux.in
-index 58c9d9cd0..243890e1c 100644
+index 62da9bae3..99c5671a0 100644
 --- a/util/grub.d/10_linux.in
 +++ b/util/grub.d/10_linux.in
-@@ -41,6 +41,9 @@ else
-     Ubuntu|Kubuntu)
-       OS="${GRUB_DISTRIBUTOR}"
-       ;;
-+    SteamOS)
-+      OS="${GRUB_DISTRIBUTOR}"
-+      ;;
-     *)
-       OS="${GRUB_DISTRIBUTOR} GNU/Linux"
-       ;;
-@@ -166,6 +169,10 @@ linux_entry ()
-       echo "	gfxmode \$linux_gfx_mode" | sed "s/^/$submenu_indentation/"
-   fi
+@@ -31,7 +31,7 @@ else
+ if [ "x${GRUB_DISTRIBUTOR}" = "x" ] ; then
+   OS=GNU/Linux
+ else
+-  OS="${GRUB_DISTRIBUTOR} GNU/Linux"
++  OS="${GRUB_DISTRIBUTOR}"
+   CLASS="--class $(echo ${GRUB_DISTRIBUTOR} | tr 'A-Z' 'a-z' | cut -d' ' -f1|LC_ALL=C sed 's,[^[:alnum:]_],_,g') ${CLASS}"
+ fi
  
-+  if [[ "x${GRUB_DISABLE_STEAMCL_ENVIRONMENT:-false}" != xtrue ]]; then
-+    echo "	insmod steamenv" | sed "s/^/$submenu_indentation/"
+@@ -137,7 +140,11 @@ linux_entry ()
+       if [ "x$GRUB_GFXPAYLOAD_LINUX" != xtext ]; then
+ 	  echo "	load_video" | sed "s/^/$submenu_indentation/"
+       fi
+-      echo "	set gfxpayload=$GRUB_GFXPAYLOAD_LINUX" | sed "s/^/$submenu_indentation/"
++      echo "	set gfxpayload=\$linux_gfx_mode" | sed "s/^/$submenu_indentation/"
 +  fi
 +
-   echo "	insmod gzio" | sed "s/^/$submenu_indentation/"
-   echo "	if [ x\$grub_platform = xxen ]; then insmod xzio; insmod lzopio; fi" | sed "s/^/$submenu_indentation/"
++  if [[ "x${GRUB_DISABLE_STEAMCL_ENVIRONMENT:-false}" != xtrue ]]; then
++    echo "	insmod steamenv" | sed "s/^/$submenu_indentation/"
+   fi
  
-@@ -186,6 +193,15 @@ linux_entry ()
+   echo "	insmod gzio" | sed "s/^/$submenu_indentation/"
+@@ -159,9 +166,15 @@ linux_entry ()
  	echo	'$(echo "$message" | grub_quote)'
  EOF
    fi
-+  if [[ "x${GRUB_DISABLE_STEAMCL_ENVIRONMENT:-false}" != xtrue ]] && test -e "${linux}.efi.signed"; then
-+     sed "s/^/$submenu_indentation/" << EOF
-+	steamenv_boot	linux ${rel_dirname}/${basename}.efi.signed ${args}
-+EOF
-+  elif [[ "x${GRUB_DISABLE_STEAMCL_ENVIRONMENT:-false}" != xtrue ]]; then
+-  sed "s/^/$submenu_indentation/" << EOF
+-	linux	${rel_dirname}/${basename} root=${linux_root_device_thisversion} ro ${args}
++  if [[ "x${GRUB_DISABLE_STEAMCL_ENVIRONMENT:-false}" != xtrue ]]; then
 +     sed "s/^/$submenu_indentation/" << EOF
 +	steamenv_boot	linux ${rel_dirname}/${basename} ${args}
-+EOF
-+  else
-   if test -d /sys/firmware/efi && test -e "${linux}.efi.signed"; then
-     sed "s/^/$submenu_indentation/" << EOF
- 	linux	${rel_dirname}/${basename}.efi.signed root=${linux_root_device_thisversion} ro ${args}
-@@ -194,6 +210,7 @@ EOF
-     sed "s/^/$submenu_indentation/" << EOF
- 	linux	${rel_dirname}/${basename} root=${linux_root_device_thisversion} ro ${args}
  EOF
++  else
++     sed "s/^/$submenu_indentation/" << EOF
++	linux	${rel_dirname}/${basename} root=${linux_root_device_thisversion} rw ${args}
++EOF
 +  fi
-   fi
    if test -n "${initrd}" ; then
      # TRANSLATORS: ramdisk isn't identifier. Should be translated.
-@@ -358,6 +375,12 @@ while [ "x$list" != "x" ] ; do
+     if [ x"$quiet_boot" = x0 ] || [ x"$type" != xsimple ]; then
+@@ -210,6 +223,13 @@ prepare_root_cache=
+ boot_device_id=
+ title_correction_code=
+ 
++if [ "x$GRUB_GFXPAYLOAD_LINUX" != x ]; then
++  echo "set linux_gfx_mode=\${steamenv_kernel_mode}"
++else
++  echo "set linux_gfx_mode=keep"
++fi
++echo "export linux_gfx_mode"
++
+ # Extra indentation to add to menu entries in a submenu. We're not in a submenu
+ # yet, so it's empty. In a submenu it will be equal to '\t' (one tab).
+ submenu_indentation=""
+@@ -284,6 +304,12 @@ for linux in ${reverse_sorted_list}; do
        initramfs=`grep CONFIG_INITRAMFS_SOURCE= "${config}" | cut -f2 -d= | tr -d \"`
    fi
  
@@ -2023,6 +2045,107 @@ index da5f28876..ca7bc6629 100644
  EOF
      ;;
      linux)
+diff --git a/util/grub.d/00_header.in b/util/grub.d/00_header.in
+index 6a316a5ba..366d9b035 100644
+--- a/util/grub.d/00_header.in
++++ b/util/grub.d/00_header.in
+@@ -175,6 +175,20 @@ EOF
+     font="`make_system_path_relative_to_its_root "${font_path}"`"
+ fi
+ 
++## start header steamenv sub block
++insmod steamenv
++steamenv_noisy_loader_mode="1280x800"
++steamenv_noisy_kernel_mode="800x1280"
++steamenv_loader_mode=${GRUB_GFXMODE}
++steamenv_kernel_mode=${GRUB_GFXPAYLOAD_LINUX:-keep}
++steamenv_quiet="loglevel=3 splash quiet plymouth.ignore-serial-consoles fbcon=vc:4-6"
++steamenv_noisy="loglevel=5 sysrq_always_enabled splash=verbose fbcon=nodefer"
++steamenv_verbosity=""
++timeout=0
++timeout_style=menu
++steamenv_init
++## end steamenv header sub block
++
+ if loadfont \$font ; then
+ EOF
+ 	    else
+@@ -185,7 +199,7 @@ EOF
+ 	fi
+ 
+     cat << EOF
+-  set gfxmode=${GRUB_GFXMODE}
++  set gfxmode=\${steamenv_loader_mode}
+   load_video
+   insmod gfxterm
+ EOF
+@@ -280,66 +294,6 @@ EOF
+     fi
+ fi
+ 
+-make_timeout ()
+-{
+-    if [ "x${3}" != "x" ] ; then
+-	timeout="${2}"
+-	style="${3}"
+-    elif [ "x${1}" != "x" ] && [ "x${1}" != "x0" ] ; then
+-	# Handle the deprecated GRUB_HIDDEN_TIMEOUT scheme.
+-	timeout="${1}"
+-	if [ "x${2}" != "x0" ] ; then
+-	    grub_warn "$(gettext "Setting GRUB_TIMEOUT to a non-zero value when GRUB_HIDDEN_TIMEOUT is set is no longer supported.")"
+-	fi
+-	if [ "x${GRUB_HIDDEN_TIMEOUT_QUIET}" = "xtrue" ] ; then
+-	    style="hidden"
+-	    verbose=
+-	else
+-	    style="countdown"
+-	    verbose=" --verbose"
+-	fi
+-    else
+-	# No hidden timeout, so treat as GRUB_TIMEOUT_STYLE=menu
+-	timeout="${2}"
+-	style="menu"
+-    fi
+-    cat << EOF
+-if [ x\$feature_timeout_style = xy ] ; then
+-  set timeout_style=${style}
+-  set timeout=${timeout}
+-EOF
+-    if [ "x${style}" = "xmenu" ] ; then
+-	cat << EOF
+-# Fallback normal timeout code in case the timeout_style feature is
+-# unavailable.
+-else
+-  set timeout=${timeout}
+-EOF
+-    else
+-	cat << EOF
+-# Fallback hidden-timeout code in case the timeout_style feature is
+-# unavailable.
+-elif sleep${verbose} --interruptible ${timeout} ; then
+-  set timeout=0
+-EOF
+-    fi
+-    cat << EOF
+-fi
+-EOF
+-}
+-
+-if [ "x$GRUB_BUTTON_CMOS_ADDRESS" != "x" ]; then
+-    cat <<EOF
+-if cmostest $GRUB_BUTTON_CMOS_ADDRESS ; then
+-EOF
+-make_timeout "${GRUB_HIDDEN_TIMEOUT_BUTTON}" "${GRUB_TIMEOUT_BUTTON}" "${GRUB_TIMEOUT_STYLE_BUTTON}"
+-echo else
+-make_timeout "${GRUB_HIDDEN_TIMEOUT}" "${GRUB_TIMEOUT}" "${GRUB_TIMEOUT_STYLE}"
+-echo fi
+-else
+-make_timeout "${GRUB_HIDDEN_TIMEOUT}" "${GRUB_TIMEOUT}" "${GRUB_TIMEOUT_STYLE}"
+-fi
+-
+ if [ "x$GRUB_BUTTON_CMOS_ADDRESS" != "x" ] && [ "x$GRUB_BUTTON_CMOS_CLEAN" = "xyes" ]; then
+     cat <<EOF
+ cmosclean $GRUB_BUTTON_CMOS_ADDRESS
 -- 
 2.30.1
 

@@ -1,6 +1,6 @@
 # Maintainer : Christian Hesse <mail@eworm.de>
-# Maintainer : Ronald van Haren <ronald.archlinux.org>
-# Contributor: Tobias Powalowski <tpowa@archlinux.org>
+# Maintainer : Tobias Powalowski <tpowa@archlinux.org>
+# Contributor: Ronald van Haren <ronald.archlinux.org>
 # Contributor: Keshav Amburay <(the ddoott ridikulus ddoott rat) (aatt) (gemmaeiil) (ddoott) (ccoomm)>
 
 ## "1" to enable IA32-EFI build in Arch x86_64, "0" to disable
@@ -18,15 +18,15 @@ _GRUB_EMU_BUILD="0"
 pkgname='grub'
 pkgdesc='GNU GRand Unified Bootloader (2)'
 epoch=2
-_tag='53c5000739db114c229fe69ec3d4b76b92441098' # git rev-parse grub-${_pkgver}
-_gnulib_commit='be584c56eb1311606e5ea1a36363b97bddb6eed3'
-_unifont_ver='14.0.01'
-_pkgver=2.06
+_tag='03e6ea18f6f834f177cad017279bedbb0a3de594' # git rev-parse grub-${_pkgver}
+_gnulib_commit='cfdbd92718d6d4989bfe885448063d7863aa69dc' # git rev-parse origin/stable-202407
+_pkgver=2.12
+_unifont_ver='15.1.05'
 pkgver=${_pkgver/-/}
-pkgrel=4.10
+pkgrel=2.1
 url='https://www.gnu.org/software/grub/'
 arch=('x86_64')
-license=('GPL3')
+license=('GPL-3.0-or-later')
 backup=('etc/default/grub'
         'etc/grub.d/40_custom')
 install="${pkgname}.install"
@@ -37,10 +37,10 @@ replaces=('grub-common' 'grub-bios' 'grub-emu' "grub-efi-${_EFI_ARCH}")
 provides=('grub-common' 'grub-bios' 'grub-emu' "grub-efi-${_EFI_ARCH}")
 
 makedepends=('git' 'rsync' 'xz' 'freetype2' 'ttf-dejavu' 'python>=3.11' 'python<3.12' 'autogen'
-             'texinfo' 'help2man' 'gettext' 'device-mapper' 'fuse2')
+             'texinfo' 'help2man' 'gettext' 'device-mapper' 'fuse3')
 depends=('sh' 'xz' 'gettext' 'device-mapper')
 optdepends=('freetype2: For grub-mkfont usage'
-            'fuse2: For grub-mount usage'
+            'fuse3: For grub-mount usage'
             'dosfstools: For grub-mkrescue FAT FS and EFI support'
             'lzop: For grub-mkrescue LZO support'
             'efibootmgr: For grub-install EFI support'
@@ -58,161 +58,178 @@ validpgpkeys=('E53D497F3FA42AD8C9B4D1E835A93B74E82E4209'  # Vladimir 'phcoder' S
               'BE5C23209ACDDACEB20DB0A28C8189F1988C2166'  # Daniel Kiper <dkiper@net-space.pl>
               '95D2E9AB8740D8046387FD151A09227B1F435A33') # Paul Hardy <unifoundry@unifoundry.com>
 
+# this is for tracking patches from elsewhere (debian, arch, etc)
+# that we should not be using. It's not standard pkgbuild but it
+# lets us catch patches if someone adds them back in:
+declare -A excluded_patches=(
+    ['arch-0003-support-dropins-for-default-configuration.patch']='Arch: subset of debian-default-grub-d.patch'
+    ['debian-olpc-prefix-hack.patch']='OpenBoot/OFW: ieee1275 support hack - not required'
+    ['debian-grub-legacy-0-based-partitions.patch']='GRUB legacy support - obsolete'
+    ['debian-disable-floppies.patch']='Ignores floppies: we do not need to as they do not exist'
+    ['debian-gfxpayload-keep-default.patch']='Suppresses the ‘keep’ graphics default - not needed'
+    ['debian-mkconfig-ubuntu-distributor.patch']='Ubuntu: Distribution specific label changes'
+    ['debian-install-stage2-confusion.patch']='GRUB legacy support - obsolete'
+    ['debian-install-efi-fallback.patch']='Fallback to non-EFI boot: Not supported by x86 SteamOS'
+    ['debian-mkconfig-ubuntu-recovery.patch']='Ubuntu: recovery mode support - not needed'
+    ['debian-install-locale-langpack.patch']='Ubuntu: langpack support - not needed'
+    ['debian-install-efi-adjust-distributor.patch']='Cosmetic kubuntu and devuan labels - not needed'
+    ['debian-quick-boot.patch']='Quick Boot: not useful on EFI as there is no keydown detection'
+    ['debian-quick-boot-lvm.patch']='Quick Boot: not useful on EFI as there is no keydown detection'
+    ['debian-gfxpayload-dynamic.patch']='Legacy: boot gfxpayload=keep support - not needed'
+    ['debian-vt-handoff.patch']='Legacy: VT handoff for flicker free boot - not needed'
+    ['debian-probe-fusionio.patch']='FusionIO disc support - obsolete'
+    ['debian-ignore-grub_func_test-failures.patch']='Disable a video mode test - not needed'
+    ['debian-mkconfig-recovery-title.patch']='Text for recovery boot entries - not needed'
+    ['debian-skip-grub_cmd_set_date.patch']='Disables a test - not needed'
+    ['debian-pc-verifiers-module.patch']='Disables verifiers on grub-pc - not a supported platform for SteamOS'
+    ['debian-revert-term-ns8250-spcr.patch']='Legacy: diables serial auto detection on grub-pc - not a supported platform for SteamOS'
+    ['debian-install-powerpc-machtypes.patch']='PowerPC: NVRAM quirks - not needed'
+    ['debian-ieee1275-clear-reset.patch']='PowerPC: OFW text mode quirk - not needed'
+    ['debian-ppc64el-disable-vsx.patch']='PowerPC PPC64: (Power7 and Power8) - not needed'
+    ['debian-grub-install-pvxen-paths.patch']='Xen: boot path support - not needed'
+    ['debian-insmod-xzio-and-lzopio-on-xen.patch']='Xen: xzio and lzio support - not needed'
+    ['debian-zpool-full-device-name.patch']='ZFS initramfs support - not needed'
+    ['debian-bootp-new-net_bootp6-command.patch']='bootp6: network booting - not needed'
+    ['debian-bootp-process-dhcpack-http-boot.patch']='bootp fix: network booting - not needed'
+    ['debian-uefi-secure-boot-cryptomount.patch']='secureboot + full disk encryption support - not needed'
+    ['debian-xen-no-xsm-policy-in-non-xsm-options.patch']='Xen: build system quirk workaround'
+    ['debian-recovery-dis_ucode_ldr.patch']='Failsafe: ignore microcode loader in recovery option - SteamOS does not have a recovery option'
+    ['debian-hwmatch-only-on-grub-pc-platform.patch']='Legacy: i386 only hardware blacklist'
+    ['debian-install-signed.patch']='Secureboot: Install signed images - not supported by SteamOS'
+    ['debian-grub-install-removable-shim.patch']='Secureboot: install signed shim - not supported by SteamOS'
+)
+# Arch patch '0003-support-dropins-for-default-configuration.patch' excluded
+# as it is a subset of the debian patch 'debian-default-grub-d.patch'
 source=("git+https://git.savannah.gnu.org/git/grub.git#tag=${_tag}?signed"
         "git+https://git.savannah.gnu.org/git/gnulib.git#commit=${_gnulib_commit}"
         "https://ftp.gnu.org/gnu/unifont/unifont-${_unifont_ver}/unifont-${_unifont_ver}.bdf.gz"{,.sig}
-        'debian-olpc-prefix-hack.patch'
+        'arch-0001-00_header-add-GRUB_COLOR_-variables.patch'
+        'arch-0002-10_linux-detect-archlinux-initramfs.patch'
         'debian-core-in-fs.patch'
-        'debian-dpkg-version-comparison.patch'
-        'debian-grub-legacy-0-based-partitions.patch'
-        'debian-disable-floppies.patch'
-        'debian-grub.cfg-400.patch'
-        'debian-gfxpayload-keep-default.patch'
-        'debian-mkrescue-efi-modules.patch'
         'debian-mkconfig-loopback.patch'
         'debian-restore-mkdevicemap.patch'
         'debian-gettext-quiet.patch'
-        'debian-install-efi-fallback.patch'
-        'debian-mkconfig-ubuntu-recovery.patch'
-        'debian-install-locale-langpack.patch'
         'debian-mkconfig-nonexistent-loopback.patch'
-        'debian-no-insmod-on-sb.patch'
         'debian-default-grub-d.patch'
         'debian-blacklist-1440x900x32.patch'
-        'debian-mkconfig-ubuntu-distributor.patch'
-        'debian-linuxefi.patch'
-        'debian-mkconfig-signed-kernel.patch'
-        'debian-install-signed.patch'
-        'debian-wubi-no-windows.patch'
         'debian-maybe-quiet.patch'
-        'debian-install-efi-adjust-distributor.patch'
-        'debian-gfxpayload-dynamic.patch'
-        'debian-vt-handoff.patch'
-        'debian-probe-fusionio.patch'
-        'debian-ignore-grub_func_test-failures.patch'
-        'debian-mkconfig-recovery-title.patch'
-        'debian-install-powerpc-machtypes.patch'
-        'debian-ieee1275-clear-reset.patch'
-        'debian-ppc64el-disable-vsx.patch'
-        'debian-grub-install-pvxen-paths.patch'
-        'debian-insmod-xzio-and-lzopio-on-xen.patch'
-        'debian-grub-install-extra-removable.patch'
-        'debian-mkconfig-other-inits.patch'
-        'debian-zpool-full-device-name.patch'
-        'debian-net-read-bracketed-ipv6-addr.patch'
-        'debian-bootp-new-net_bootp6-command.patch'
-        'debian-efinet-uefi-ipv6-pxe-support.patch'
-        'debian-bootp-process-dhcpack-http-boot.patch'
-        'debian-efinet-set-network-from-uefi-devpath.patch'
-        'debian-efinet-set-dns-from-uefi-proto.patch'
-        'debian-fix-lockdown.patch'
-        'debian-skip-grub_cmd_set_date.patch'
         'debian-bash-completion-drop-have-checks.patch'
         'debian-at_keyboard-module-init.patch'
-        'debian-uefi-secure-boot-cryptomount.patch'
         'debian-efi-variable-storage-minimise-writes.patch'
-        'debian-no-devicetree-if-secure-boot.patch'
-        'debian-grub-install-removable-shim.patch'
-        'debian-dejavu-font-path.patch'
-        'debian-xen-no-xsm-policy-in-non-xsm-options.patch'
-        'debian-safe-alloc-5.patch'
-        'debian-bootp-alloc.patch'
-        'debian-unix-config-overflow.patch'
-        'debian-deviceiter-overflow.patch'
-        '0001-00_header-add-GRUB_COLOR_-variables.patch'
-        '0002-10_linux-detect-archlinux-initramfs.patch'
+        'debian-debug_verifiers.patch'
+        'debian-mkimage-fix-section-sizes.patch'
+        'debian-987008-lvrename-boot-fail.patch'
+        'debian-grub_os-prober.patch'
+        'debian-zstd-require-8-byte-buffer.patch'
+        'debian-fat-fix-listing-the-root-directory.patch'
+        'debian-efivar-check-that-efivarfs-is-writeable.patch'
+        'debian-fdt-add-debug-output-to-devicetree-command.patch'
+        'debian-fdt-device-tree-fixup-protocol.patch'
+        'debian-grub-install-extra-removable.patch'
         'steamos-0001-SteamOS-stage-II-bootloader-implemented-as-a-grub-mo.patch'
         'steamos-0002-Reduce-eagerness-of-grub-install-to-remove-other-boo.patch'
         'steamos-0003-Patch-grub-install-to-support-a-custom-grub-mkimage.patch'
         'steamos-0006-10_linux-always-hide-the-Loading-messages-in-quiet-m.patch'
-        'steamos-0007-00_header-steamenv.patch'
         'steamos-0008-Use-SteamOS-specific-kernel-command-line-settings-if.patch'
-        '0001-Disable-EFI-1.0-UGA-Support.patch'
+        'steamos-0009-Disable-EFI-1.0-UGA-Support.patch'
+        'steamos-0010-Defer-theme-loading-until-we-know-we-need-it.patch'
         'build-tweaks-1.patch'
-        'build-tweaks-2.patch' # applied via bootstrap by build-tweaks-1.patch
+        'build-tweaks-2.diff' # applied via bootstrap by build-tweaks-1.patch
         'grub.default')
 
+# unifont-15.1.05.bdf.gz
+# 8ea5b5a14d71e3353d1fea373f5d88d198ad1e285cedd8294655926ee11fd91d
 sha256sums=('SKIP'
             'SKIP'
-            '391d194f6307fcd0915daafd360509a734e26f3e4013e63d47deb2530d59e66e'
+            '8ea5b5a14d71e3353d1fea373f5d88d198ad1e285cedd8294655926ee11fd91d'
             'SKIP'
-            '417fb948234b9f1a7b466a88ec9aef51e9409131f375fc2bacd9216504088b14'
-            'be150109b09f937a9c70174d2ec7a4f38add4125908842219d3d8f8abc9619a6'
-            '418a1b11549ffaa5b96f974916d36b5d00f003ed58631fdd199f96bb7cf925ea'
-            '40dfa6adfdf4638a72ee87c8e2ff2fbdcaf41e81dca5e330e53a1c87ecff8eaf'
-            '39691deec693addac7ec6bcaecd24b6917884034d32742d58410f17d48174baa'
-            '95d7a502e81330268e05b8fb0fd9021f48b44f9d843a5b24197c15f272ae6c5e'
-            '2f7e94dd9206092881df157141794ac8e8559ee95643db165f212e6f8e266222'
-            '90be90bbd604875e17a4d97b6689b94d7c8b695f17a4eb917fe62fc0e09bdb6d'
-            'bf84445900797c5a1d4605a0c750e24e285d98b124ce0b78400bd21294709a37'
-            '978c0dbbbfc210f251b6fffbe8da630330769decb059f81ef5c3e43a4ed4e048'
-            '52bdaaea2596b93666a3470ee354f5f20db1fdca5e6c6765ac5a32e4a8c26345'
-            'b2b2c805e308c62198ed81428f2c6f143d0da1f48a0e6562c3f0467e34e2dcf8'
-            'aef21376173bce3c85dc2153ff0fb8c1366e8b119a492dd4e87e10578e4f95cb'
-            '5b4a5d64ab5808b966df54b42ab5066cd46062814d0c9f547c752afb148c5c39'
-            '9c8e36577c8493ea9c199bc0cebaaafb3be7518b6fc2da730bd4f4c95f6f148b'
-            '1eb9a22aaaf724617218c2d57ae1816c0eccc1d2fccbe08d5d26cf7184f9a236'
-            '33ef7e232cef526b4ab5e801f7423ff44ef0b4cbaf129da510edc92ffd4ca223'
-            '7afefd1e0afb21924e2207cc644f6fd30b8cab7364fe24864df1bf64e054d61d'
-            'f9e204a019f0ca2acca826ae98540d099497272402d5d934d0b44d1a533b8403'
-            '8210af34ccca0b67697206b124f646ca88093899d73dd0911c506e51d13204a1'
-            '2a71f86bf11c8fad0f6a3301d22b7d9e6341585d39814dddc21ea995765bb972'
-            '0465eece73e6cc4937118f6649a8aad7e4f86217b829bc92688f2fdb39304a00'
-            'da1d54da56b1175c41f7ea5ed55c7d305b714b61eb10361bd50dd402fd66628f'
-            '4560286dfe5afe95afa91a8d46aa36a3fd10ad2bf6b7c7847bb19084c3a4c640'
-            '26f815c4ac19100aa75a0dbd2fa2cc8ae1a0be38e9ae09c8e72d1eda3baf56a9'
-            '1741771384a1babd60e295380b1122c74d616feb01fe588a5c782a8e5f372058'
-            'f514b17eb9e21d305927bc8c0eb033bb9eaa5814f626ad183a4f3a9ffb6a5358'
-            '0b71ab17279c1c700a4c4e64317feaece8d97500c59719a011b10c270e48e8f6'
-            '07b4dfe8550930f76d224a999923c3d4bf5f5871fa5c6914dfe90d0079d25622'
-            '94ae8a8637b984fb1b47ee5b5bff682981600b7f1f4946db04056ef532a79469'
-            '7dbf5c8bf695422b109963d44f88c5947748498a13f66bc0bcb8b2e80fc7b27a'
-            '4bc3f581363225c4a7c9d5e6d3238bd96ddb06ecdac2c8e6e4de6d9504389e2b'
-            '61f422db46a9642656cbaebaad674a58952c25e4ab0dc5f93e20be4a9fc250c4'
-            '8672a82d06e53d17b5cbb599151c7e48b6b789da7ad4925a5733b754261b4554'
-            'f9ef7d3d4c39549f73643ff1a28719c09dc7dd01fa2285158fe4347b8645017d'
-            '7b09400c7a9bcd18ca7d535404688d7bb8b024ebc8bfad73a9b9bb81d097ddd9'
-            'f83c19cdf398e5a3c0ddab722566d9e1753a68a5177663ff6944451a40454230'
-            'f54f6558eb17affdce9974f7917ef5ef28afb675faa1b7de066d048aa9f36205'
-            '7a2df4ae172381ef4f1a3049f8f18a7dccfd1918414da0a06a126491ba89e617'
-            'cfdcd31f37483930ce0affa3f379c6b62f948dd4099000e2765e49c5868e8e74'
-            '22fae003a69c01e25708d4463eed29e4b3e0fa462ca1a2d76fd5890bad5c86dd'
-            'f7d9b9a863dfa944e0845e0f18e2d7c2a4085df50991791ccc08bfcb94a2e0a1'
-            'dc01caea3c829c8afc265f709acc0b3cf8b9796c37dd9d9832ffe27757c25cef'
-            '22754f2d2ec7b2953bc2c91280a388d1d36a60c5f48ba63306a6fa3941eef39c'
-            '1f318d66edc8b22d9b51f3bef5654b4a6f8c7ea61fe3aa1ffeb72db0b1f9998d'
-            '9a14439fbe608b638ef2466706bf2f4ac8d4c2e22986a32d03b34e472eeb9dff'
-            'cf0fa7c6a236f5cd72cece363bb64cb06678a9f6737d351e7dc2c614e3095523'
-            'e0f2f5b3e97088f23294deae56a61c8a0ef104de0b97469347ed682813827b45'
-            'c8baf1fc62b3e55014fe6fd29acec749164ca09007cb51fd426271719e88cf38'
-            'e49f107bbb8d161c49610c918f03dd37a89b13b373e767b4db3971046225d955'
-            '75e2fbe4de204fe7fb3ff67a84edbb49e14c3161fc5da09e1f0bb0bc559ed6fe'
-            '5f35ac60acab77e3f3d7c644368df6fd1151ee02275f97e07c6a5ebe5e39e726'
-            '44a1ec4c5cadf5899b5e99c8cb385179d36840d6c8a036b06097ea127ae7ef15'
-            'f1572755df503b3566a01ce6e8d8b4ff1a6cea29fdc7330c7ab15928daa0a869'
-            '4d1ce68c2ccad6b7829fc2bf081c59b04ec9b6327a7a4a13b9074e438727ce88'
-            'cbc785aab8d6211f2e12db87e28e6ee10302bde82236320991a1a85b099b9315'
-            'd785f4c4cdea03af111c9f9a0d3f0d7922fe44409e91bfbb101996394ca0518b'
-            '77bc269851a5ef01db256a745b93bb191936a2c9018884f88a9a7b0d657741b9'
-            '5dee6628c48eef79812bb9e86ee772068d85e7fcebbd2b2b8d1e19d24eda9dab'
-            '06f756f57fe017188c53bd363bd367ea2ea0cef0aef4253469f7017802a7bf63'
-            '5600e800ceb9c146601c2d6ce12d78f8f208dd419f0d40adb3475b0c31b5a584'
-            'c2b46fa4f3c43161de12ebd0ff4e12da37eeae07fcb3ffb487e0c194630d9ee6'
-            'bb3f5f2729ed7ab35d749fae3c15b229cc719b189f94224a685742230595db86'
+            'f63ab8e6d340052d5248f93aaf856a3c7ae910eedef6ceaf653802408ebab573'
+            '8488aec30a93e8fe66c23ef8c23aefda39c38389530e9e73ba3fbcc8315d244d'
+            '9dfd44b21a2aa3bf1e16036cda753baa325b64c8c1ebc2ddfa0ce138b00b1e92'
+            '070f87c281a99a0be14910bfd953684e951f16f6dc14b9597032a6153db58e66'
+            '3fac7b90aee01637def80e5de3f70fbe3a0647a67f5ebc6f2eaef5738223cfd1'
+            'e2c846cb7bc7f59d7786112ee94285710ee318cc67139c46dc100035376575a1'
+            'ee6521ef5c2b0b93b435dad2b13107710753e8d71339babeae92743b3ca88f1a'
+            '19b58743baf889c80b72bc691fa58113517f8eb47dea830095747d93e506d533'
+            'ca30ff7d77be2b89622ae94fbf4b5f28a04fb0b0433ef13270fec5b44fdf76b0'
+            '6e575cec0e095ada41390742ab468ad5cfb8e7f36b6015da07c7a6ec2097c592'
+            '1963f5f5303e99c6e74ce8d89541c0b180a12830f181ab8c432f53d5fca75e6c'
+            'cf500cd47d4d49c08988d59880e991b2a84f8df842141dcff539fee3d764e348'
+            '4fe12f176b1a7fe883ed228412a45e879b1e3847a8dbb922d7028b73f6bcc205'
+            '724d9d6fa3052242385946aae19c45a729c3844122ce784eba08e04496097d27'
+            '26f670ac83a7587d015563897962bd5721534c2a015e67c939c92c5314ad7f40'
+            '50747adf074ef0b5d63b616bb68524eb30adde6467902b1899d8a0445395836e'
+            'a043e3f7f4833cbd3ece6e29d2c9dcedd7ecc31a9adfb69cb964858c373480dc'
+            'a78363e16d192de4cdde43ff3366613fc18870e4a6b29724a7d6aac59cecf805'
+            'd928cedb7bd6b404fbf71b5052628462f6b2d6b893f3b2918ecb17f133057c13'
+            '8bdcde4e42d5860c0bedba21901ea83f49ace602d8011377e38506192c95e7cd'
+            '658bd3474f84fbbfe675da93e2e05b6d156658c92a2d604b52d6a0b23223c71b'
+            '6e8c873eae8988cb99fd6b3de0857c0ec4db0ed2fd90c6d0054a3f88361c013c'
+            '02eb5080d99bebd6843b172367813ab7968508e48894f241c409703cf05aeff2'
+            '08b4970c01cedeeeb4ef87bf748f8eb46278a58db42abea3fc84f4ad93d69cd0'
+            '4dc26722812df2a261f9e27632bcacdb5899d49b7270a66dd67f270b6eba05e1'
+            'ccd8ba6646a298f015707d6cbf5f20db418569a1878617224f2946d2dbb503fc'
             'cca890f4be9a2c58fc290b488b4ef9eeb490066726297e4fda5ec87215d9e7a9'
-            '7fa584f8047c11c3d43495deaa189ab2b6f7277769a26739aafaed4a781e3534'
             'cf078325cbd14fbe01c59632e1bc41188b55748ae355a3c8d1198ebff09cab90'
             'b44f10d3f30a0bc0aff94617cce0570593d408b09e3cc5f05d7d97a4888169b0'
-            'bf0683e8416d845a3f35441bc5ffdae0e37d74f583ad6fe93140b64d3773f19d'
+            'f80fd0837be9edcb77cd0e346357218cc39dda325ef932fa888eabad8570ffc7'
+            '2cfb4c61f1724e496fafc7224bdf4218012f4dc612f267055ea2c140522a0505'
             '7caac232189069e46cd3dd68e615c68712625d287cdbce34fe9169b51b0070ea'
-            '9f6fad49d082d7e1372563a971c7d1221df7603dca3fb6de16324ee7c10528e9')
+            '7a8e55d517de423bbe0f1e16d1c43e9cf1a6600b8169764000e23e547a7b6989'
+)
+
+patch_allowed () {
+    local patch_name="${1:-}"
+    local msg="${excluded_patches[$patch_name]:-}"
+
+    if [ -n "$msg" ]
+    then
+        echo "Patch $patch_name rejected: ${msg:-Reason not recorded}" >&2
+        return 1
+    fi
+
+    return 0
+}
+
+filter_patchlist () {
+    local -i n=0
+    local -a _src=()
+    local -a _sum=()
+
+    while [ $n -lt ${#source[@]} ]
+    do
+        case ${source[$n]} in
+            debian-*.patch|arch-*.patch|steamos-*.patch|build-*.patch)
+                if patch_allowed ${source[$n]}
+                then
+                    _src+=(${source[$n]})
+                    _sum+=(${sha256sums[$n]})
+                fi
+                ;;
+            *.patch)
+                echo "ERROR: Unexpcted patch name ${source[$n]}" >&2
+                echo "  Patches must be arch- steamos- debian- or build-" >&2
+                exit 1
+                ;;
+            *)
+                _src+=(${source[$n]})
+                _sum+=(${sha256sums[$n]})
+                ;;
+        esac
+        n=$((n + 1))
+    done
+
+    source=("${_src[@]}")
+    sha256sums=("${_sum[@]}")
+}
+
+filter_patchlist
 
 _backports=(
-	# fs/xfs: Fix unreadable filesystem with v4 superblock
-	'a4b495520e4dc41a896a8b916a64eda9970c50ea'
 )
 
 _configure_options=(
+	PACKAGE_VERSION="${epoch}:${pkgver}-${pkgrel}"
 	FREETYPE="pkg-config freetype2"
 	BUILD_FREETYPE="pkg-config freetype2"
 	--enable-mm-debug
@@ -239,6 +256,16 @@ _configure_options=(
 	--disable-werror
 )
 
+patch_ident () {
+    local _input="$1"
+    local _ident=
+
+    _ident=$(grep '^Subject:' ../"$_input")
+    _ident=${_ident#Subject: }
+
+    echo "${_ident:-$_input}"
+}
+
 prepare() {
 	cd "${srcdir}/grub/"
 
@@ -250,88 +277,38 @@ prepare() {
 	done
 
 	echo "Patches from debian..."
-	patch -Np1 -i "${srcdir}/debian-olpc-prefix-hack.patch"
-	patch -Np1 -i "${srcdir}/debian-core-in-fs.patch"
-	patch -Np1 -i "${srcdir}/debian-dpkg-version-comparison.patch"
-	patch -Np1 -i "${srcdir}/debian-grub-legacy-0-based-partitions.patch"
-	patch -Np1 -i "${srcdir}/debian-disable-floppies.patch"
-	patch -Np1 -i "${srcdir}/debian-grub.cfg-400.patch"
-	patch -Np1 -i "${srcdir}/debian-gfxpayload-keep-default.patch"
-	patch -Np1 -i "${srcdir}/debian-mkrescue-efi-modules.patch"
-	patch -Np1 -i "${srcdir}/debian-mkconfig-loopback.patch"
-	patch -Np1 -i "${srcdir}/debian-restore-mkdevicemap.patch"
-	patch -Np1 -i "${srcdir}/debian-gettext-quiet.patch"
-	patch -Np1 -i "${srcdir}/debian-install-efi-fallback.patch"
-	patch -Np1 -i "${srcdir}/debian-mkconfig-ubuntu-recovery.patch"
-	patch -Np1 -i "${srcdir}/debian-install-locale-langpack.patch"
-	patch -Np1 -i "${srcdir}/debian-mkconfig-nonexistent-loopback.patch"
-	patch -Np1 -i "${srcdir}/debian-no-insmod-on-sb.patch"
-	patch -Np1 -i "${srcdir}/debian-default-grub-d.patch"
-	patch -Np1 -i "${srcdir}/debian-blacklist-1440x900x32.patch"
-	patch -Np1 -i "${srcdir}/debian-mkconfig-ubuntu-distributor.patch"
-	patch -Np1 -i "${srcdir}/debian-linuxefi.patch"
-	patch -Np1 -i "${srcdir}/debian-mkconfig-signed-kernel.patch"
-	patch -Np1 -i "${srcdir}/debian-install-signed.patch"
-	patch -Np1 -i "${srcdir}/debian-wubi-no-windows.patch"
-	patch -Np1 -i "${srcdir}/debian-maybe-quiet.patch"
-	patch -Np1 -i "${srcdir}/debian-install-efi-adjust-distributor.patch"
-	patch -Np1 -i "${srcdir}/debian-gfxpayload-dynamic.patch"
-	patch -Np1 -i "${srcdir}/debian-vt-handoff.patch"
-	patch -Np1 -i "${srcdir}/debian-probe-fusionio.patch"
-	patch -Np1 -i "${srcdir}/debian-ignore-grub_func_test-failures.patch"
-	patch -Np1 -i "${srcdir}/debian-mkconfig-recovery-title.patch"
-	patch -Np1 -i "${srcdir}/debian-install-powerpc-machtypes.patch"
-	patch -Np1 -i "${srcdir}/debian-ieee1275-clear-reset.patch"
-	patch -Np1 -i "${srcdir}/debian-ppc64el-disable-vsx.patch"
-	patch -Np1 -i "${srcdir}/debian-grub-install-pvxen-paths.patch"
-	patch -Np1 -i "${srcdir}/debian-insmod-xzio-and-lzopio-on-xen.patch"
-	patch -Np1 -i "${srcdir}/debian-grub-install-extra-removable.patch"
-	patch -Np1 -i "${srcdir}/debian-mkconfig-other-inits.patch"
-	patch -Np1 -i "${srcdir}/debian-zpool-full-device-name.patch"
-	patch -Np1 -i "${srcdir}/debian-net-read-bracketed-ipv6-addr.patch"
-	patch -Np1 -i "${srcdir}/debian-bootp-new-net_bootp6-command.patch"
-	patch -Np1 -i "${srcdir}/debian-efinet-uefi-ipv6-pxe-support.patch"
-	patch -Np1 -i "${srcdir}/debian-bootp-process-dhcpack-http-boot.patch"
-	patch -Np1 -i "${srcdir}/debian-efinet-set-network-from-uefi-devpath.patch"
-	patch -Np1 -i "${srcdir}/debian-efinet-set-dns-from-uefi-proto.patch"
-	patch -Np1 -i "${srcdir}/debian-fix-lockdown.patch"
-	patch -Np1 -i "${srcdir}/debian-skip-grub_cmd_set_date.patch"
-	patch -Np1 -i "${srcdir}/debian-bash-completion-drop-have-checks.patch"
-	patch -Np1 -i "${srcdir}/debian-at_keyboard-module-init.patch"
-	patch -Np1 -i "${srcdir}/debian-uefi-secure-boot-cryptomount.patch"
-	patch -Np1 -i "${srcdir}/debian-efi-variable-storage-minimise-writes.patch"
-	patch -Np1 -i "${srcdir}/debian-no-devicetree-if-secure-boot.patch"
-	patch -Np1 -i "${srcdir}/debian-grub-install-removable-shim.patch"
-	patch -Np1 -i "${srcdir}/debian-dejavu-font-path.patch"
-	patch -Np1 -i "${srcdir}/debian-xen-no-xsm-policy-in-non-xsm-options.patch"
-	patch -Np1 -i "${srcdir}/debian-safe-alloc-5.patch"
-	patch -Np1 -i "${srcdir}/debian-bootp-alloc.patch"
-	patch -Np1 -i "${srcdir}/debian-unix-config-overflow.patch"
-	patch -Np1 -i "${srcdir}/debian-deviceiter-overflow.patch"
+        local _p
+        for _p in "${source[@]}"; do
+            case $_p in
+                debian-*.patch)
+                    echo "Applying: ""$(patch_ident $_p)"
+                    patch -Np1 -i ../"$_p"
+                    ;;
+            esac
+        done
 
-	echo "Patch to enable GRUB_COLOR_* variables in grub-mkconfig..."
-	## Based on http://lists.gnu.org/archive/html/grub-devel/2012-02/msg00021.html
-        patch -Np1 -i "${srcdir}/0001-00_header-add-GRUB_COLOR_-variables.patch"
+	echo "Patches from Arch..."
+        for _p in "${source[@]}"; do            
+            case $_p in
+                arch-*.patch)
+                    echo "Applying: ""$(patch_ident $_p)"
+                    patch -Np1 -i ../"$_p"
+                    ;;
+            esac
+        done
 
-	echo "Patch to detect of Arch Linux initramfs images by grub-mkconfig..."
-        patch -Np1 -i "${srcdir}/0002-10_linux-detect-archlinux-initramfs.patch"
-
-	echo "Patch for SteamOS..."
-	patch -Np1 -i "${srcdir}/steamos-0001-SteamOS-stage-II-bootloader-implemented-as-a-grub-mo.patch"
-	patch -Np1 -i "${srcdir}/steamos-0002-Reduce-eagerness-of-grub-install-to-remove-other-boo.patch"
-	patch -Np1 -i "${srcdir}/steamos-0003-Patch-grub-install-to-support-a-custom-grub-mkimage.patch"
-	patch -Np1 -i "${srcdir}/steamos-0006-10_linux-always-hide-the-Loading-messages-in-quiet-m.patch"
-        patch -Np1 -i "${srcdir}/steamos-0007-00_header-steamenv.patch"
-        patch -Np1 -i "${srcdir}/steamos-0008-Use-SteamOS-specific-kernel-command-line-settings-if.patch"
-        patch -Np1 -i "${srcdir}/0001-Disable-EFI-1.0-UGA-Support.patch"
-	echo
+        echo "Patches from SteamOS..."
+        for _p in "${source[@]}"; do
+            case $_p in
+                steamos-*.patch)
+                    echo "Applying: ""$(patch_ident $_p)"
+                    patch -Np1 -i ../"$_p"
+                    ;;
+            esac
+        done
 
         echo "Build system fixes (fewer warnings)..."
         patch -Np1 -i "${srcdir}/build-tweaks-1.patch"
-
-        echo "Revert patch that handle the Debian kernel version numbers..."
-	patch -Rp1 -i "${srcdir}/debian-dpkg-version-comparison.patch"
-	echo
 
 	echo "Fix DejaVuSans.ttf location so that grub-mkfont can create *.pf2 files for starfield theme..."
 	sed 's|/usr/share/fonts/dejavu|/usr/share/fonts/dejavu /usr/share/fonts/TTF|g' -i "configure.ac"
@@ -446,8 +423,8 @@ _build_grub-emu() {
 build() {
 	cd "${srcdir}/grub/"
 
-	echo "Build grub bios stuff..."
-	_build_grub-common_and_bios
+	#echo "Build grub bios stuff..."
+	#_build_grub-common_and_bios
 
 	echo "Build grub ${_EFI_ARCH} efi stuff..."
 	_build_grub-efi
@@ -473,9 +450,6 @@ _package_grub-common_and_bios() {
 	rm -f "${pkgdir}/usr/lib/grub/i386-pc"/*.module || true
 	rm -f "${pkgdir}/usr/lib/grub/i386-pc"/*.image || true
 	rm -f "${pkgdir}/usr/lib/grub/i386-pc"/{kernel.exec,gdb_grub,gmodule.pl} || true
-
-	echo "Install /etc/default/grub (used by grub-mkconfig)..."
-	install -D -m0644 "${srcdir}/grub.default" "${pkgdir}/etc/default/grub"
 }
 
 _package_grub-efi() {
@@ -494,6 +468,9 @@ _package_grub-efi() {
 	echo "sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md" >> "${_sbat_file}"
 	echo "grub,1,Free Software Foundation,grub,${_pkgver},https//www.gnu.org/software/grub/" >> "${_sbat_file}"
 	echo "grub.arch,1,Arch Linux,grub,${_pkgver},https://archlinux.org/packages/core/x86_64/grub/" >> "${_sbat_file}"
+
+	echo "Install /etc/default/grub (used by grub-mkconfig)..."
+	install -D -m0644 "${srcdir}/grub.default" "${pkgdir}/etc/default/grub"
 }
 
 _package_grub-emu() {
@@ -524,8 +501,8 @@ package() {
 		_package_grub-emu
 	fi
 
-	echo "Package grub bios stuff..."
-	_package_grub-common_and_bios
+	#echo "Package grub bios stuff..."
+	#_package_grub-common_and_bios
 
 	echo "Move grub binaries to libdir..."
 	mv "${pkgdir}/usr/bin/grub-install" "${pkgdir}/usr/lib/grub/grub-install"

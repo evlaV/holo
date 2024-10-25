@@ -31,7 +31,7 @@ index e8b01c0d0..9b60af944 100644
    linux_root_device_thisversion="${LINUX_ROOT_DEVICE}"
  
 @@ -285,6 +289,29 @@ while [ "x$list" != "x" ] ; do
-
+ 
    linux_entry "${OS}" "${version}" advanced \
                "${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_LINUX_DEFAULT}"
 +
@@ -57,6 +57,6 @@ index e8b01c0d0..9b60af944 100644
 +                "${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_LINUX_DEFAULT}"
 +  fi
 +
-   for supported_init in ${SUPPORTED_INITS}; do
-     init_path="${supported_init#*:}"
-     if [ -x "${init_path}" ] && [ "$(readlink -f /sbin/init)" != "$(readlink -f "${init_path}")" ]; then
+   if [ "x${GRUB_DISABLE_RECOVERY}" != "xtrue" ]; then
+     linux_entry "${OS}" "${version}" recovery \
+                 "single ${GRUB_CMDLINE_LINUX}"

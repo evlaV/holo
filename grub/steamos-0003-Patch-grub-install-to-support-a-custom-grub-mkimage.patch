@@ -87,11 +87,10 @@ diff --git a/util/grub-install.c b/util/grub-install.c
 index bd6d8dbb3..dd4c1df9e 100644
 --- a/util/grub-install.c
 +++ b/util/grub-install.c
-@@ -42,6 +42,8 @@
+@@ -43,6 +43,7 @@
  #include <grub/emu/config.h>
  #include <grub/util/ofpath.h>
  #include <grub/hfsplus.h>
-+#include <grub/emu/hostfile.h>
 +#include <grub/emu/exec.h>
  
  #include <string.h>

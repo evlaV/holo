@@ -1,6 +1,7 @@
 From 21e5bcf22ab1a9f08c63e2a0212219d7482f77c1 Mon Sep 17 00:00:00 2001
 From: Christian Hesse <mail@eworm.de>
 Date: Wed, 10 Mar 2021 18:42:25 +0100
+X-based-on: http://lists.gnu.org/archive/html/grub-devel/2012-02/msg00021.html
 Subject: [PATCH] 00_header: add GRUB_COLOR_* variables
 ---
  util/grub-mkconfig.in    | 2 ++

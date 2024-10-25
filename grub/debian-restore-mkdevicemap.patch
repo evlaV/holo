@@ -1,4 +1,3 @@
-From 2ecd079ed1078da6a26223333d0645dd53ef181a Mon Sep 17 00:00:00 2001
 From: Colin Watson <cjwatson@debian.org>
 Date: Mon, 13 Jan 2014 12:13:01 +0000
 Subject: Restore grub-mkdevicemap
@@ -10,17 +9,17 @@ would be very complicated.
 
 Author: Dimitri John Ledkov <dimitri.ledkov@canonical.com>
 Forwarded: no
-Last-Update: 2019-05-25
+Last-Update: 2021-09-24
 
 Patch-Name: restore-mkdevicemap.patch
 ---
  Makefile.util.def              |   17 +
  docs/man/grub-mkdevicemap.h2m  |    4 +
  include/grub/util/deviceiter.h |   14 +
- util/deviceiter.c              | 1021 ++++++++++++++++++++++++++++++++
+ util/deviceiter.c              | 1027 ++++++++++++++++++++++++++++++++++++++++
  util/devicemap.c               |   13 +
- util/grub-mkdevicemap.c        |  181 ++++++
- 6 files changed, 1250 insertions(+)
+ util/grub-mkdevicemap.c        |  181 +++++++
+ 6 files changed, 1256 insertions(+)
  create mode 100644 docs/man/grub-mkdevicemap.h2m
  create mode 100644 include/grub/util/deviceiter.h
  create mode 100644 util/deviceiter.c
@@ -28,10 +27,10 @@ Patch-Name: restore-mkdevicemap.patch
  create mode 100644 util/grub-mkdevicemap.c
 
 diff --git a/Makefile.util.def b/Makefile.util.def
-index 969d32f00..0029b9000 100644
+index 9432365..970a003 100644
 --- a/Makefile.util.def
 +++ b/Makefile.util.def
-@@ -324,6 +324,23 @@ program = {
+@@ -339,6 +339,23 @@ program = {
    condition = COND_GRUB_MKFONT;
  };
  
@@ -57,7 +56,7 @@ index 969d32f00..0029b9000 100644
    installdir = sbin;
 diff --git a/docs/man/grub-mkdevicemap.h2m b/docs/man/grub-mkdevicemap.h2m
 new file mode 100644
-index 000000000..96cd6ee72
+index 0000000..96cd6ee
 --- /dev/null
 +++ b/docs/man/grub-mkdevicemap.h2m
 @@ -0,0 +1,4 @@
@@ -67,7 +66,7 @@ index 000000000..96cd6ee72
 +.BR grub-probe (8)
 diff --git a/include/grub/util/deviceiter.h b/include/grub/util/deviceiter.h
 new file mode 100644
-index 000000000..85374978c
+index 0000000..8537497
 --- /dev/null
 +++ b/include/grub/util/deviceiter.h
 @@ -0,0 +1,14 @@
@@ -87,10 +86,10 @@ index 000000000..85374978c
 +#endif /* ! GRUB_DEVICEITER_MACHINE_UTIL_HEADER */
 diff --git a/util/deviceiter.c b/util/deviceiter.c
 new file mode 100644
-index 000000000..a4971ef42
+index 0000000..b5b9ac6
 --- /dev/null
 +++ b/util/deviceiter.c
-@@ -0,0 +1,1021 @@
+@@ -0,0 +1,1027 @@
 +/* deviceiter.c - iterate over system devices */
 +/*
 + *  GRUB  --  GRand Unified Bootloader
@@ -128,6 +127,7 @@ index 000000000..a4971ef42
 +#include <grub/list.h>
 +#include <grub/misc.h>
 +#include <grub/emu/misc.h>
++#include <grub/safemath.h>
 +
 +#ifdef __linux__
 +# if !defined(__GLIBC__) || \
@@ -663,7 +663,7 @@ index 000000000..a4971ef42
 +	struct device *devs;
 +	size_t devs_len = 0, devs_max = 1024, dev;
 +
-+	devs = xmalloc (devs_max * sizeof (*devs));
++	devs = xcalloc (devs_max, sizeof (*devs));
 +
 +	/* Dump all the directory entries into names, resizing if
 +	   necessary.  */
@@ -685,8 +685,13 @@ index 000000000..a4971ef42
 +	      continue;
 +	    if (devs_len >= devs_max)
 +	      {
++		size_t sz;
++
 +		devs_max *= 2;
-+		devs = xrealloc (devs, devs_max * sizeof (*devs));
++		sz = devs_max;
++		if (grub_mul (sz, sizeof (*devs), &sz))
++		  grub_util_error ("%s", _("overflow is detected"));
++		devs = xrealloc (devs, sz);
 +	      }
 +	    devs[devs_len].stable =
 +	      xasprintf ("/dev/disk/by-id/%s", entry->d_name);
@@ -1114,7 +1119,7 @@ index 000000000..a4971ef42
 +}
 diff --git a/util/devicemap.c b/util/devicemap.c
 new file mode 100644
-index 000000000..c61864420
+index 0000000..c618644
 --- /dev/null
 +++ b/util/devicemap.c
 @@ -0,0 +1,13 @@
@@ -1133,7 +1138,7 @@ index 000000000..c61864420
 +}
 diff --git a/util/grub-mkdevicemap.c b/util/grub-mkdevicemap.c
 new file mode 100644
-index 000000000..c4bbdbf69
+index 0000000..c4bbdbf
 --- /dev/null
 +++ b/util/grub-mkdevicemap.c
 @@ -0,0 +1,181 @@

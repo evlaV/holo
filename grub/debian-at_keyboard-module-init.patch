@@ -1,4 +1,3 @@
-From 274c57260b4b599874e9ede10ea417b7bb7c98e2 Mon Sep 17 00:00:00 2001
 From: Jeroen Dekkers <jeroen@dekkers.ch>
 Date: Sat, 12 Jan 2019 21:02:18 +0100
 Subject: at_keyboard: initialize keyboard in module init if keyboard is ready
@@ -16,10 +15,10 @@ Patch-Name: at_keyboard-module-init.patch
  1 file changed, 9 insertions(+)
 
 diff --git a/grub-core/term/at_keyboard.c b/grub-core/term/at_keyboard.c
-index f0a986eb1..d4395c201 100644
+index f8a129e..3dbf89c 100644
 --- a/grub-core/term/at_keyboard.c
 +++ b/grub-core/term/at_keyboard.c
-@@ -244,6 +244,14 @@ grub_at_keyboard_getkey (struct grub_term_input *term __attribute__ ((unused)))
+@@ -254,6 +254,14 @@ grub_at_keyboard_getkey (struct grub_term_input *term __attribute__ ((unused)))
    return ret;
  }
  
@@ -34,7 +33,7 @@ index f0a986eb1..d4395c201 100644
  static void
  grub_keyboard_controller_init (void)
  {
-@@ -314,6 +322,7 @@ grub_at_restore_hw (void)
+@@ -324,6 +332,7 @@ grub_at_restore_hw (void)
  static struct grub_term_input grub_at_keyboard_term =
    {
      .name = "at_keyboard",
