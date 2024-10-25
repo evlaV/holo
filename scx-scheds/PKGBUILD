@@ -5,8 +5,8 @@
 
 pkgname=scx-scheds
 gitname=scx
-pkgver=1.0.3.linux.neptune.68
-pkgrel=7
+pkgver=1.0.5.linux.neptune.68
+pkgrel=1
 pkgdesc="sched_ext schedulers"
 arch=('x86_64')
 url="https://github.com/evlav/scx/-/tree/v$pkgver"
@@ -57,16 +57,15 @@ prepare() {
 build() {
   cd $gitname
   arch-meson . build --buildtype release --auto-features auto
-  meson compile -C build
+  meson compile -C build scx_lavd
 }
 
 package() {
   cd $gitname
   install -Dm644 "services/scx" "${pkgdir}/etc/default/scx"
-  install -Dm644 "services/systemd/journald@sched-ext.conf" "${pkgdir}/etc/systemd/journald@sched-ext.conf"
   install -Dm644 "services/systemd/scx.service" "${pkgdir}/usr/lib/systemd/system/scx.service"
   install -Dm644 "libalpm/systemd/90-scx-scheds-upgrade.hook" "${pkgdir}/usr/share/libalpm/hooks/90-scx-scheds-upgrade.hook"
   install -Dm755 "libalpm/systemd/scx-systemd-restart" "${pkgdir}/usr/share/libalpm/scripts/scx-systemd-restart"
-  install -Dm755 "build/scheds/rust/release/scx_lavd" "${pkgdir}/usr/bin/scx_lavd"
+  install -Dm755 "build/release/scx_lavd" "${pkgdir}/usr/bin/scx_lavd"
   install -Dm644 "LICENSE" "${pkgdir}/usr/share/licenses/$pkgname/LICENSE"
 }
