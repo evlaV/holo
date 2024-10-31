@@ -1,7 +1,7 @@
 # Author : Clayton Craft <clayton@igalia.com>
 
 pkgname='steamos-systemreport'
-pkgver=0.11
+pkgver=0.12
 pkgrel=1
 pkgdesc='System report collection tool'
 arch=('any')
@@ -12,8 +12,8 @@ source=(
   'steamos-systemreport-privileged'
   'org.valve.steamos.systemreport.policy'
 )
-sha256sums=('ee1045089970f2f22183b64d9ff91ef5dd1ebe5d43537984dcf6bf7d13069d41'
-            'cb8b682883810f0d3919ce9c2a906ebb458b7fa0a7db5148cff828fa55493fe8'
+sha256sums=('c732e6af25ff34474da130e8ab054291d0b408f80dd27186d71a3471e71d807d'
+            '0977bf47e1fb5384946f08bcb60daebe4ffa899941950537cc939bdba4568304'
             'b36473e3b77307450e75c59e248dde34d95b69c6c765a425fc30d9e201e23067')
 
 package() {
@@ -36,6 +36,7 @@ package() {
     'steamos-customizations-jupiter' # steamos-{readonly,dump-info}
     'jupiter-hw-support'             # amd_system_info
     'polkit'
+    'zstd'
   )
   install -Dm755 steamos-systemreport -t "$pkgdir"/usr/bin/
   install -Dm755 steamos-systemreport-privileged -t "$pkgdir"/usr/bin/steamos-polkit-helpers

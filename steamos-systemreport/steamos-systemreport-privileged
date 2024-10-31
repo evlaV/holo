@@ -81,4 +81,12 @@ case ${1:-all} in
       echo
     done
     ;;&
+
+  all|pacman-check)
+    run '(pacman -Qkk 1> /tmp/pacman-check.out 2> /tmp/pacman-check.err)'
+    run '(diff -u0 <(unzstd -kc /usr/share/steamos/pacman-check.out.zst) /tmp/pacman-check.out \
+      | grep "^+" | grep -v " 0 altered files")'
+    run '(diff -u0 <(unzstd -kc /usr/share/steamos/pacman-check.err.zst) /tmp/pacman-check.err \
+      | grep "^+" | grep -v ": /var")'
+    ;;&
 esac

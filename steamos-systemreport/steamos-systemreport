@@ -137,6 +137,9 @@ super dri-debugfs
 
 run 'drm_info'
 
+# Package check info
+super pacman-check
+
 # Fan Control Info
 run 'pacman -Q jupiter-fan-control'
 run 'systemctl status jupiter-fan-control'
