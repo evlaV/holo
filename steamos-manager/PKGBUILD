@@ -1,9 +1,9 @@
 # Maintainer: Jeremy Whiting <jeremy.whiting@collabora.com>
 
 pkgname=steamos-manager
-_srctag=v24.4.1
+_srctag=v24.11.1
 pkgver=${_srctag##v}
-pkgrel=2
+pkgrel=1
 pkgdesc='SteamOS Manager daemon for running various tasks as root'
 arch=('x86_64')
 url='https://store.steampowered.com/steamos/'
