@@ -16,7 +16,7 @@ then
 fi
 
 
-declare -r NM_WIFI_BACKEND_CONF_FILE="/etc/NetworkManager/conf.d/wifi_backend.conf"
+declare -r NM_WIFI_BACKEND_CONF_FILE="/etc/NetworkManager/conf.d/99-valve-wifi-backend.conf"
 
 
 write_config_wifi_backend() {

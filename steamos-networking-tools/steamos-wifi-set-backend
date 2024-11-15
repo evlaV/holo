@@ -10,7 +10,7 @@
 set -euo pipefail
 
 declare -r HELPER="${HELPER:-/usr/bin/steamos-polkit-helpers/steamos-wifi-set-backend-privileged}"
-declare -r NM_WIFI_BACKEND_CONF_FILE="/etc/NetworkManager/conf.d/wifi_backend.conf"
+declare -r NM_WIFI_BACKEND_CONF_FILE="/etc/NetworkManager/conf.d/99-valve-wifi-backend.conf"
 
 is_debug_enabled() {
     if [[ -v DEBUG ]] && [[ "${DEBUG}" != "0" ]] && [[ "${DEBUG}" != "false" ]] ; then

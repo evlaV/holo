@@ -1,7 +1,7 @@
 # Author : Manuel A. Fernandez Montecelo <mafm@igalia.com>
 
 pkgname='steamos-networking-tools'
-pkgver=1.0
+pkgver=1.1
 pkgrel=1
 pkgdesc='SteamOS networking tools'
 arch=('any')
@@ -15,8 +15,8 @@ source=(
   'org.valve.steamos.wifi.set.backend.policy'
 )
 sha256sums=(
-  '5a86f15f80474388d03000d0e51e9cf31cf9b0469ab2c9b266dc92b4af58df65'
-  '75d931eaf4d4a225c52ba8af6850ff4c52490e7595edd0681d1b41d8da54de4d'
+  'd151d32e4a6fce255361a1ebb25720ea9edb623d54a56ff90cccdb3858324449'
+  'ea4b7b1fb046922233f2deda1c1ae1a96ff034973c1a02202849f27c323b4de1'
   'ebc55a73168f331d34ce03ecf0d081699faa448ae49098ecd2ce15e8081598bc'
   'd5b620c8b6cf581f1d0068611d63b17671f7383ce5ed11ab085966d9cf7574cc'
 )
