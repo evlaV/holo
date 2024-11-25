@@ -1,7 +1,7 @@
 # Maintainer (upstream): emersion <contact emersion fr>
 # Maintainer (ugly holo vendoring of meson stuff sorry): John Schoenick <johns@valvesoftware.com>
 pkgname=drm_info
-pkgver=2.4.0
+pkgver=2.7.0
 pkgrel=1
 license=('MIT')
 pkgdesc='Small utility to dump info about DRM devices'
