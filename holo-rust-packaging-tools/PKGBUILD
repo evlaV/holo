@@ -1,13 +1,13 @@
 pkgname=holo-rust-packaging-tools
 pkgver=0.1.1
-pkgrel=2
+pkgrel=3
 pkgdesc="Packaging tools for Rust in Holo"
 arch=(any)
 url="https://github.com/evlav/rust-packaging/"
 license=(MIT)
 depends=(python)
-makedepends=('python>=3.11'
-             'python<3.12'
+makedepends=('python>=3.12'
+             'python<3.13'
              python-build
              python-installer
              python-setuptools

@@ -6,15 +6,15 @@
 
 pkgname=python-libversion
 pkgver=1.2.4
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc="Python bindings for libversion"
 url='https://pypi.org/project/libversion'
 license=('MIT')
 arch=('x86_64' 'i686')
 depends=('python' 'libversion')
 makedepends=('python-setuptools'
-  'python>=3.11'
-  'python<3.12'
+  'python>=3.12'
+  'python<3.13'
 )
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/repology/py-libversion/archive/${pkgver}.tar.gz")
 sha256sums=('9edda48b2f030cb95b0de41aae21f9983a412909d806184f32027c26d7bf2919')
