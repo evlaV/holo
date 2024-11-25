@@ -5,7 +5,7 @@
 
 pkgname=steamos-kdumpst-layer
 pkgver=1.0
-pkgrel=2
+pkgrel=3
 pkgdesc="SteamOS kdumpst layer of customizations"
 arch=('any')
 license=('LGPL2.1')
