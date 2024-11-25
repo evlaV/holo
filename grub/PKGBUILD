@@ -20,7 +20,7 @@ pkgdesc='GNU GRand Unified Bootloader (2)'
 epoch=2
 _tag='03e6ea18f6f834f177cad017279bedbb0a3de594' # git rev-parse grub-${_pkgver}
 _gnulib_commit='cfdbd92718d6d4989bfe885448063d7863aa69dc' # git rev-parse origin/stable-202407
-_pkgver=2.12
+_pkgver=2.13
 _unifont_ver='15.1.05'
 pkgver=${_pkgver/-/}
 pkgrel=2.1
@@ -36,7 +36,7 @@ conflicts=('grub-common' 'grub-bios' 'grub-emu' "grub-efi-${_EFI_ARCH}" 'grub-le
 replaces=('grub-common' 'grub-bios' 'grub-emu' "grub-efi-${_EFI_ARCH}")
 provides=('grub-common' 'grub-bios' 'grub-emu' "grub-efi-${_EFI_ARCH}")
 
-makedepends=('git' 'rsync' 'xz' 'freetype2' 'ttf-dejavu' 'python>=3.11' 'python<3.12' 'autogen'
+makedepends=('git' 'rsync' 'xz' 'freetype2' 'ttf-dejavu' 'python>=3.12' 'python<3.13' 'autogen'
              'texinfo' 'help2man' 'gettext' 'device-mapper' 'fuse3')
 depends=('sh' 'xz' 'gettext' 'device-mapper')
 optdepends=('freetype2: For grub-mkfont usage'
@@ -288,7 +288,7 @@ prepare() {
         done
 
 	echo "Patches from Arch..."
-        for _p in "${source[@]}"; do            
+        for _p in "${source[@]}"; do
             case $_p in
                 arch-*.patch)
                     echo "Applying: ""$(patch_ident $_p)"

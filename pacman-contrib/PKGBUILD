@@ -3,18 +3,20 @@
 # Maintainer: Daniel M. Capella <polyzen@archlinux.org>
 
 pkgname=pacman-contrib
-pkgver=1.10.4
-pkgrel=1.1
+pkgver=1.10.6
+pkgrel=2.1
 pkgdesc='Contributed scripts and tools for pacman systems'
 arch=('x86_64')
 url=https://gitlab.archlinux.org/pacman/pacman-contrib
-license=('GPL')
-depends=('fakeroot' 'pacman' 'perl')
+license=('GPL-2.0-or-later')
+depends=('pacman')
 makedepends=('asciidoc' 'git')
 optdepends=(
   'diffutils: for pacdiff'
+  'fakeroot: for checkupdates'
   'findutils: for pacdiff --find'
   'mlocate: for pacdiff --locate'
+  'perl: for pacsearch'
   'sudo: privilege elevation for several scripts'
   'vim: default merge program for pacdiff'
 )
