@@ -1,7 +1,7 @@
 # Maintainer: Vlad Zahorodnii <vladzzag@gmail.com>
 pkgname=drm_janitor
 pkgver=0.0.4
-pkgrel=2
+pkgrel=4
 pkgdesc="A helper that resets the DRM state to reasonable defaults"
 arch=(x86_64)
 url="https://github.com/zzag/drm_janitor"
@@ -21,5 +21,5 @@ build() {
 package() {
     meson install -C build --destdir="${pkgdir}"
     install -Dm644 "${pkgname}-${pkgver}/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-    install -Dm644 drm_janitor.conf "${pkgdir}/usr/lib/systemd/system/sddm.service.d/drm_janitor.conf"
+    install -Dm644 drm_janitor.conf "${pkgdir}/usr/lib/systemd/user/gamescope-session.service.d/drm_janitor.conf"
 }
