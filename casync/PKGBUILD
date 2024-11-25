@@ -5,15 +5,15 @@ pkgname=casync
 _commit=99559cd
 # Should match what pkgver() generates below
 pkgver=2.r227.g99559cd
-pkgrel=4.2
+pkgrel=4.3
 pkgdesc="Content-Addressable Data Synchronization Tool"
 arch=(x86 x86_64)
 url="https://github.com/systemd/casync"
 license=('LGPL')
 depends=('acl' 'fuse2' 'libcurl.so' 'libudev.so' 'openssl' 'xz' 'zlib' 'zstd')
 makedepends=('git' 'meson' 'python-sphinx'
-  'python>=3.11'
-  'python<3.12'
+  'python>=3.12'
+  'python<3.13'
 )
 optdepends=()
 checkdepends=('rsync')

@@ -1,0 +1,29 @@
+From 330c50fc19f0a228da89d4044bd740197fded4c6 Mon Sep 17 00:00:00 2001
+From: Ludovico de Nittis <ludovico.denittis@collabora.com>
+Date: Wed, 11 Sep 2024 17:46:35 +0200
+Subject: [PATCH 2/2] Use the device privacy mode
+
+This should help with the case where having a Steam Controller connected
+could block suspend.
+
+Signed-off-by: Ludovico de Nittis <ludovico.denittis@collabora.com>
+---
+ src/main.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/main.conf b/src/main.conf
+index 82040b3fa..6d7fca937 100644
+--- a/src/main.conf
++++ b/src/main.conf
+@@ -95,7 +95,7 @@
+ # discoverable, and Device Privacy Mode for scanning.
+ #
+ # Defaults to "off"
+-#Privacy = off
++Privacy = device
+ 
+ # Specify the policy to the JUST-WORKS repairing initiated by peer
+ # Possible values: "never", "confirm", "always"
+-- 
+2.46.0
+

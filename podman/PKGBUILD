@@ -5,9 +5,8 @@
 
 pkgbase=podman
 pkgname=podman
-pkgver=4.9.3
-_commit=bd1b4a96544e6199f369feef8cb19c2e8f803b1f	#refs/tags/v4.9.3
-pkgrel=1.2 # Holo: build only podman and not podman-docker, disable PGP signature
+pkgver=5.2.5
+pkgrel=1.1 # Holo: build only podman and not podman-docker
 pkgdesc='Tool and library for running OCI-based containers in pods'
 arch=(x86_64)
 url='https://github.com/containers/podman'
@@ -16,22 +15,19 @@ makedepends=(
   apparmor
   btrfs-progs
   catatonit
-  device-mapper
   git
   go
   go-md2man
   gpgme
   libseccomp
+  man-db
+  shadow
   systemd
 )
 # https://github.com/containers/podman/issues/13297
 options=(!lto)
-# Holo: disable PGP signature check until we have a patched pacman
-# https://gitlab.archlinux.org/pacman/pacman/-/issues/92
-# https://gitlab.archlinux.org/archlinux/packaging/packages/pacman/-/merge_requests/9
 source=(
-  git+$url#tag=$_commit
-  $pkgname-4.6.0-defaultinitpath.patch
+  "git+$url?signed#tag=v$pkgver"
 )
 # See the release-keys repository
 # https://github.com/containers/release-keys
@@ -40,24 +36,9 @@ validpgpkeys=(
   7CE1E6F8C90CB53E7E4D8F2D502E08DB0BBF8EEE  # Ashley Cui <acui@redhat.com>
   9E33DD8704CC03E2DEB84D9A1C1EDD7CC7C3A0DD  # Lokesh Mandvekar <lsm5@redhat.com>
 )
-sha256sums=('SKIP'
-            'eeacf654707b9b8d6a6c08453b5625d9cf31010d666f82f4851aa34433b97700')
-
-pkgver() {
-  cd $pkgname
-  git describe --tags | sed 's/^v//;s/-/+/g'
-}
-
-prepare() {
-  # set default init_path to /usr/lib/podman/catatonit
-  # https://bugs.archlinux.org/task/75493
-  # https://github.com/containers/common/issues/1110
-  patch -Np1 -d $pkgname -i ../$pkgname-4.6.0-defaultinitpath.patch
-}
+sha256sums=('22afdc76311ec0696390724b0ce4a33d79973f9b2c8138f3d0c5403a4a3cd30c')
 
 build() {
-  # NOTE: the BUILDTAGS may change over time
-  export BUILDTAGS='apparmor seccomp systemd'
   export CGO_CPPFLAGS="${CPPFLAGS}"
   export CGO_CFLAGS="${CFLAGS}"
   export CGO_CXXFLAGS="${CXXFLAGS}"
@@ -74,21 +55,21 @@ package_podman() {
     catatonit
     conmon
     containers-common
-    crun
+    oci-runtime
     gcc-libs
     glibc
     iptables
-    device-mapper libdevmapper.so
     gpgme libgpgme.so
     libseccomp libseccomp.so
-    slirp4netns
+    passt
+    shadow
   )
   optdepends=(
     'apparmor: for AppArmor support'
     'btrfs-progs: support btrfs backend devices'
     'cni-plugins: for an alternative container-network-stack implementation'
     'fuse-overlayfs: for storage driver in rootless environment'
-    'passt: for alternative rootless network support'
+    'slirp4netns: for alternative rootless network support'
     'podman-compose: for docker-compose compatibility'
     'podman-docker: for Docker-compatible CLI'
   )
