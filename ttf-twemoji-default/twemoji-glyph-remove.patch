@@ -1,0 +1,22 @@
+@@ -7732,21 +7732,6 @@
+     <cmap_format_12 platformID="3" platEncID="10" format="12" reserved="0" length="2104" language="0" nGroups="174">
+       <map code="0x0" name="uni0000"/><!-- ???? -->
+       <map code="0xd" name="uni000D"/><!-- ???? -->
+-      <map code="0x20" name="space"/><!-- SPACE -->
+-      <map code="0x23" name="numbersign"/><!-- NUMBER SIGN -->
+-      <map code="0x2a" name="asterisk"/><!-- ASTERISK -->
+-      <map code="0x30" name="zero"/><!-- DIGIT ZERO -->
+-      <map code="0x31" name="one"/><!-- DIGIT ONE -->
+-      <map code="0x32" name="two"/><!-- DIGIT TWO -->
+-      <map code="0x33" name="three"/><!-- DIGIT THREE -->
+-      <map code="0x34" name="four"/><!-- DIGIT FOUR -->
+-      <map code="0x35" name="five"/><!-- DIGIT FIVE -->
+-      <map code="0x36" name="six"/><!-- DIGIT SIX -->
+-      <map code="0x37" name="seven"/><!-- DIGIT SEVEN -->
+-      <map code="0x38" name="eight"/><!-- DIGIT EIGHT -->
+-      <map code="0x39" name="nine"/><!-- DIGIT NINE -->
+-      <map code="0xa9" name="copyright"/><!-- COPYRIGHT SIGN -->
+-      <map code="0xae" name="registered"/><!-- REGISTERED SIGN -->
+       <map code="0x200d" name="uni200D"/><!-- ZERO WIDTH JOINER -->
+       <map code="0x203c" name="exclamdbl"/><!-- DOUBLE EXCLAMATION MARK -->
+       <map code="0x2049" name="uni2049"/><!-- EXCLAMATION QUESTION MARK -->
