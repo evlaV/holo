@@ -1,41 +1,46 @@
-# Maintainer: Evangelos Foutras <evangelos@foutrelis.com>
+# Maintainer: Evangelos Foutras <foutrelis@archlinux.org>
 # Contributor: Jan "heftig" Steffens <jan.steffens@gmail.com>
+
+# Holo: Split the clang and clang-libs packages (https://gitlab.archlinux.org/archlinux/packaging/packages/clang/-/merge_requests/1)
+# Holo: Disable check() to speed up the build
 
 pkgbase=clang
 pkgname=(clang clang-libs)
-pkgver=16.0.6
-pkgrel=2.2
+pkgver=18.1.8
+pkgrel=4.1
 pkgdesc="C language family frontend for LLVM"
 arch=('x86_64')
 url="https://clang.llvm.org/"
-license=('custom:Apache 2.0 with LLVM Exception')
-makedepends=('llvm' 'cmake' 'ninja' 'python-sphinx' 'python-recommonmark'
-  'python>=3.11'
-  'python<3.12'
+license=('Apache-2.0 WITH LLVM-exception')
+makedepends=('llvm' 'cmake' 'ninja' 'python-sphinx' 'python-myst-parser'
+  'python>=3.12'
+  'python<3.13'
 )
+# Holo: Avoid building debug packages
 options=('!debug')
 _source_base=https://github.com/llvm/llvm-project/releases/download/llvmorg-$pkgver
-source=($_source_base/$pkgbase-$pkgver.src.tar.xz{,.sig}
+source=($_source_base/clang-$pkgver.src.tar.xz{,.sig}
         $_source_base/clang-tools-extra-$pkgver.src.tar.xz{,.sig}
         $_source_base/llvm-$pkgver.src.tar.xz{,.sig}
         $_source_base/cmake-$pkgver.src.tar.xz{,.sig}
         $_source_base/third-party-$pkgver.src.tar.xz{,.sig}
-        clangd-handle-missing-ending-brace.patch
+        clang-disable-float128-diagnostics-for-device-compilation.patch::https://github.com/llvm/llvm-project/commit/318bff6811e7.patch
+        support-__GCC_-CON-DE-STRUCTIVE_SIZE.patch
         enable-fstack-protector-strong-by-default.patch)
-sha256sums=('1186b6e6eefeadd09912ed73b3729e85b59f043724bb2818a95a2ec024571840'
+sha256sums=('5724fe0a13087d5579104cedd2f8b3bc10a212fb79a0fcdac98f4880e19f4519'
             'SKIP'
-            '174c7844db2590b18b2a59a9ce503f8fe439edc2de2f0f625006501c99736f31'
+            'e58877fcd95ed106824bd1a31276dd17ed0c53adcd60ca75289eac0654f0a7f1'
             'SKIP'
-            'e91db44d1b3bb1c33fcea9a7d1f2423b883eaa9163d3d56ca2aa6d2f0711bc29'
+            'f68cf90f369bc7d0158ba70d860b0cb34dbc163d6ff0ebc6cfa5e515b9b2e28d'
             'SKIP'
-            '39d342a4161095d2f28fb1253e4585978ac50521117da666e2b1f6f28b62f514'
+            '59badef592dd34893cd319d42b323aaa990b452d05c7180ff20f23ab1b41e837'
             'SKIP'
-            '15f5b9aeeba938530af977d5f9205612737a091a7f0f6c8075df8723b7713f70'
+            'b76b810f3d3dc5d08e83c4236cb6e395aa9bd5e3ea861e8c319b216d093db074'
             'SKIP'
-            '0d4dc477f5a28f9f16639dc094b6d9bc14228d5de771547394799d2d5f8cd1df'
-            '45da5783f4e89e4507a351ed0ffbbe6ec240e21ff7070797a89c5ccf434ac612')
-validpgpkeys=('474E22316ABF4785A88C6E8EA2C794A986419D8A'  # Tom Stellard <tstellar@redhat.com>
-              'D574BD5D1D0E98895E3BF90044F2485E45D59042') # Tobias Hieta <tobias@hieta.se>
+            '94a3d4df2443f9dc9e256e6c0c661ff4a4ca4f34a5ca351f065511b9694faf2a'
+            '8832b4ee02fe8a0e57fca608288242f80e348ee9b60be3eb0069c8b91a42fbf4'
+            'ef319e65f927718e1d3b1a23c480d686b1d292e2a0bf27229540964f9734117a')
+validpgpkeys=('474E22316ABF4785A88C6E8EA2C794A986419D8A') # Tom Stellard <tstellar@redhat.com>
 
 # Utilizing LLVM_DISTRIBUTION_COMPONENTS to avoid
 # installing static libraries; inspired by Gentoo
@@ -44,9 +49,6 @@ _get_distribution_components() {
   ninja -t targets | grep -Po 'install-\K.*(?=-stripped:)' | while read -r target; do
     case $target in
       clang-libraries|distribution)
-        continue
-        ;;
-      clang-tidy-headers)
         continue
         ;;
       clang|clangd|clang-*)
@@ -61,14 +63,12 @@ _get_distribution_components() {
 
 prepare() {
   rename -v -- "-$pkgver.src" '' {cmake,third-party}-$pkgver.src
-  cd "$srcdir/$pkgbase-$pkgver.src"
+  cd clang-$pkgver.src
   mkdir build
   mv "$srcdir/clang-tools-extra-$pkgver.src" tools/extra
   patch -Np2 -i ../enable-fstack-protector-strong-by-default.patch
-
-  # https://github.com/clangd/clangd/issues/1559
-  sed 's|clang-tools-extra|clang/tools/extra|' \
-    clangd-handle-missing-ending-brace.patch | patch -Np2
+  patch -Np2 -i ../clang-disable-float128-diagnostics-for-device-compilation.patch
+  patch -Np2 -i ../support-__GCC_-CON-DE-STRUCTIVE_SIZE.patch
 
   # Attempt to convert script to Python 3
   2to3 -wn --no-diffs \
@@ -76,7 +76,7 @@ prepare() {
 }
 
 build() {
-  cd "$srcdir/$pkgbase-$pkgver.src/build"
+  cd clang-$pkgver.src/build
 
   # Build only minimal debug info to reduce size
   CFLAGS=${CFLAGS/-g /-g1 }
@@ -113,7 +113,7 @@ build() {
 
 check() {
   return 0 # Holo: disable check to speed up build
-  cd "$srcdir/$pkgbase-$pkgver.src/build"
+  cd clang-$pkgver.src/build
   LD_LIBRARY_PATH=$PWD/lib ninja check-clang{,-tools}
 }
 
@@ -124,7 +124,7 @@ _python_optimize() {
 }
 
 package_clang() {
-  depends=('clang-libs' 'gcc' 'compiler-rt')
+  depends=('clang-libs' 'llvm-libs' 'gcc' 'compiler-rt')
   optdepends=('openmp: OpenMP support in clang with -fopenmp'
               'python: for scan-view and git-clang-format'
               'llvm: referenced by some clang headers')
@@ -132,7 +132,7 @@ package_clang() {
   conflicts=('clang-analyzer' 'clang-tools-extra')
   replaces=('clang-analyzer' 'clang-tools-extra')
 
-  cd "$srcdir/$pkgbase-$pkgver.src/build"
+  cd clang-$pkgver.src/build
 
   DESTDIR="$pkgdir" ninja install-distribution
   install -Dm644 ../LICENSE.TXT "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
