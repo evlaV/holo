@@ -2,27 +2,67 @@
 # Maintainer (Holo): David Redondo <kde@david-redondo.de>
 
 pkgname=discover
-pkgver=5.27.10.1
+pkgver=6.2.2
 _dirver=$(echo $pkgver | cut -d. -f1-3)
-pkgrel=1.2 # Holo change to enable steamos backend.
+pkgrel=1.1 # Holo change to enable steamos backend.
 pkgdesc='KDE and Plasma resources management GUI'
 arch=(x86_64)
 url='https://kde.org/plasma-desktop/'
-license=(LGPL)
-depends=(knewstuff5 kidletime5 qt5-graphicaleffects appstream-qt5 archlinux-appstream-data
-         kirigami2 discount kuserfeedback5 purpose5 qt5-webview)
-makedepends=(extra-cmake-modules plasma-framework5 packagekit-qt5 flatpak fwupd)
-optdepends=('packagekit-qt5: to manage packages from Arch Linux repositories (not recommended, use at your own risk)'
-            'flatpak: Flatpak packages support'
-            'fwupd: firmware update support')
+license=(LGPL-2.0-or-later)
+depends=(appstream-qt
+         archlinux-appstream-data
+         attica
+         discount
+         gcc-libs
+         glib2
+         glibc
+         kcmutils
+         kconfig
+         kcoreaddons
+         kcrash
+         kdbusaddons
+         ki18n
+         kiconthemes
+         kidletime
+         kio
+         kirigami
+         kirigami-addons
+         kjobwidgets
+         knewstuff
+         knotifications
+         kservice
+         kstatusnotifieritem
+         kuserfeedback
+         kwidgetsaddons
+         kwindowsystem
+         purpose
+         qcoro
+         qt6-base
+         qt6-declarative
+         qt6-webview)
+makedepends=(extra-cmake-modules
+             flatpak
+             fwupd
+             packagekit-qt6)
+optdepends=('flatpak: Flatpak packages support'
+            'fwupd: firmware update support'
+            'packagekit-qt6: to manage packages from Arch Linux repositories (not recommended, use at your own risk)')
 groups=(plasma)
-source=(https://download.kde.org/stable/plasma/$_dirver/$pkgname-$pkgver.tar.xz{,.sig})
-sha256sums=('d856aeb1288b966955e04d5669cfc2b3fb659fdd3f07b869a41dc705a7f6d1ac'
-            'SKIP')
+source=(https://download.kde.org/stable/plasma/$_dirver/$pkgname-$pkgver.tar.xz{,.sig}
+        0001-FwupdBackend-Do-not-use-more-API-now-removed-in-fwupd-2-0-0.patch)
+sha256sums=('d4fefafaa9b5b98005222a298cfcb7e3e1c89820d0ef8c02540e1a82108d5aae'
+            'SKIP'
+            '85b701bfca5b3944abda1d1b8101d381b16c484773da25848a89f69734248c05')
 validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>
               '0AAC775BB6437A8D9AF7A3ACFE0784117FBCE11D'  # Bhushan Shah <bshah@kde.org>
               'D07BD8662C56CB291B316EB2F5675605C74E02CF'  # David Edmundson <davidedmundson@kde.org>
               '1FA881591C26B276D7A5518EEAAF29B42A678C20') # Marco Martin <notmart@gmail.com>
+
+prepare() {
+  cd $pkgname-$pkgver
+
+  patch -Np1 < ../0001-FwupdBackend-Do-not-use-more-API-now-removed-in-fwupd-2-0-0.patch
+}
 
 build() {
   cmake -B build -S $pkgname-$pkgver \
