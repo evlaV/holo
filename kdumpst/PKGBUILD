@@ -5,7 +5,7 @@
 
 pkgname=kdumpst
 pkgver=1.1
-pkgrel=1
+pkgrel=2
 pkgdesc="kdumpst, a tool for collecting pstore/kdump logs."
 arch=('any')
 url="https://gitlab.freedesktop.org/gpiccoli/kdumpst"

@@ -1,8 +1,8 @@
 # Maintainer (Holo): Manuel A. Fernandez Montecelo <mafm@igalia.com>
 
 pkgname=holo-glibc-locales
-pkgver=2.39
-pkgrel=1
+pkgver=2.40+r16+gaa533d58ff
+pkgrel=2
 pkgdesc="Substitute of glibc-locales with only the locales present in SteamOS"
 arch=('x86_64')
 license=(GPL LGPL)
@@ -16,7 +16,7 @@ replaces=(
   "glibc-locales"
 )
 source=("https://archive.archlinux.org/packages/g/glibc-locales/glibc-locales-${pkgver}-${pkgrel}-x86_64.pkg.tar.zst")
-b2sums=("acc331f48c1f8d7b9eab7d2d6ac11a5d68be96918152deb16773ac446420cf6f63a1f8e55617accfd0c57d30106a3a3c15360567aff4fb2f70cb4cbd0813491d")
+b2sums=('dca2024a4552785469f520754a6fd561490ee7db2f9b24f85d92781e64df8098944b9d43a9f2aa27a2c9044cc1877ba37c00ef5ec4f0a40d78831e107714c472')
 
 package() {
   # runtime depends only

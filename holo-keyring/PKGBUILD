@@ -1,17 +1,17 @@
 # Maintainer: Emil Velikov <emil.l.velikov@gmail.com>
 
 pkgname=holo-keyring
-_srctag=holo-20240322-sq033
+_srctag=holo-20241029
 pkgver=${_srctag#holo-}
 pkgver=${pkgver//-/.}
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc='Holo PGP keyring'
 arch=(any)
 url='https://github.com/evlav/archlinux-keyring/'
 license=(GPL)
 groups=(holo-base)
 install=$pkgname.install
-makedepends=('git' 'python>=3.11' 'python<3.12' 'sequoia-sq>=0.33' 'sequoia-sq<0.34')
+makedepends=('git' 'python>=3.12' 'python<3.13' 'sequoia-sq>=0.35' 'sequoia-sq<0.39')
 source=("$pkgname-$pkgver::git+https://github.com/evlav/archlinux-keyring#tag=$_srctag")
 sha256sums=('SKIP')
 
