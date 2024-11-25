@@ -4,7 +4,7 @@
 pkgname=steamos-manager
 _srctag=v24.5.1
 pkgver=${_srctag##v}
-pkgrel=3
+pkgrel=4
 pkgdesc='SteamOS Manager daemon for running various tasks as root'
 arch=('x86_64')
 url='https://store.steampowered.com/steamos/'
