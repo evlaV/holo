@@ -4,10 +4,10 @@
 # Contributor: John Gerritse <reaphsharc@gmail.com>
 
 pkgname=lsb-release
-pkgver=2.0.r48.3cf5103
-_commit=3cf51039933d03ef15388b75d30baa5d5e09a1a0
+pkgver=2.0.r53.a86f885
+_commit=a86f885597a91cd41837d706bf6a08d4c239a54b
 # SteamOS custom/vendor /etc/lsb-release
-pkgrel=1.1
+pkgrel=2.1
 pkgdesc="LSB version query program"
 arch=('any')
 url="https://refspecs.linuxfoundation.org/lsb.shtml"
