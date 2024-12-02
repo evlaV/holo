@@ -6,7 +6,7 @@
 # Maintainer (Holo/rust reproducibility rider): John Schoenick <johns@valvesoftware.com>
 pkgname=paru
 pkgver=2.0.4
-pkgrel=1.1
+pkgrel=1.2
 arch=('i686' 'pentium4' 'x86_64' 'arm' 'armv7h' 'armv6h' 'aarch64')
 pkgdesc='Feature packed AUR helper'
 url='https://github.com/Morganamilo/paru'
@@ -290,6 +290,7 @@ source=('paru-2.0.4.tar.gz::https://github.com/Morganamilo/paru/archive/v2.0.4.t
         'zerocopy-derive-0.7.35.tar.gz::https://crates.io/api/v1/crates/zerocopy-derive/0.7.35/download')
 makedepends=('cargo'
              'holo-rust-packaging-tools')
+depends=('git' 'pacman' 'libalpm.so>=14')
 license=('GPL-3.0')
 sha256sums=('b9c67f1390caacc949c2eb2a254e8cf37778f382c3c6b8d057fa6feb6eaeb0f9'
             'f5fb1d8e4442bd405fdfd1dacb42792696b0cf9cb15882e5d097b742a676d375'
