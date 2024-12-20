@@ -2,7 +2,7 @@
 
 pkgname='steamos-networking-tools'
 pkgver=1.1
-pkgrel=1
+pkgrel=2
 pkgdesc='SteamOS networking tools'
 arch=('any')
 license=('LGPL2.1')
@@ -12,7 +12,7 @@ source=(
   'steamos-wifi-set-backend'
   'steamos-wifi-set-backend-privileged'
   'steamos-wifi-set-backend.bash-completion'
-  'org.valve.steamos.wifi.set.backend.policy'
+  'com.steampowered.SteamOS.WifiSetBackend.policy'
 )
 sha256sums=(
   'd151d32e4a6fce255361a1ebb25720ea9edb623d54a56ff90cccdb3858324449'
@@ -35,5 +35,5 @@ package() {
   install -Dm0755 steamos-wifi-set-backend-privileged -t "${pkgdir}"/usr/bin/steamos-polkit-helpers
   install -Dm0644 steamos-wifi-set-backend.bash-completion -T "${pkgdir}"/usr/share/bash-completion/completions/steamos-wifi-set-backend
   install -m0755 -d "${pkgdir}"/usr/share/polkit-1/actions
-  install -Dm0644 org.valve.steamos.wifi.set.backend.policy -t "${pkgdir}"/usr/share/polkit-1/actions
+  install -Dm0644 com.steampowered.SteamOS.WifiSetBackend.policy -t "${pkgdir}"/usr/share/polkit-1/actions
 }

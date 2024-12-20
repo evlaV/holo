@@ -2,7 +2,7 @@
 
 pkgname='steamos-systemreport'
 pkgver=0.12
-pkgrel=1
+pkgrel=2
 pkgdesc='System report collection tool'
 arch=('any')
 license=('LGPL2.1')
@@ -10,7 +10,7 @@ url='https://github.com/evlav/holo'
 source=(
   'steamos-systemreport'
   'steamos-systemreport-privileged'
-  'org.valve.steamos.systemreport.policy'
+  'com.steampowered.SteamOS.systemreport.policy'
 )
 sha256sums=('c732e6af25ff34474da130e8ab054291d0b408f80dd27186d71a3471e71d807d'
             '0977bf47e1fb5384946f08bcb60daebe4ffa899941950537cc939bdba4568304'
@@ -41,5 +41,5 @@ package() {
   install -Dm755 steamos-systemreport -t "$pkgdir"/usr/bin/
   install -Dm755 steamos-systemreport-privileged -t "$pkgdir"/usr/bin/steamos-polkit-helpers
   install -m755 -d "$pkgdir"/usr/share/polkit-1/actions
-  install -m644 org.valve.steamos.systemreport.policy -t "$pkgdir"/usr/share/polkit-1/actions
+  install -m644 com.steampowered.SteamOS.systemreport.policy -t "$pkgdir"/usr/share/polkit-1/actions
 }
