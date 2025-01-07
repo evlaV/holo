@@ -1,0 +1,148 @@
+From 22a96980ed08c2fde51e6d69d5b360976d8ef0bd Mon Sep 17 00:00:00 2001
+From: Ludovico de Nittis <ludovico.denittis@collabora.com>
+Date: Mon, 6 Jan 2025 14:22:34 +0100
+Subject: [PATCH] Revert "device: Fix overwritting current_flags"
+
+This reverts commit 9cc587947b6ac56a4c94dcc880b273bc72af22a8.
+
+Workaround to fix setting the WakeAllowed property regression.
+---
+ src/adapter.c | 20 +++-----------------
+ src/device.c  | 20 +-------------------
+ src/device.h  |  2 --
+ 3 files changed, 4 insertions(+), 38 deletions(-)
+
+diff --git a/src/adapter.c b/src/adapter.c
+index 2bb94cf16..0d174b26b 100644
+--- a/src/adapter.c
++++ b/src/adapter.c
+@@ -5568,7 +5568,6 @@ void adapter_accept_list_remove(struct btd_adapter *adapter,
+ static void set_device_privacy_complete(uint8_t status, uint16_t length,
+ 					 const void *param, void *user_data)
+ {
+-	struct btd_device *dev = user_data;
+ 	const struct mgmt_rp_set_device_flags *rp = param;
+ 
+ 	if (status != MGMT_STATUS_SUCCESS) {
+@@ -5581,9 +5580,6 @@ static void set_device_privacy_complete(uint8_t status, uint16_t length,
+ 		error("Too small Set Device Flags complete event: %d", length);
+ 		return;
+ 	}
+-
+-	btd_device_flags_changed(dev, btd_device_get_supported_flags(dev),
+-					btd_device_get_pending_flags(dev));
+ }
+ 
+ static void add_device_complete(uint8_t status, uint16_t length,
+@@ -5629,7 +5625,7 @@ static void add_device_complete(uint8_t status, uint16_t length,
+ 			adapter_set_device_flags(adapter, dev, flags |
+ 						DEVICE_FLAG_DEVICE_PRIVACY,
+ 						set_device_privacy_complete,
+-						dev);
++						NULL);
+ 		}
+ 	}
+ }
+@@ -5679,7 +5675,6 @@ void adapter_set_device_flags(struct btd_adapter *adapter,
+ {
+ 	struct mgmt_cp_set_device_flags cp;
+ 	uint32_t supported = btd_device_get_supported_flags(device);
+-	uint32_t pending = btd_device_get_pending_flags(device);
+ 	const bdaddr_t *bdaddr;
+ 	uint8_t bdaddr_type;
+ 
+@@ -5687,14 +5682,6 @@ void adapter_set_device_flags(struct btd_adapter *adapter,
+ 				(supported | flags) != supported)
+ 		return;
+ 
+-	/* Check if changing flags are pending */
+-	if (flags == (flags & pending))
+-		return;
+-
+-	/* Set Device Privacy Mode if it has not set the flag yet. */
+-	if (btd_opts.device_privacy && !(flags & DEVICE_FLAG_DEVICE_PRIVACY))
+-		flags |= DEVICE_FLAG_DEVICE_PRIVACY & supported & ~pending;
+-
+ 	bdaddr = device_get_address(device);
+ 	bdaddr_type = btd_device_get_bdaddr_type(device);
+ 
+@@ -5703,9 +5690,8 @@ void adapter_set_device_flags(struct btd_adapter *adapter,
+ 	cp.addr.type = bdaddr_type;
+ 	cp.current_flags = cpu_to_le32(flags);
+ 
+-	if (mgmt_send(adapter->mgmt, MGMT_OP_SET_DEVICE_FLAGS, adapter->dev_id,
+-		  sizeof(cp), &cp, func, user_data, NULL))
+-		btd_device_set_pending_flags(device, flags);
++	mgmt_send(adapter->mgmt, MGMT_OP_SET_DEVICE_FLAGS, adapter->dev_id,
++		  sizeof(cp), &cp, func, user_data, NULL);
+ }
+ 
+ static void device_flags_changed_callback(uint16_t index, uint16_t length,
+diff --git a/src/device.c b/src/device.c
+index 2b3d19f55..6189c8cf7 100644
+--- a/src/device.c
++++ b/src/device.c
+@@ -215,7 +215,6 @@ struct btd_device {
+ 	GDBusPendingPropertySet wake_id;
+ 
+ 	uint32_t	supported_flags;
+-	uint32_t	pending_flags;
+ 	uint32_t	current_flags;
+ 	GSList		*svc_callbacks;
+ 	GSList		*eir_uuids;
+@@ -1571,7 +1570,7 @@ static void set_wake_allowed_complete(uint8_t status, uint16_t length,
+ 		return;
+ 	}
+ 
+-	btd_device_flags_changed(dev, dev->supported_flags, dev->pending_flags);
++	device_set_wake_allowed_complete(dev);
+ }
+ 
+ void device_set_wake_allowed(struct btd_device *device, bool wake_allowed,
+@@ -7348,22 +7347,6 @@ uint32_t btd_device_get_supported_flags(struct btd_device *dev)
+ 	return dev->supported_flags;
+ }
+ 
+-void btd_device_set_pending_flags(struct btd_device *dev, uint32_t flags)
+-{
+-	if (!dev)
+-		return;
+-
+-	dev->pending_flags = flags;
+-}
+-
+-uint32_t btd_device_get_pending_flags(struct btd_device *dev)
+-{
+-	if (!dev)
+-		return 0;
+-
+-	return dev->pending_flags;
+-}
+-
+ /* This event is sent immediately after add device on all mgmt sockets.
+  * Afterwards, it is only sent to mgmt sockets other than the one which called
+  * set_device_flags.
+@@ -7376,7 +7359,6 @@ void btd_device_flags_changed(struct btd_device *dev, uint32_t supported_flags,
+ 
+ 	dev->supported_flags = supported_flags;
+ 	dev->current_flags = current_flags;
+-	dev->pending_flags = 0;
+ 
+ 	if (!changed_flags)
+ 		return;
+diff --git a/src/device.h b/src/device.h
+index 97536774e..603f0339d 100644
+--- a/src/device.h
++++ b/src/device.h
+@@ -191,8 +191,6 @@ int btd_device_connect_services(struct btd_device *dev, GSList *services);
+ 
+ uint32_t btd_device_get_current_flags(struct btd_device *dev);
+ uint32_t btd_device_get_supported_flags(struct btd_device *dev);
+-uint32_t btd_device_get_pending_flags(struct btd_device *dev);
+-void btd_device_set_pending_flags(struct btd_device *dev, uint32_t flags);
+ void btd_device_flags_changed(struct btd_device *dev, uint32_t supported_flags,
+ 			      uint32_t current_flags);
+ 
+-- 
+2.47.1
+
