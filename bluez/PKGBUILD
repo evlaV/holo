@@ -7,11 +7,11 @@
 pkgbase=bluez
 pkgname=('bluez' 'bluez-utils' 'bluez-libs' 'bluez-cups' 'bluez-deprecated-tools' 'bluez-hid2hci' 'bluez-mesh')
 pkgver=5.79
-pkgrel=1.4
+pkgrel=1.5
 url="http://www.bluez.org/"
 arch=('x86_64')
 license=('GPL-2.0-only')
-makedepends=('dbus' 'libical' 'systemd' 'alsa-lib' 'json-c' 'ell' 'python-docutils' 'python-pygments' 'cups' 'python>=3.12' 'python<3.13')
+makedepends=('dbus' 'libical' 'systemd' 'alsa-lib' 'json-c' 'ell' 'python-docutils' 'python-pygments' 'cups' 'python>=3.13' 'python<3.14')
 source=(https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz,sign}
         bluetooth.modprobe
         0001-valve-bluetooth-config.patch  # SteamOS: Enable compatibility with devices like AirPods Pro
