@@ -3,13 +3,13 @@
 
 pkgname=ttf-twemoji-default
 pkgver=13.1.0
-pkgrel=2.2
+pkgrel=2.3
 _fedrel=1.fc35
 pkgdesc="Twitter Emoji for everyone."
 url="https://github.com/twitter/twemoji"
 arch=(any)
 license=('CCPL' 'MIT' 'Apache')
-makedepends=('python-fonttools' 'python>=3.12' 'python<3.13')
+makedepends=('python-fonttools' 'python>=3.13' 'python<3.14')
 depends=('fontconfig')
 provides=('emoji-font' 'ttf-twemoji')
 conflicts=('ttf-twemoji')
