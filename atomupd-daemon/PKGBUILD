@@ -2,14 +2,14 @@
 
 pkgname=atomupd-daemon
 pkgver=0.20241205.0
-pkgrel=1
+pkgrel=2
 pkgdesc='Atomic updates daemon'
 arch=('x86_64')
 url='https://github.com/evlav/atomupd-daemon'
 license=('MIT')
 makedepends=('git' 'glib2-devel' 'meson' 'python-dbusmock'
-  'python>=3.12'
-  'python<3.13'
+  'python>=3.13'
+  'python<3.14'
 )
 depends=('dbus' 'glib2' 'json-glib' 'steamos-atomupd-client' 'polkit' 'systemd')
 provides=("${pkgname}")

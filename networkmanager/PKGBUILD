@@ -15,7 +15,7 @@ pkgname=(
   networkmanager-docs
 )
 pkgver=1.50.0
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc="Network connection manager and user applications"
 url="https://networkmanager.dev/"
 arch=(x86_64)
@@ -52,8 +52,8 @@ makedepends=(
   perl-yaml
   polkit
   ppp
-  'python>=3.12'
-  'python<3.13'
+  'python>=3.13'
+  'python<3.14'
   python-gobject
   readline
   systemd
