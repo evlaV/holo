@@ -3,12 +3,12 @@
 
 pkgname=maliit-keyboard
 pkgver=2.3.1
-pkgrel=3.1 # Holo: disable presage, see https://bugs.archlinux.org/task/79500
+pkgrel=4.1 # Holo: disable presage, see https://bugs.archlinux.org/task/79500
 pkgdesc='Virtual keyboard based on Maliit framework'
 arch=(x86_64)
 url='https://maliit.github.io/'
 license=(LGPL)
-depends=(maliit-framework hunspell qt5-multimedia qt5-quickcontrols2 qt5-feedback qt5-graphicaleffects)
+depends=(maliit-framework hunspell qt5-multimedia qt5-quickcontrols2 qt5-feedback qt5-graphicaleffects qt5-wayland)
 makedepends=(cmake libpinyin anthy libchewing)
 optdepends=('anthy: japanese language support' 'libpinyin: chinese language support' 'libchewing: chinese language support')
 source=(https://github.com/maliit/keyboard/archive/$pkgver/$pkgname-$pkgver.tar.gz)
