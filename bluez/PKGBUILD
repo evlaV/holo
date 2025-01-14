@@ -7,7 +7,7 @@
 pkgbase=bluez
 pkgname=('bluez' 'bluez-utils' 'bluez-libs' 'bluez-cups' 'bluez-deprecated-tools' 'bluez-hid2hci' 'bluez-mesh')
 pkgver=5.79
-pkgrel=1.5
+pkgrel=1.6
 url="http://www.bluez.org/"
 arch=('x86_64')
 license=('GPL-2.0-only')
@@ -26,14 +26,13 @@ source=(https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz,
         # At the moment of writing, the upstream patch has still not being merged
         # https://lore.kernel.org/all/CABBYNZKFEBuW2OeU4uOSfku=-jCnn3oXJENDMBGmkqP-4rybDA@mail.gmail.com/t/#u
         0001-BlueZ-adapter-Fix-execute-LE-Add-Device-To-Resolving.patch
-        0002-Use-the-device-privacy-mode.patch
 
         # Holo: Fix toggling wake from suspend option.
-        # Keep this patch until a proper fix is done upstream.
-        # Upstream issues: https://github.com/bluez/bluez/issues/1045 and
-        # https://github.com/bluez/bluez/issues/1047
+        # These upstream patches fix toggling the WakeAllowed option.
         # Internal issue: https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1428
-        0001-Revert-device-Fix-overwritting-current_flags.patch
+        # Both patches are merged upstream, and expected to be included in BlueZ 5.80
+        0001-device-Fix-not-being-able-to-set-WakeAllowed.patch
+        0002-device-clear-pending_wake_allowed-on-error.patch
 
         # Holo: Fix devices that don't work correctly after being re-connected, like
         # the Steam Controller. Keep this patch until we figure out the root cause and
@@ -54,8 +53,8 @@ sha256sums=('4164a5303a9f71c70f48c03ff60be34231b568d93a9ad5e79928d34e6aa0ea8a'
             '0919781b35efb1e53b60dbad947ec282ad82f413879fd3e58af38a7b49a91941'
             '5800e6f6ff74a2a1b2c4482a393c65a83b10b0be52a53d51588e7a192d16fa0f'
             '24e49ec04e5c985d7f42acceb7c2dd9bad6ad6f8be80ff12368e18293448c42a'
-            '170eef0d9b26a7e31ef2ce2039f662bf9558ee71a1f832538dc9ba5628659f69'
-            '76661c8fd10e1ed56ce942710258b31b053875bb0469a0bcafc70d09a62e528f'
+            '48e17914960c91a6dc53c0025bf1118408ff24f6f37ea1dd1a57614eacffe3af'
+            'ecb389bb42a49e97ff066e92606bc4f9511542accaf05928d989546805aa24bb'
             '8b2a57b97964e5a4579a7c5f91863210e21c1bf8b9ace6510746ae3eb0c26779')
 validpgpkeys=('E932D120BC2AEC444E558F0106CA9F5D1DCF2659') # Marcel Holtmann <marcel@holtmann.org>
 
