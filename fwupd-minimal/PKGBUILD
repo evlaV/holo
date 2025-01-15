@@ -4,8 +4,8 @@
 # Contributor: Mirco Tischler <mt-ml at gmx dot de>
 
 pkgname=fwupd-minimal
-pkgver=1.9.26
-pkgrel=3
+pkgver=2.0.3
+pkgrel=1
 pkgdesc="Simple daemon to allow session software to update firmware"
 arch=(x86_64)
 url='https://github.com/fwupd/fwupd'
@@ -23,8 +23,7 @@ depends=(
   json-glib
   libarchive
   libcbor
-  libgudev
-  libgusb
+  libdrm
   libjcat
   libxmlb
   polkit
@@ -51,18 +50,24 @@ makedepends=(
   vala
   valgrind
 )
-checkdepends=(umockdev)
 source=(
   "https://github.com/fwupd/fwupd/releases/download/${pkgver}/fwupd-${pkgver}.tar.xz"{,.asc}
   fwupd.sysusers
+  0001-Fix-an-issue-where-UEFI-capsule-reboot_cleanup-wasn-.patch
 )
-sha512sums=('04684f0be26c1daec9966e62c7db103cce923bb361657c66111e085e9a388e812250ac18774ef83eac672852489acc2ab21b9d7c94a28a8e5564e8bb7d67c0ba'
+sha512sums=('68321ecf655f12352fd12182e000d9295c3421015ae13012c37bd5e711a0e240a331a6ae5d17a42c2608be79f005e121470c77c28b5fae61fe3383c7579e2bfd'
             'SKIP'
-            '637203080b55eda74a659f58c853a9a723a2dad5da70915b2b0e036c6145a649468ebec700cc83975d9cb5378b9dced8b3a3b26bdbcc75ddc774837355e75deb')
-b2sums=('11551c22bbce26cb1e7117e76f7d02077cf22889cdf21711a4dc2e523630335efcd20cf44dffecab74c04cd3dbd0cb5faa8277e220e193e613d75c4a9353e623'
+            '637203080b55eda74a659f58c853a9a723a2dad5da70915b2b0e036c6145a649468ebec700cc83975d9cb5378b9dced8b3a3b26bdbcc75ddc774837355e75deb'
+            '5c7a5c6728bfac370b92a6711b6bc0a4afa5f90b61f97a04aea7b6a4ab4e34504aecab7b5475065206370eb08806d658aced0f9b5a07c90b07010ad831bcda22')
+b2sums=('82e5170c8f3771685f3c3bed9f02c934104f9953d6dc4eb00290f3a283305a30ae9cebab165c88725a016e86f5610d9699c5f86cc5acf7a32cc4454d82df7c84'
         'SKIP'
-        'e65ca7da22a20a40882cfc1fe4479643f9a38c90a4f2c3e71e6e5e3de1d6db212a0f17d600097619fe3cdb0a9b860422f8b0b9a9d45441518e51a7eb12a918bb')
+        'e65ca7da22a20a40882cfc1fe4479643f9a38c90a4f2c3e71e6e5e3de1d6db212a0f17d600097619fe3cdb0a9b860422f8b0b9a9d45441518e51a7eb12a918bb'
+        '3c76859707b7d29676b8eb00b84e75dec19bb8b256fc7b7ec21b8c5a9c801cfce0eb3aac9d8d77f818f0b334edb594559d23abbdc9434a836179f826e7cbd7a9')
 validpgpkeys=(163EB50119225DB3DF8F49EA17ACBA8DFA970E17) # Richard Hughes <richard@hughsie.com>
+
+prepare() {
+  patch -d fwupd-${pkgver} -Np1 -i ../0001-Fix-an-issue-where-UEFI-capsule-reboot_cleanup-wasn-.patch
+}
 
 build() {
   local meson_options=(
@@ -72,8 +77,9 @@ build() {
     -D supported_build=enabled
     -D systemd_unit_user=fwupd
     -D hsi=disabled
-    -D introspection=false
-    -D plugin_redfish=false
+    -D introspection=disabled
+    -D umockdev_tests=disabled
+    -D plugin_redfish=disabled
     -D plugin_tpm=disabled
     -D plugin_flashrom=disabled
     -D plugin_logitech_bulkcontroller=disabled
