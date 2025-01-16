@@ -1,0 +1,144 @@
+From f89d35af03cdd297764e123f1a4e25ed347e239e Mon Sep 17 00:00:00 2001
+From: Mario Limonciello <mario.limonciello@amd.com>
+Date: Wed, 15 Jan 2025 14:59:46 -0600
+Subject: [PATCH] amd-gpu: Split up the VBIOS P/N for the version
+
+Recently there have been some cases that the amd-gpu plugin isn't
+showing update that /should/ be present. This is because the version
+string was being misinterpreted.
+
+The version string is supposed to be populated by the VBIOS P/N
+not "the legacy" CSM version string.
+
+A typical string is:
+
+```
+XXX-YYYYYYZZ-WWW
+```
+
+`XXX-YYYYYY` is used for matching a given board.  This is
+what was done as part of commit ea8ee1b69 ("amd-gpu: Only compare the
+first 10 characters of part number").
+
+But the `WWW` is actually a collection of ALL firmware changes and will
+change any time the firmware is changed in ANY way.  It should be used
+to reflect the version.
+
+Adjust the `setup()` callback to tokeninze the string and split it.
+If tokenization fails (such as on really old parts) then just show the
+CSM string as before.
+---
+ plugins/amd-gpu/fu-amd-gpu-device.c        | 24 ++++++++++++++++++----
+ plugins/amd-gpu/tests/amd-apu.json         |  2 +-
+ plugins/amd-gpu/tests/amd-dgpu-navi3x.json |  4 ++--
+ plugins/amd-gpu/tests/amd-dgpu.json        |  2 +-
+ 4 files changed, 24 insertions(+), 8 deletions(-)
+
+diff --git a/plugins/amd-gpu/fu-amd-gpu-device.c b/plugins/amd-gpu/fu-amd-gpu-device.c
+index b72ca004f..2941cc26d 100644
+--- a/plugins/amd-gpu/fu-amd-gpu-device.c
++++ b/plugins/amd-gpu/fu-amd-gpu-device.c
+@@ -233,8 +233,8 @@ fu_amd_gpu_device_setup(FuDevice *device, GError **error)
+ 	FuAmdGpuDevice *self = FU_AMDGPU_DEVICE(device);
+ 	struct drm_amdgpu_info_vbios vbios_info = {0};
+ 	g_autofree gchar *part = NULL;
+-	g_autofree gchar *ver = NULL;
+ 	g_autofree gchar *model = NULL;
++	g_auto(GStrv) tokens = NULL;
+ 
+ 	fu_amd_gpu_device_set_marketing_name(self);
+ 
+@@ -246,15 +246,29 @@ fu_amd_gpu_device_setup(FuDevice *device, GError **error)
+ 	self->vbios_pn = fu_strsafe((const gchar *)vbios_info.vbios_pn, PART_NUM_STR_SIZE);
+ 	part = g_strdup_printf("AMD\\%s", self->vbios_pn);
+ 	fu_device_add_instance_id(device, part);
+-	fu_device_set_version_raw(device, vbios_info.version);
+-	ver = fu_strsafe((const gchar *)vbios_info.vbios_ver_str, sizeof(vbios_info.vbios_ver_str));
+-	fu_device_set_version(device, ver); /* nocheck:set-version */
++
++	tokens =
++	    fu_strsplit((const gchar *)vbios_info.vbios_pn, sizeof(vbios_info.vbios_pn), "-", -1);
++	if (g_strv_length(tokens) >= 3) {
++		guint64 ver;
++
++		if (!fu_strtoull(tokens[2], &ver, 0, G_MAXUINT64, FU_INTEGER_BASE_AUTO, error))
++			return FALSE;
++		fu_device_set_version_raw(device, ver);
++	}
++
+ 	model = fu_strsafe((const gchar *)vbios_info.name, sizeof(vbios_info.name));
+ 	fu_device_set_summary(device, model);
+ 
+ 	return TRUE;
+ }
+ 
++static gchar *
++fu_amd_gpu_device_convert_version(FuDevice *device, guint64 version_raw)
++{
++	return fu_version_from_uint32(version_raw, fu_device_get_version_format(device));
++}
++
+ static FuFirmware *
+ fu_amd_gpu_device_prepare_firmware(FuDevice *device,
+ 				   GInputStream *stream,
+@@ -399,6 +413,7 @@ fu_amd_gpu_device_init(FuAmdGpuDevice *self)
+ {
+ 	fu_device_add_private_flag(FU_DEVICE(self), FU_DEVICE_PRIVATE_FLAG_AUTO_PARENT_CHILDREN);
+ 	fu_device_add_private_flag(FU_DEVICE(self), FU_DEVICE_PRIVATE_FLAG_NO_GENERIC_GUIDS);
++	fu_device_set_version_format(FU_DEVICE(self), FWUPD_VERSION_FORMAT_NUMBER);
+ }
+ 
+ static void
+@@ -421,4 +436,5 @@ fu_amd_gpu_device_class_init(FuAmdGpuDeviceClass *klass)
+ 	device_class->write_firmware = fu_amd_gpu_device_write_firmware;
+ 	device_class->prepare_firmware = fu_amd_gpu_device_prepare_firmware;
+ 	device_class->to_string = fu_amd_gpu_device_to_string;
++	device_class->convert_version = fu_amd_gpu_device_convert_version;
+ }
+diff --git a/plugins/amd-gpu/tests/amd-apu.json b/plugins/amd-gpu/tests/amd-apu.json
+index c110474d2..8d3ba58c6 100644
+--- a/plugins/amd-gpu/tests/amd-apu.json
++++ b/plugins/amd-gpu/tests/amd-apu.json
+@@ -6,7 +6,7 @@
+       "emulation-file": "@enumeration_datadir@/amd-apu-setup.json",
+       "components": [
+         {
+-          "version": "023.010.001.017.000001",
++          "version": "1",
+           "guids": [
+             "cc72cddc-68ef-5809-afce-bb1e5bcf571f"
+           ]
+diff --git a/plugins/amd-gpu/tests/amd-dgpu-navi3x.json b/plugins/amd-gpu/tests/amd-dgpu-navi3x.json
+index 54d1d185d..22664cbdb 100644
+--- a/plugins/amd-gpu/tests/amd-dgpu-navi3x.json
++++ b/plugins/amd-gpu/tests/amd-dgpu-navi3x.json
+@@ -3,11 +3,11 @@
+   "interactive": false,
+   "steps": [
+     {
+-      "url": "https://fwupd.org/downloads/732d1df025e809ee620fd411c9e8dcc488a492cf2bec3d0ea3ba5f43f7d91461-D704_XT_A0_20GB_MBA_NAVI31_Baseline_PRD004B_69818.cab",
++      "url": "https://fwupd.org/downloads/270e46249e7fb134ff3de616a3b30355e07bdc51b72bb1b05b63d5a5bd6b6dc8-D704_XT_A0_20GB_MBA_NAVI31_Baseline_PRD004B_69818.cab",
+       "emulation-url": "https://fwupd.org/downloads/808f6a085f8a59a8db62d08921e786e15d252eb3cf5069ee4c0b991e4a250cf1-navi31.zip",
+       "components": [
+         {
+-          "version": "022.001.002.030.000001",
++          "version": "114",
+           "guids": [
+             "8ed32270-e736-52e2-87d8-acef1dd2a946"
+           ]
+diff --git a/plugins/amd-gpu/tests/amd-dgpu.json b/plugins/amd-gpu/tests/amd-dgpu.json
+index a78dbf511..a4e8abd27 100644
+--- a/plugins/amd-gpu/tests/amd-dgpu.json
++++ b/plugins/amd-gpu/tests/amd-dgpu.json
+@@ -6,7 +6,7 @@
+       "emulation-file": "@enumeration_datadir@/amd-dgpu-setup.json",
+       "components": [
+         {
+-          "version": "015.050.003.000.012636",
++          "version": "100",
+           "guids": [
+             "fec45400-2aa5-51b9-9bba-091bfb972433"
+           ]
+-- 
+2.43.0
+
