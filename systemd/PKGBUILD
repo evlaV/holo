@@ -11,7 +11,7 @@ _tag='256.7'
 # way or another. So we replace dashes and tildes with the empty string to
 # make sure pacman's version comparing does the right thing for rc versions:
 pkgver="${_tag/[-~]/}"
-pkgrel=1.1
+pkgrel=1.2
 arch=('x86_64')
 license=('LGPL-2.1-or-later')
 url='https://www.github.com/systemd/systemd'
@@ -19,7 +19,7 @@ makedepends=('acl' 'cryptsetup' 'docbook-xsl' 'gperf' 'lz4' 'xz' 'pam' 'libelf'
              'intltool' 'iptables' 'kmod' 'libarchive' 'libcap' 'libidn2' 'libgcrypt'
              'libmicrohttpd' 'libxcrypt' 'libxslt' 'util-linux' 'linux-api-headers'
              'python-jinja' 'python-lxml' 'quota-tools' 'shadow' 'git'
-             'python>=3.12' 'python<3.13' # Holo: pin Python version
+             'python>=3.13' 'python<3.14' # Holo: pin Python version
              'meson' 'libseccomp' 'pcre2' 'audit' 'kexec-tools' 'libxkbcommon'
              'bash-completion' 'p11-kit' 'systemd' 'libfido2' 'tpm2-tss' 'rsync'
              'bpf' 'libbpf' 'clang' 'llvm' 'curl' 'gnutls' 'python-pyelftools'
@@ -33,6 +33,8 @@ source=("git+https://github.com/systemd/systemd#tag=v${_tag}?signed"
         '0001-Use-Arch-Linux-device-access-groups.patch'
         # Holo - don't reap "old" files while running, only on boot
         '0002-Make-the-tmp-and-var-tmp-reapers-fire-only-during-bo.patch'
+        # Upstream, not yet in v257.2
+        '0003-resolved-if-one-transaction-completes-expect-other-t.patch'
         # bootloader files
         'arch.conf'
         'loader.conf'
@@ -53,7 +55,8 @@ source=("git+https://github.com/systemd/systemd#tag=v${_tag}?signed"
         '30-systemd-update.hook')
 sha512sums=('468f772b3dfa83483da75516499c50159206dc5f8e26d7a62fc08437c93a4e536c0b27ee7fa5ac11fb1bc27a9c0e41315261751e5cc7428629a30849aeb23386'
             '3ccf783c28f7a1c857120abac4002ca91ae1f92205dcd5a84aff515d57e706a3f9240d75a0a67cff5085716885e06e62597baa86897f298662ec36a940cf410e'
-            '6a511f4ffbb225eebbdfcf6f697c6137f5368bf810840704536af21ffcc436fb347ac79fc776a3f44c1f533ed9039351328f30a196b6503c7d91c0b9d8727e35' # Holo
+            '6a511f4ffbb225eebbdfcf6f697c6137f5368bf810840704536af21ffcc436fb347ac79fc776a3f44c1f533ed9039351328f30a196b6503c7d91c0b9d8727e35'
+            'e2a04b6eb6788459d79edeed9465983166b46c14a5c40f9b49ef10cb31b47447a6761dfc4f588aa01cc074b42e78615670f41ab20df37c4c2996318e27b2186d'
             '61032d29241b74a0f28446f8cf1be0e8ec46d0847a61dadb2a4f096e8686d5f57fe5c72bcf386003f6520bc4b5856c32d63bf3efe7eb0bc0deefc9f68159e648'
             'c416e2121df83067376bcaacb58c05b01990f4614ad9de657d74b6da3efa441af251d13bf21e3f0f71ddcb4c9ea658b81da3d915667dc5c309c87ec32a1cb5a5'
             '5a1d78b5170da5abe3d18fdf9f2c3a4d78f15ba7d1ee9ec2708c4c9c2e28973469bc19386f70b3cf32ffafbe4fcc4303e5ebbd6d5187a1df3314ae0965b25e75'

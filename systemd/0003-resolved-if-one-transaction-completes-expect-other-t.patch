@@ -1,0 +1,262 @@
+From 0da73fab56506ff1e4f8e59c167d27961f0fbf33 Mon Sep 17 00:00:00 2001
+From: Morten Hauke Solvang <mhs@emlogic.no>
+Date: Thu, 12 Dec 2024 14:26:31 +0100
+Subject: [PATCH] resolved: if one transaction completes, expect other
+ transactions within candidate to succeed quickly
+
+Fixes #22575, as suggested by poettering in #35514.
+
+Intended as a workaround for some buggy routers, which refuse to send empty
+replies. If systemd-resolved starts two DnsTransactions, one for A and one
+for AAAA, and the domain in question has no AAAA entry, then the server will
+send a reply for A and no reply for AAAA. Correct behavior for the server would
+be to send an empty reply for AAAA.
+
+systemd-resolved would previously keep retrying the AAAA transaction, and
+eventually timeout the whole query, returning an error to the caller.
+
+Now, if the server replies to one query and not another, we cut short the
+timeout and return the partial result. Returning the partial result allows
+the rest of the system to keep working. It matches how e.g. glibc libnss_dns
+behaves.
+---
+ src/resolve/resolved-dns-query.c       | 46 +++++++++++++++++++++++++-
+ src/resolve/resolved-dns-query.h       |  1 +
+ src/resolve/resolved-dns-scope.c       |  1 +
+ src/resolve/resolved-dns-transaction.c | 10 ++----
+ src/resolve/resolved-dns-transaction.h | 21 ------------
+ src/resolve/resolved-timeouts.h        | 39 ++++++++++++++++++++++
+ 6 files changed, 88 insertions(+), 30 deletions(-)
+ create mode 100644 src/resolve/resolved-timeouts.h
+
+diff --git a/src/resolve/resolved-dns-query.c b/src/resolve/resolved-dns-query.c
+index 47788e32168..700c40a8aeb 100644
+--- a/src/resolve/resolved-dns-query.c
++++ b/src/resolve/resolved-dns-query.c
+@@ -10,6 +10,7 @@
+ #include "resolved-dns-query.h"
+ #include "resolved-dns-synthesize.h"
+ #include "resolved-etc-hosts.h"
++#include "resolved-timeouts.h"
+ #include "string-util.h"
+ 
+ #define QUERIES_MAX 2048
+@@ -48,6 +49,8 @@ static void dns_query_candidate_stop(DnsQueryCandidate *c) {
+ 
+         assert(c);
+ 
++        (void) event_source_disable(c->timeout_event_source);
++
+         /* Detach all the DnsTransactions attached to this query */
+ 
+         while ((t = set_steal_first(c->transactions))) {
+@@ -62,6 +65,8 @@ static void dns_query_candidate_abandon(DnsQueryCandidate *c) {
+ 
+         assert(c);
+ 
++        (void) event_source_disable(c->timeout_event_source);
++
+         /* Abandon all the DnsTransactions attached to this query */
+ 
+         while ((t = set_steal_first(c->transactions))) {
+@@ -94,6 +99,8 @@ static DnsQueryCandidate* dns_query_candidate_free(DnsQueryCandidate *c) {
+         if (!c)
+                 return NULL;
+ 
++        c->timeout_event_source = sd_event_source_disable_unref(c->timeout_event_source);
++
+         dns_query_candidate_stop(c);
+         dns_query_candidate_unlink(c);
+ 
+@@ -312,6 +319,30 @@ fail:
+         return r;
+ }
+ 
++static void dns_query_accept(DnsQuery *q, DnsQueryCandidate *c);
++
++static int on_candidate_timeout(sd_event_source *s, usec_t usec, void *userdata) {
++        DnsQueryCandidate *c = userdata;
++
++        assert(s);
++        assert(c);
++
++        log_debug("Accepting incomplete query candidate after expedited timeout on partial success.");
++        dns_query_accept(c->query, c);
++
++        return 0;
++}
++
++static bool dns_query_candidate_has_partially_succeeded(DnsQueryCandidate *c) {
++        DnsTransaction *t;
++
++        SET_FOREACH(t, c->transactions)
++                if (t->state == DNS_TRANSACTION_SUCCESS)
++                        return true;
++
++        return false;
++}
++
+ void dns_query_candidate_notify(DnsQueryCandidate *c) {
+         DnsTransactionState state;
+         int r;
+@@ -323,11 +354,24 @@ void dns_query_candidate_notify(DnsQueryCandidate *c) {
+ 
+         state = dns_query_candidate_state(c);
+ 
+-        if (DNS_TRANSACTION_IS_LIVE(state))
++        if (DNS_TRANSACTION_IS_LIVE(state)) {
++                if (dns_query_candidate_has_partially_succeeded(c))
++                        (void) event_reset_time_relative(
++                                        c->query->manager->event,
++                                        &c->timeout_event_source,
++                                        CLOCK_BOOTTIME,
++                                        CANDIDATE_EXPEDITED_TIMEOUT_USEC, /* accuracy_usec= */ 0,
++                                        on_candidate_timeout, c,
++                                        /* priority= */ 0, "candidate-timeout",
++                                        /* force_reset= */ false);
++
+                 return;
++        }
+ 
+         if (state != DNS_TRANSACTION_SUCCESS && c->search_domain) {
+ 
++                (void) event_source_disable(c->timeout_event_source);
++
+                 r = dns_query_candidate_next_search_domain(c);
+                 if (r < 0)
+                         goto fail;
+diff --git a/src/resolve/resolved-dns-query.h b/src/resolve/resolved-dns-query.h
+index 6bbebcac933..1097e90dc09 100644
+--- a/src/resolve/resolved-dns-query.h
++++ b/src/resolve/resolved-dns-query.h
+@@ -25,6 +25,7 @@ struct DnsQueryCandidate {
+         DnsSearchDomain *search_domain;
+ 
+         Set *transactions;
++        sd_event_source *timeout_event_source;
+ 
+         LIST_FIELDS(DnsQueryCandidate, candidates_by_query);
+         LIST_FIELDS(DnsQueryCandidate, candidates_by_scope);
+diff --git a/src/resolve/resolved-dns-scope.c b/src/resolve/resolved-dns-scope.c
+index cd16d2475e7..3f137468cce 100644
+--- a/src/resolve/resolved-dns-scope.c
++++ b/src/resolve/resolved-dns-scope.c
+@@ -16,6 +16,7 @@
+ #include "resolved-dns-zone.h"
+ #include "resolved-llmnr.h"
+ #include "resolved-mdns.h"
++#include "resolved-timeouts.h"
+ #include "socket-util.h"
+ #include "strv.h"
+ 
+diff --git a/src/resolve/resolved-dns-transaction.c b/src/resolve/resolved-dns-transaction.c
+index a162a91a033..9e539a54f3a 100644
+--- a/src/resolve/resolved-dns-transaction.c
++++ b/src/resolve/resolved-dns-transaction.c
+@@ -14,13 +14,10 @@
+ #include "resolved-dns-transaction.h"
+ #include "resolved-dnstls.h"
+ #include "resolved-llmnr.h"
++#include "resolved-timeouts.h"
+ #include "string-table.h"
+ 
+ #define TRANSACTIONS_MAX 4096
+-#define TRANSACTION_TCP_TIMEOUT_USEC (10U*USEC_PER_SEC)
+-
+-/* After how much time to repeat classic DNS requests */
+-#define DNS_TIMEOUT_USEC (SD_RESOLVED_QUERY_TIMEOUT_USEC / DNS_TRANSACTION_ATTEMPTS_MAX)
+ 
+ static void dns_transaction_reset_answer(DnsTransaction *t) {
+         assert(t);
+@@ -1632,13 +1629,10 @@ static usec_t transaction_get_resend_timeout(DnsTransaction *t) {
+ 
+         case DNS_PROTOCOL_DNS:
+ 
+-                /* When we do TCP, grant a much longer timeout, as in this case there's no need for us to quickly
+-                 * resend, as the kernel does that anyway for us, and we really don't want to interrupt it in that
+-                 * needlessly. */
+                 if (t->stream)
+                         return TRANSACTION_TCP_TIMEOUT_USEC;
+ 
+-                return DNS_TIMEOUT_USEC;
++                return TRANSACTION_UDP_TIMEOUT_USEC;
+ 
+         case DNS_PROTOCOL_MDNS:
+                 if (t->probing)
+diff --git a/src/resolve/resolved-dns-transaction.h b/src/resolve/resolved-dns-transaction.h
+index 30d2167d645..cea0a890db3 100644
+--- a/src/resolve/resolved-dns-transaction.h
++++ b/src/resolve/resolved-dns-transaction.h
+@@ -203,24 +203,3 @@ DnsTransactionState dns_transaction_state_from_string(const char *s) _pure_;
+ 
+ const char* dns_transaction_source_to_string(DnsTransactionSource p) _const_;
+ DnsTransactionSource dns_transaction_source_from_string(const char *s) _pure_;
+-
+-/* LLMNR Jitter interval, see RFC 4795 Section 7 */
+-#define LLMNR_JITTER_INTERVAL_USEC (100 * USEC_PER_MSEC)
+-
+-/* mDNS probing interval, see RFC 6762 Section 8.1 */
+-#define MDNS_PROBING_INTERVAL_USEC (250 * USEC_PER_MSEC)
+-
+-/* Maximum attempts to send DNS requests, across all DNS servers */
+-#define DNS_TRANSACTION_ATTEMPTS_MAX 24
+-
+-/* Maximum attempts to send LLMNR requests, see RFC 4795 Section 2.7 */
+-#define LLMNR_TRANSACTION_ATTEMPTS_MAX 3
+-
+-/* Maximum attempts to send MDNS requests, see RFC 6762 Section 8.1 */
+-#define MDNS_TRANSACTION_ATTEMPTS_MAX 3
+-
+-#define TRANSACTION_ATTEMPTS_MAX(p) ((p) == DNS_PROTOCOL_LLMNR ?        \
+-                                     LLMNR_TRANSACTION_ATTEMPTS_MAX :   \
+-                                     (p) == DNS_PROTOCOL_MDNS ?         \
+-                                     MDNS_TRANSACTION_ATTEMPTS_MAX :    \
+-                                     DNS_TRANSACTION_ATTEMPTS_MAX)
+diff --git a/src/resolve/resolved-timeouts.h b/src/resolve/resolved-timeouts.h
+new file mode 100644
+index 00000000000..e17fe301756
+--- /dev/null
++++ b/src/resolve/resolved-timeouts.h
+@@ -0,0 +1,39 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++#pragma once
++
++#include "time-util.h"
++#include "resolved-def.h"
++
++/* LLMNR Jitter interval, see RFC 4795 Section 7 */
++#define LLMNR_JITTER_INTERVAL_USEC (100 * USEC_PER_MSEC)
++
++/* mDNS probing interval, see RFC 6762 Section 8.1 */
++#define MDNS_PROBING_INTERVAL_USEC (250 * USEC_PER_MSEC)
++
++/* Maximum attempts to send DNS requests, across all DNS servers */
++#define DNS_TRANSACTION_ATTEMPTS_MAX 24
++
++/* Maximum attempts to send LLMNR requests, see RFC 4795 Section 2.7 */
++#define LLMNR_TRANSACTION_ATTEMPTS_MAX 3
++
++/* Maximum attempts to send MDNS requests, see RFC 6762 Section 8.1 */
++#define MDNS_TRANSACTION_ATTEMPTS_MAX 3
++
++#define TRANSACTION_ATTEMPTS_MAX(p) (\
++                                     (p) == DNS_PROTOCOL_LLMNR ?        \
++                                     LLMNR_TRANSACTION_ATTEMPTS_MAX :   \
++                                     (p) == DNS_PROTOCOL_MDNS ?         \
++                                     MDNS_TRANSACTION_ATTEMPTS_MAX :    \
++                                     DNS_TRANSACTION_ATTEMPTS_MAX)
++
++/* After how much time to repeat classic DNS requests */
++#define TRANSACTION_UDP_TIMEOUT_USEC (SD_RESOLVED_QUERY_TIMEOUT_USEC / DNS_TRANSACTION_ATTEMPTS_MAX)
++
++/* When we do TCP, grant a much longer timeout, as in this case there's no need for us to quickly
++ * resend, as the kernel does that anyway for us, and we really don't want to interrupt it in that
++ * needlessly. */
++#define TRANSACTION_TCP_TIMEOUT_USEC (10 * USEC_PER_SEC)
++
++/* Should be longer than transaction timeout for a single UDP transaction, so we get at least
++ * one transaction retry before timeouting the whole candidate */
++#define CANDIDATE_EXPEDITED_TIMEOUT_USEC (TRANSACTION_UDP_TIMEOUT_USEC + 1 * USEC_PER_SEC)
+-- 
+2.39.5
+
