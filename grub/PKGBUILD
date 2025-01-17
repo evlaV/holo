@@ -23,7 +23,7 @@ _gnulib_commit='cfdbd92718d6d4989bfe885448063d7863aa69dc' # git rev-parse origin
 _pkgver=2.13
 _unifont_ver='15.1.05'
 pkgver=${_pkgver/-/}
-pkgrel=2.1
+pkgrel=2.2
 url='https://www.gnu.org/software/grub/'
 arch=('x86_64')
 license=('GPL-3.0-or-later')
@@ -36,7 +36,7 @@ conflicts=('grub-common' 'grub-bios' 'grub-emu' "grub-efi-${_EFI_ARCH}" 'grub-le
 replaces=('grub-common' 'grub-bios' 'grub-emu' "grub-efi-${_EFI_ARCH}")
 provides=('grub-common' 'grub-bios' 'grub-emu' "grub-efi-${_EFI_ARCH}")
 
-makedepends=('git' 'rsync' 'xz' 'freetype2' 'ttf-dejavu' 'python>=3.12' 'python<3.13' 'autogen'
+makedepends=('git' 'rsync' 'xz' 'freetype2' 'ttf-dejavu' 'python>=3.13' 'python<3.14' 'autogen'
              'texinfo' 'help2man' 'gettext' 'device-mapper' 'fuse3')
 depends=('sh' 'xz' 'gettext' 'device-mapper')
 optdepends=('freetype2: For grub-mkfont usage'
