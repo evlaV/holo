@@ -19,10 +19,22 @@ fi
 declare -r NM_WIFI_BACKEND_CONF_FILE="/etc/NetworkManager/conf.d/99-valve-wifi-backend.conf"
 
 
+validate_backend() {
+    case "$1" in
+        "iwd"|"wpa_supplicant")
+            ;;
+        *)
+            echo >&2 "ERROR: '$1' is not a valid backend"
+            exit 1
+        ;;
+    esac
+}
+
 write_config_wifi_backend() {
     local desired_backend="$1"
+    validate_backend "$1"
 
-    sed -i "s/^wifi.backend[ \t]*=.*$/wifi.backend=${desired_backend}/" "${NM_WIFI_BACKEND_CONF_FILE}"
+    echo -e "[device]\nwifi.backend=${desired_backend}" > "${NM_WIFI_BACKEND_CONF_FILE}"
 }
 
 
@@ -80,6 +92,7 @@ case "${1}" in
     restart_units)
         other_backend="$2"
         {
+            validate_backend "${other_backend}"
             systemctl stop NetworkManager
             systemctl disable --now "${other_backend}"
             # these systemd units are not set to enabled permanently, NetworkManager will pull them as necessary

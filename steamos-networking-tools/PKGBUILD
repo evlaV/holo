@@ -1,8 +1,8 @@
 # Author : Manuel A. Fernandez Montecelo <mafm@igalia.com>
 
 pkgname='steamos-networking-tools'
-pkgver=1.1
-pkgrel=2
+pkgver=1.2
+pkgrel=1
 pkgdesc='SteamOS networking tools'
 arch=('any')
 license=('LGPL2.1')
@@ -15,8 +15,8 @@ source=(
   'com.steampowered.SteamOS.WifiSetBackend.policy'
 )
 sha256sums=(
-  'd151d32e4a6fce255361a1ebb25720ea9edb623d54a56ff90cccdb3858324449'
-  'ea4b7b1fb046922233f2deda1c1ae1a96ff034973c1a02202849f27c323b4de1'
+  '2fd71495b31d3b98442f8a8cd72719ee203a1d1777d278eb3c49066ba28c724e'
+  'b8cfea8158a263891ad9abdb6a881dce32597db6fed83b88271ba381776a688c'
   'ebc55a73168f331d34ce03ecf0d081699faa448ae49098ecd2ce15e8081598bc'
   'd5b620c8b6cf581f1d0068611d63b17671f7383ce5ed11ab085966d9cf7574cc'
 )

@@ -11,6 +11,7 @@ set -euo pipefail
 
 declare -r HELPER="${HELPER:-/usr/bin/steamos-polkit-helpers/steamos-wifi-set-backend-privileged}"
 declare -r NM_WIFI_BACKEND_CONF_FILE="/etc/NetworkManager/conf.d/99-valve-wifi-backend.conf"
+declare -r NM_DEFAULT_CONF_FILE="/usr/lib/NetworkManager/conf.d/10-steamos-defaults.conf"
 
 is_debug_enabled() {
     if [[ -v DEBUG ]] && [[ "${DEBUG}" != "0" ]] && [[ "${DEBUG}" != "false" ]] ; then
@@ -34,9 +35,16 @@ run_privileged() {
 
 debug_dump_config() {
     if is_debug_enabled ; then
-        debug "contents of '${NM_WIFI_BACKEND_CONF_FILE}'"
+
+        debug "contents of '${NM_DEFAULT_CONF_FILE}'"
         # print contents to stderr with indent=2, excluding empty lines
-        sed -n '/^.*[[:alnum:]].*$/ s/^\(.*\)$/  \1/p' "${NM_WIFI_BACKEND_CONF_FILE}" >&2
+        sed -n '/^.*[[:alnum:]].*$/ s/^\(.*\)$/  \1/p' "${NM_DEFAULT_CONF_FILE}" >&2
+
+        if [[ -e "${NM_WIFI_BACKEND_CONF_FILE}" ]]; then
+            debug "contents of '${NM_WIFI_BACKEND_CONF_FILE}'"
+            sed -n '/^.*[[:alnum:]].*$/ s/^\(.*\)$/  \1/p' "${NM_WIFI_BACKEND_CONF_FILE}" >&2
+        fi
+
         echo >&2 "/DEBUG"
     fi
 }
@@ -71,20 +79,21 @@ check_unit_status() {
 }
 
 get_backend() {
-    sed -n '/^wifi\.backend[ \t]*=/ s/^wifi\.backend[ \t]*=[ \t]*//p' "${NM_WIFI_BACKEND_CONF_FILE}"
+    if [[ -e "${NM_WIFI_BACKEND_CONF_FILE}" ]]; then
+        sed -n '/^wifi\.backend[ \t]*=/ s/^wifi\.backend[ \t]*=[ \t]*//p' "${NM_WIFI_BACKEND_CONF_FILE}"
+    elif [[ -e "${NM_DEFAULT_CONF_FILE}" ]]; then
+        sed -n '/^wifi\.backend[ \t]*=/ s/^wifi\.backend[ \t]*=[ \t]*//p' "${NM_DEFAULT_CONF_FILE}"
+    fi
 }
 
 if [[ $# -ne 1 ]]; then
     usage
 fi
 
-if [[ ! -e "${NM_WIFI_BACKEND_CONF_FILE}" ]] ; then
-    exit_fail "File '${NM_WIFI_BACKEND_CONF_FILE}' does not exist"
-fi
-
 debug_dump_config
 
 CURRENT_BACKEND=$(get_backend)
+
 case "${CURRENT_BACKEND}" in
     "iwd"|"wpa_supplicant")
         ;;
@@ -103,7 +112,7 @@ DESIRED_BACKEND="${1:-}"
 
 # check if already set to desired back-end
 if [[ "${CURRENT_BACKEND}" == "${DESIRED_BACKEND}" ]]; then
-    debug "'wifi.backend' in config file: " "$(grep "^wifi\.backend" "${NM_WIFI_BACKEND_CONF_FILE}")"
+    debug "'wifi.backend' in config file: " "$(get_backend)"
     exit_with_warning "'wifi.backend' is currently set to '${DESIRED_BACKEND}' already, nothing to do"
 fi
 
