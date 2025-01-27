@@ -1,0 +1,26 @@
+From 4a2b29b384b97cba2d06f7f68d2c4f5f5d99a91a Mon Sep 17 00:00:00 2001
+From: Friedrich Vock <friedrich.vock@gmx.de>
+Date: Sun, 26 Jan 2025 13:30:40 +0100
+Subject: [PATCH 2/2] Bump ring stream decoder stack size
+
+We seem to hit the 32-element limit in some games with RADV.
+---
+ src/app/ring_stream_read.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/app/ring_stream_read.c b/src/app/ring_stream_read.c
+index 820675c..febd379 100644
+--- a/src/app/ring_stream_read.c
++++ b/src/app/ring_stream_read.c
+@@ -30,7 +30,7 @@
+  * tedious and a waste of time.
+  */
+ 
+-#define RING_STREAM_STACK_SIZE 32
++#define RING_STREAM_STACK_SIZE 64
+ 
+ struct ui_data {
+ 	struct {
+-- 
+2.48.1
+
