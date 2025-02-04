@@ -1,4 +1,4 @@
-From 745f650bf949d1c5f86fdd85152bdd834c909edc Mon Sep 17 00:00:00 2001
+From 95a8ad3a9117fbd065635cb55f9716e120d4a5c5 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Fr=C3=A9d=C3=A9ric=20Danis?= <frederic.danis@collabora.com>
 Date: Wed, 24 Apr 2024 15:36:23 +0200
 Subject: [PATCH BlueZ 1/2] plugins: Add new plugin to manage wake policy
@@ -18,16 +18,16 @@ except Peripheral should be uncommented and set to 'false', while for the
 second case Peripheral should also be uncommented and set to '01;02'.
 ---
  Makefile.plugins         |   4 +
- plugins/wake-policy.c    | 180 +++++++++++++++++++++++++++++++++++++++
+ plugins/wake-policy.c    | 184 +++++++++++++++++++++++++++++++++++++++
  plugins/wake-policy.conf |  21 +++++
  src/device.c             |   2 +-
  src/device.h             |   1 +
- 5 files changed, 207 insertions(+), 1 deletion(-)
+ 5 files changed, 211 insertions(+), 1 deletion(-)
  create mode 100644 plugins/wake-policy.c
  create mode 100644 plugins/wake-policy.conf
 
 diff --git a/Makefile.plugins b/Makefile.plugins
-index 4aa2c9c92..fbd4e4155 100644
+index 9da29a3ce..90ea18a1e 100644
 --- a/Makefile.plugins
 +++ b/Makefile.plugins
 @@ -11,6 +11,10 @@ builtin_sources += plugins/autopair.c
@@ -43,10 +43,10 @@ index 4aa2c9c92..fbd4e4155 100644
  builtin_sources += plugins/admin.c
 diff --git a/plugins/wake-policy.c b/plugins/wake-policy.c
 new file mode 100644
-index 000000000..34e77c615
+index 000000000..d7d89f0d4
 --- /dev/null
 +++ b/plugins/wake-policy.c
-@@ -0,0 +1,180 @@
+@@ -0,0 +1,184 @@
 +// SPDX-License-Identifier: GPL-2.0-or-later
 +/*
 + *
@@ -156,6 +156,10 @@ index 000000000..34e77c615
 +	// Check if WakeAllowed has already been stored,
 +	// if yes do not change it
 +	filename = btd_device_get_storage_path(device, "info");
++	if (!filename) {
++		error("Unable to get info storage path for device");
++		return;
++	}
 +	device_key_file = g_key_file_new();
 +	if (!g_key_file_load_from_file(device_key_file, filename, 0, &gerr)) {
 +		error("Unable to load key file from %s: (%s)", filename,
@@ -255,7 +259,7 @@ index 000000000..e6220bad1
 +#Health=true
 +#Uncategorized=true
 diff --git a/src/device.c b/src/device.c
-index 1d4b8ab36..d970745f5 100644
+index 2b3d19f55..9c66fd744 100644
 --- a/src/device.c
 +++ b/src/device.c
 @@ -1500,7 +1500,7 @@ dev_property_advertising_data_exist(const GDBusPropertyTable *property,
@@ -268,10 +272,10 @@ index 1d4b8ab36..d970745f5 100644
  	return device->wake_support;
  }
 diff --git a/src/device.h b/src/device.h
-index 5722ca9ca..f8c744baf 100644
+index 97536774e..1e2b0a4e9 100644
 --- a/src/device.h
 +++ b/src/device.h
-@@ -149,6 +149,7 @@ void device_set_wake_support(struct btd_device *device, bool wake_support);
+@@ -151,6 +151,7 @@ void device_set_wake_support(struct btd_device *device, bool wake_support);
  void device_set_wake_override(struct btd_device *device, bool wake_override);
  void device_set_wake_allowed(struct btd_device *device, bool wake_allowed,
  			     guint32 id);
@@ -280,5 +284,5 @@ index 5722ca9ca..f8c744baf 100644
  
  typedef void (*disconnect_watch) (struct btd_device *device, gboolean removal,
 -- 
-2.34.1
+2.48.1
 
