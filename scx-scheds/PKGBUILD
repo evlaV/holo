@@ -5,7 +5,7 @@
 
 pkgname=scx-scheds
 gitname=scx
-pkgver=1.0.7.linux.neptune.68
+pkgver=1.0.9.linux.neptune.611
 pkgrel=1
 pkgdesc="sched_ext schedulers"
 arch=('x86_64')
