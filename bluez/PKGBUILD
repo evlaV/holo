@@ -7,7 +7,7 @@
 pkgbase=bluez
 pkgname=('bluez' 'bluez-utils' 'bluez-libs' 'bluez-cups' 'bluez-deprecated-tools' 'bluez-hid2hci' 'bluez-mesh')
 pkgver=5.79
-pkgrel=1.7
+pkgrel=1.8
 url="http://www.bluez.org/"
 arch=('x86_64')
 license=('GPL-2.0-only')
@@ -41,6 +41,15 @@ source=(https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz,
         # https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1247
         # Upstream issue https://github.com/bluez/bluez/issues/919
         0001-Revert-hog-lib-Use-bt_uhid-functions.patch
+
+        # Holo: Additional fixes for the WakeAllowed property
+        # All three fixes have been sent upstream and are currently waiting
+        # to be reviewed/merged.
+        # TODO: Update this comment when they are merged upstream
+        # Internal issue: https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1528
+        0001-device-Clear-only-the-pending-flags-that-have-been-a.patch
+        0001-device-Clear-pending_flags-on-error.patch
+        0001-adapter-Fix-the-pending-changing-flags-check.patch
 )
 # see https://www.kernel.org/pub/linux/bluetooth/sha256sums.asc
 sha256sums=('4164a5303a9f71c70f48c03ff60be34231b568d93a9ad5e79928d34e6aa0ea8a'
@@ -55,7 +64,10 @@ sha256sums=('4164a5303a9f71c70f48c03ff60be34231b568d93a9ad5e79928d34e6aa0ea8a'
             '24e49ec04e5c985d7f42acceb7c2dd9bad6ad6f8be80ff12368e18293448c42a'
             '48e17914960c91a6dc53c0025bf1118408ff24f6f37ea1dd1a57614eacffe3af'
             'ecb389bb42a49e97ff066e92606bc4f9511542accaf05928d989546805aa24bb'
-            '8b2a57b97964e5a4579a7c5f91863210e21c1bf8b9ace6510746ae3eb0c26779')
+            '8b2a57b97964e5a4579a7c5f91863210e21c1bf8b9ace6510746ae3eb0c26779'
+            '8be65f6357ea73c55d508c49770553712f2c0c4a39a3f7160dc7aad70161c95d'
+            '41ba81e3c8dbb3c7719c95266a4d258534ab567dddfba6edcaa19509c7678943'
+            '662e7502790ac3943c9fe412463cb65f712f6e9af8e5e72483eebfbbbffeb13a')
 validpgpkeys=('E932D120BC2AEC444E558F0106CA9F5D1DCF2659') # Marcel Holtmann <marcel@holtmann.org>
 
 build() {

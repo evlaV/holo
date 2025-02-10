@@ -1,0 +1,32 @@
+From efa23a3d37be60a4183a39f5e9cad6d51fc1f40c Mon Sep 17 00:00:00 2001
+From: Ludovico de Nittis <ludovico.denittis@collabora.com>
+Date: Wed, 29 Jan 2025 16:18:10 +0100
+Subject: [PATCH BlueZ] device: Clear only the pending flags that have been
+ applied
+
+When executing `btd_device_flags_changed()`, `dev->pending_flags` may
+hold additional queued flag changes.
+
+Instead of completely clearing out `dev->pending_flags`, we should only
+remove the bits that have been actually applied and leaving the rest as
+pending.
+---
+ src/device.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/device.c b/src/device.c
+index e8bff718c..17d023a61 100644
+--- a/src/device.c
++++ b/src/device.c
+@@ -7413,7 +7413,7 @@ void btd_device_flags_changed(struct btd_device *dev, uint32_t supported_flags,
+ 
+ 	dev->supported_flags = supported_flags;
+ 	dev->current_flags = current_flags;
+-	dev->pending_flags = 0;
++	dev->pending_flags &= ~current_flags;
+ 
+ 	if (!changed_flags)
+ 		return;
+-- 
+2.48.1
+
