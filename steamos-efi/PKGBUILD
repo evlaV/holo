@@ -1,7 +1,7 @@
 # Maintainer: Collabora Ltd <gael.portay@collabora.com>
 
 pkgname=steamos-efi
-_srctag=jupiter-20241105.1
+_srctag=jupiter-20250204.1
 pkgver=${_srctag#jupiter-}
 pkgrel=1
 arch=('x86_64')
