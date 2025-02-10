@@ -23,7 +23,7 @@ _gnulib_commit='cfdbd92718d6d4989bfe885448063d7863aa69dc' # git rev-parse origin
 _pkgver=2.13
 _unifont_ver='15.1.05'
 pkgver=${_pkgver/-/}
-pkgrel=2.2
+pkgrel=3.0
 url='https://www.gnu.org/software/grub/'
 arch=('x86_64')
 license=('GPL-3.0-or-later')
@@ -166,7 +166,7 @@ sha256sums=('SKIP'
             '658bd3474f84fbbfe675da93e2e05b6d156658c92a2d604b52d6a0b23223c71b'
             '6e8c873eae8988cb99fd6b3de0857c0ec4db0ed2fd90c6d0054a3f88361c013c'
             '02eb5080d99bebd6843b172367813ab7968508e48894f241c409703cf05aeff2'
-            '08b4970c01cedeeeb4ef87bf748f8eb46278a58db42abea3fc84f4ad93d69cd0'
+            '1ca627601a4782c219f077fbab10a3d01fa79c4bae3e0529f0b1cc754369d36f'
             '4dc26722812df2a261f9e27632bcacdb5899d49b7270a66dd67f270b6eba05e1'
             'ccd8ba6646a298f015707d6cbf5f20db418569a1878617224f2946d2dbb503fc'
             'cca890f4be9a2c58fc290b488b4ef9eeb490066726297e4fda5ec87215d9e7a9'

@@ -74,12 +74,12 @@ new file mode 100644
 index 000000000..e80d66672
 --- /dev/null
 +++ b/grub-core/commands/efi/steamenv.c
-@@ -0,0 +1,1871 @@
+@@ -0,0 +1,2007 @@
 +/*
 + *  steamenv.mod  --  GRand Unified Bootloader SteamOS 3 boot module
 + *
-+ *  Copyright © 2018-2024  Collabora Ltd.
-+ *  Copyright © 2018-2024  Valve Corporation
++ *  Copyright © 2018-2025  Collabora Ltd.
++ *  Copyright © 2018-2025  Valve Corporation
 + *
 + *  This file is NOT part of GRUB, but is distributed under the same terms.
 + *
@@ -1133,7 +1133,10 @@ index 000000000..e80d66672
 +      if( size == 0 ) // no more entries
 +        break;
 +
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 +      name = &dirent->file_name[0];
++#pragma GCC diagnostic pop
 +
 +      // These entries won't have useful identifying information:
 +      if( strcmp_w( L"all",    name ) == 0 ||
@@ -1673,6 +1676,114 @@ index 000000000..e80d66672
 +  return GRUB_ERR_NONE;
 +}
 +
++// Initialise the variables which store the video modes used to display
++// the UI and set up the framebuffer before handover to the kernel.
++// Both can be overridden by the grub config.
++typedef struct _mode_choice
++{
++    struct
++    {
++        unsigned int mode;
++        unsigned int width;
++        unsigned int height;
++        unsigned int score;
++    } grub, kern;
++} mode_choice;
++
++static mode_choice chosen_modes = { 0 };
++
++static int choose_mode (const struct grub_video_mode_info *info, void *data)
++{
++    mode_choice *chosen = data;
++    unsigned int score = 0;
++    unsigned int ratio = ( info->width * 10 ) / info->height;
++
++    score += ( info->width  >  info->height ) ? 100 : 0;
++    score += ( info->height >= 800          ) ? 100 : 0; // at least 800px tall
++    score += ratio;                                      // wider = better
++    score += ( ratio >= 16 )                  ?  10 : 0; // 16:10 or wider bonus
++    score += ( info->width * info->height ) / 20000;     // area bonus
++
++    if( info->mode_number == 0 )
++    {
++        chosen->kern.mode   = 0;
++        chosen->kern.width  = info->width;
++        chosen->kern.height = info->height;
++        chosen->kern.score  = score;
++    }
++
++    if( score > chosen->grub.score )
++    {
++        chosen->grub.mode   = info->mode_number;
++        chosen->grub.width  = info->width;
++        chosen->grub.height = info->height;
++        chosen->grub.score  = score;
++    }
++
++    return 0;
++}
++
++static void
++choose_verbose_video_modes (mode_choice *chosen)
++{
++    grub_video_adapter_t a      = NULL;
++    grub_video_adapter_t driver = NULL;
++
++    // ==================================================================
++    // EFI GOP driver needs to be loaded here or this isn't going to work
++    // This just locates the UEFI handle for the GOP interface and checks
++    // there is at least 1 video mode available, it doesn't actually poke
++    // the framebuffer(s) or initialise the screen in any way:
++    grub_dl_load ("efi_gop");
++    // ==================================================================
++
++    FOR_VIDEO_ADAPTERS (a)
++    {
++        // As we have not yet activated the display (and may choose
++        // not to touch it) we can't use grub_video_get_driver_id()
++        if (a->id == GRUB_VIDEO_DRIVER_EFI_GOP)
++        {
++            driver = a;
++            break;
++        }
++    }
++
++    if (driver && driver->iterate)
++    {
++        driver->iterate (choose_mode, chosen);
++
++        if (chosen->grub.score)
++        {
++            char *lmode = NULL;
++
++            lmode = grub_xasprintf ("%ux%u",
++                                    chosen->grub.width, chosen->grub.height);
++            init_grub_var( "steamenv_noisy_loader_mode", lmode );
++
++            grub_free (lmode);
++        }
++
++        if (chosen->kern.score)
++        {
++            char *kmode = NULL;
++
++            kmode = grub_xasprintf ("%ux%u",
++                                    chosen->kern.width, chosen->kern.height);
++            init_grub_var( "steamenv_noisy_kernel_mode", kmode );
++
++            grub_free (kmode);
++        }
++    }
++
++    // Fall back to the default behaviour on probe failures:
++    if( chosen->grub.score == 0 )
++        init_grub_var( "steamenv_noisy_loader_mode", "auto" );
++
++    if( chosen->kern.score == 0 )
++        init_grub_var( "steamenv_noisy_kernel_mode", "keep" );
++
++}
++
 +static grub_err_t
 +grub_cmd_steamenv_init (grub_command_t cmd __attribute__ ((unused)),
 +                        int argc __attribute__ ((unused)),
@@ -1711,8 +1822,19 @@ index 000000000..e80d66672
 +  // make sure the video modes have sensible defaults if they're unset
 +  init_grub_var( "steamenv_loader_mode", "auto" );
 +  init_grub_var( "steamenv_kernel_mode", "keep" );
-+  init_grub_var( "steamenv_noisy_loader_mode", "1280x800" );
-+  init_grub_var( "steamenv_noisy_kernel_mode", "800x1280" );
++
++  // ========================================================================
++  // These two used to be statically configured but now they're
++  // set up at runtime based on the available UEFI modes:
++  // ========================================================================
++  // They're weird on the Deck because it's secretly a portrait
++  // mode device with the screen mounted sideways, with one framebuffer
++  // set up to mimic landscape mode, which the kernel compensates for
++  // but the bootloaders do not (as they don't have the gfx infrastructure)
++  // ========================================================================
++  // steamenv_noisy_loader_mode: 1280x800
++  // steamenv_noisy_kernel_mode: 800x1280
++  choose_verbose_video_modes (&chosen_modes);
 +
 +  // set steamos_verbosity & video mode variables depending on mode_verbose:
 +  const char *noise = NULL;
@@ -1871,6 +1993,8 @@ index 000000000..e80d66672
 +
 +      // force the video mode here (cmd_next may alter it
 +      // again but this is the one we expect at this point):
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-variable"
 +      video_mode = grub_env_get ("steamenv_kernel_mode");
 +      if( video_mode && *video_mode != '\0' )
 +        {
@@ -1880,8 +2004,20 @@ index 000000000..e80d66672
 +          grub_free (tmp);
 +        }
 +      else
++      {
 +          _DBG("Vnull");
++      }
++#pragma GCC diagnostic pop
 +#ifdef DEBUG_TO_KERNEL_CMDLINE
++      len += grub_snprintf (&args[len], sizeof (args) - len,
++                            " steamos-debug.lmode=%u:%ux%u"
++                            " steamos-debug.kmode=%u:%ux%u",
++                            chosen_modes.grub.score,
++                            chosen_modes.grub.width,
++                            chosen_modes.grub.height,
++                            chosen_modes.kern.score,
++                            chosen_modes.kern.width,
++                            chosen_modes.kern.height);
 +      // last chance to append to kernel cmdline:
 +      len += grub_snprintf (&args[len], sizeof (args) - len,
 +                            " sdb=%s", &sedbg[0]);
@@ -2049,14 +2185,12 @@ diff --git a/util/grub.d/00_header.in b/util/grub.d/00_header.in
 index 6a316a5ba..366d9b035 100644
 --- a/util/grub.d/00_header.in
 +++ b/util/grub.d/00_header.in
-@@ -175,6 +175,20 @@ EOF
+@@ -175,6 +175,18 @@ EOF
      font="`make_system_path_relative_to_its_root "${font_path}"`"
  fi
  
 +## start header steamenv sub block
 +insmod steamenv
-+steamenv_noisy_loader_mode="1280x800"
-+steamenv_noisy_kernel_mode="800x1280"
 +steamenv_loader_mode=${GRUB_GFXMODE}
 +steamenv_kernel_mode=${GRUB_GFXPAYLOAD_LINUX:-keep}
 +steamenv_quiet="loglevel=3 splash quiet plymouth.ignore-serial-consoles fbcon=vc:4-6"
