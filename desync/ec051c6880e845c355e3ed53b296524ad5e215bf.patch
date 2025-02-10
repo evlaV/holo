@@ -1,0 +1,39 @@
+From ec051c6880e845c355e3ed53b296524ad5e215bf Mon Sep 17 00:00:00 2001
+From: Frank Olbricht <frank.olbricht@gmail.com>
+Date: Sat, 1 Feb 2025 12:21:16 +0100
+Subject: [PATCH] Fix printing of ChunkIDs (#278)
+
+* Fix printing of ChunkIDs
+
+* newline
+---
+ cmd/desync/list.go | 2 +-
+ errors.go          | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/cmd/desync/list.go b/cmd/desync/list.go
+index 8b9759a..e2cc65c 100644
+--- a/cmd/desync/list.go
++++ b/cmd/desync/list.go
+@@ -43,7 +43,7 @@ func runList(ctx context.Context, opt listOptions, args []string) error {
+ 	}
+ 	// Write the list of chunk IDs to STDOUT
+ 	for _, chunk := range c.Chunks {
+-		fmt.Fprintln(stdout, chunk.ID)
++		fmt.Fprintln(stdout, chunk.ID.String())
+ 		// See if we're meant to stop
+ 		select {
+ 		case <-ctx.Done():
+diff --git a/errors.go b/errors.go
+index f13136e..1271d97 100644
+--- a/errors.go
++++ b/errors.go
+@@ -27,7 +27,7 @@ type ChunkInvalid struct {
+ }
+ 
+ func (e ChunkInvalid) Error() string {
+-	return fmt.Sprintf("chunk id %s does not match its hash %s", e.ID, e.Sum)
++	return fmt.Sprintf("chunk id %s does not match its hash %s", e.ID.String(), e.Sum.String())
+ }
+ 
+ // InvalidFormat is returned when an error occurred when parsing an archive file
