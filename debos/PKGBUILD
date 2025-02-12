@@ -1,0 +1,32 @@
+pkgname=debos
+epoch=1
+_tag=holo-20250212.1
+pkgver=${_tag//-/_}
+pkgrel=1
+pkgdesc="OS images builder"
+arch=(x86_64)
+url="https://github.com/go-debos/${pkgname}"
+license=('Apache')
+depends=('ostree' 'busybox' 'qemu-base')
+makedepends=('git' 'go' 'openssh')
+provides=("${pkgname}-git")
+conflicts=("${pkgname}-git")
+# NOTE: Keep the URL/branch in the README in sync
+source=("git+https://github.com/evlav/debos.git#tag=${_tag}")
+sha256sums=('SKIP')
+
+build() {
+  export CGO_CPPFLAGS="${CPPFLAGS}"
+  export CGO_CFLAGS="${CFLAGS}"
+  export CGO_CXXFLAGS="${CXXFLAGS}"
+  export CGO_LDFLAGS="${LDFLAGS}"
+  export GOFLAGS="-buildmode=pie -trimpath -mod=readonly -modcacherw"
+  cd "${pkgname}"
+
+  go build ./cmd/debos/
+}
+
+package() {
+  cd "${pkgname}"
+  install -Dm755 ${pkgname} "${pkgdir}"/usr/bin/${pkgname}
+}
