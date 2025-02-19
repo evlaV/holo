@@ -42,7 +42,7 @@ case ${1:-all} in
     ls /esp /efi >/dev/null 2>&1 || :
     ###################################################################
     run 'lsblk -nro name,partuuid,size,fstype,label,mountpoint'
-    run 'parted -l'
+    run 'parted --script --list'
     run 'cat /efi/steamos/partsets/A'
     run 'cat /efi/steamos/partsets/B'
     run 'cat /efi/steamos/partsets/shared'
