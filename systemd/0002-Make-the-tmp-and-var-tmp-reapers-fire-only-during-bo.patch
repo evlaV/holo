@@ -19,7 +19,7 @@ index fe5225d751..3055e99a29 100644
 +++ b/tmpfiles.d/tmp.conf
 @@ -7,6 +7,8 @@
  
- # See tmpfiles.d(5) for details
+ # See tmpfiles.d(5) for details.
  
 -# Clear tmp directories separately, to make them easier to override
 -q /tmp 1777 root root 10d
