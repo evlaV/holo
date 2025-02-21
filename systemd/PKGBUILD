@@ -1,17 +1,25 @@
 # Maintainer: Christian Hesse <mail@eworm.de>
 
+# ➡️ Pushing pre-releases to [core-testing] can cause havoc, especially
+#   as all [core] packages are built there, and may be moved before.
+#   Anyway, pre-release packages may be available in my personal testing
+#   repository. Brave souls add it with:
+#     [eworm-testing]
+#     SigLevel = Required
+#     Server = https://pkgbuild.com/~eworm/$repo/$arch/
+
 pkgbase=systemd
 pkgname=('systemd'
          'systemd-libs'
          'systemd-resolvconf'
          'systemd-sysvcompat'
          'systemd-ukify')
-_tag='256.7'
+_tag='257.2'
 # Upstream versioning is incompatible with pacman's version comparisons, one
 # way or another. So we replace dashes and tildes with the empty string to
 # make sure pacman's version comparing does the right thing for rc versions:
 pkgver="${_tag/[-~]/}"
-pkgrel=1.2
+pkgrel=1.1
 arch=('x86_64')
 license=('LGPL-2.1-or-later')
 url='https://www.github.com/systemd/systemd'
@@ -33,8 +41,6 @@ source=("git+https://github.com/systemd/systemd#tag=v${_tag}?signed"
         '0001-Use-Arch-Linux-device-access-groups.patch'
         # Holo - don't reap "old" files while running, only on boot
         '0002-Make-the-tmp-and-var-tmp-reapers-fire-only-during-bo.patch'
-        # Upstream, not yet in v257.2
-        '0003-resolved-if-one-transaction-completes-expect-other-t.patch'
         # bootloader files
         'arch.conf'
         'loader.conf'
@@ -49,25 +55,26 @@ source=("git+https://github.com/systemd/systemd#tag=v${_tag}?signed"
         '30-systemd-daemon-reload-system.hook'
         '30-systemd-daemon-reload-user.hook'
         '30-systemd-hwdb.hook'
+        '30-systemd-restart-marked.hook'
         '30-systemd-sysctl.hook'
         '30-systemd-tmpfiles.hook'
         '30-systemd-udev-reload.hook'
         '30-systemd-update.hook')
-sha512sums=('468f772b3dfa83483da75516499c50159206dc5f8e26d7a62fc08437c93a4e536c0b27ee7fa5ac11fb1bc27a9c0e41315261751e5cc7428629a30849aeb23386'
-            '3ccf783c28f7a1c857120abac4002ca91ae1f92205dcd5a84aff515d57e706a3f9240d75a0a67cff5085716885e06e62597baa86897f298662ec36a940cf410e'
-            '6a511f4ffbb225eebbdfcf6f697c6137f5368bf810840704536af21ffcc436fb347ac79fc776a3f44c1f533ed9039351328f30a196b6503c7d91c0b9d8727e35'
-            'e2a04b6eb6788459d79edeed9465983166b46c14a5c40f9b49ef10cb31b47447a6761dfc4f588aa01cc074b42e78615670f41ab20df37c4c2996318e27b2186d'
+sha512sums=('60e09576738abf1d328d06daae8981780a9a4facc5b09e2a3ae24b8461e23d3be2a192a2261ec0e85f004a89eb77e76c4483b268f3d4d918146baf5b201fa49d'
+            '78065bde708118b7d6e4ed492e096c763e4679a1c54bd98750d5d609d8cc2f1373023f308880f14fc923ae7f9fea34824917ef884c0f996b1f43d08ef022c0fb'
+            'f0a8a7ec9ab53ad5273c491f3b8d94cf76b51434a030e572178bd04d3ebb5936b38bf17a708290f4d054d5cb93545b2e2049113268b234f12004d0c7d296989e'
             '61032d29241b74a0f28446f8cf1be0e8ec46d0847a61dadb2a4f096e8686d5f57fe5c72bcf386003f6520bc4b5856c32d63bf3efe7eb0bc0deefc9f68159e648'
             'c416e2121df83067376bcaacb58c05b01990f4614ad9de657d74b6da3efa441af251d13bf21e3f0f71ddcb4c9ea658b81da3d915667dc5c309c87ec32a1cb5a5'
             '5a1d78b5170da5abe3d18fdf9f2c3a4d78f15ba7d1ee9ec2708c4c9c2e28973469bc19386f70b3cf32ffafbe4fcc4303e5ebbd6d5187a1df3314ae0965b25e75'
             'b90c99d768dc2a4f020ba854edf45ccf1b86a09d2f66e475de21fe589ff7e32c33ef4aa0876d7f1864491488fd7edb2682fc0d68e83a6d4890a0778dc2d6fe19'
-            '9835dbb46a3942e89774dd26f295af30ed9eb2cf7ba574e3016b0b4357536a102eb58d72b3add0ea7fd2a56d46b097f273dd02f68840b7a0211c9dbd2b0b7c29'
+            '81baa1ae439b0f4d1f09371a82c02db06a97a4fc35545fc2654f7905b4422fc8cf085f70304919a4323f39e662df1e05aa8d977d1dde73507527abe3072c386b'
             '299dcc7094ce53474521356647bdd2fb069731c08d14a872a425412fcd72da840727a23664b12d95465bf313e8e8297da31259508d1c62cc2dcea596160e21c5'
             '0d6bc3d928cfafe4e4e0bc04dbb95c5d2b078573e4f9e0576e7f53a8fab08a7077202f575d74a3960248c4904b5f7f0661bf17dbe163c524ab51dd30e3cb80f7'
             '2b50b25e8680878f7974fa9d519df7e141ca11c4bfe84a92a5d01bb193f034b1726ea05b3c0030bad1fbda8dbb78bf1dc7b73859053581b55ba813c39b27d9dc'
             'a436d3f5126c6c0d6b58c6865e7bd38dbfbfb7babe017eeecb5e9d162c21902cbf4e0a68cf3ac2f99815106f9fa003b075bd2b4eb5d16333fa913df6e2f3e32a'
             '190112e38d5a5c0ca91b89cd58f95595262a551530a16546e1d84700fc9644aa2ca677953ffff655261e8a7bff6e6af4e431424df5f13c00bc90b77c421bc32d'
             'a1661ab946c6cd7d3c6251a2a9fd68afe231db58ce33c92c42594aedb5629be8f299ba08a34713327b373a3badd1554a150343d8d3e5dfb102999c281bd49154'
+            'f6b154fdc612916d7788720cf703e34255b43ba2d19413de5f3f63f07508f4ce561ca138f987c2118c7128e1dfb01976b0ac7d5efee4d9ebaadd180e70fa013e'
             '9426829605bbb9e65002437e02ed54e35c20fdf94706770a3dc1049da634147906d6b98bf7f5e7516c84068396a12c6feaf72f92b51bdf19715e0f64620319de'
             'da7a97d5d3701c70dd5388b0440da39006ee4991ce174777931fea2aa8c90846a622b2b911f02ae4d5fffb92680d9a7e211c308f0f99c04896278e2ee0d9a4dc'
             'a50d202a9c2e91a4450b45c227b295e1840cc99a5e545715d69c8af789ea3dd95a03a30f050d52855cabdc9183d4688c1b534eaa755ebe93616f9d192a855ee3'
@@ -78,6 +85,7 @@ _meson_vcs_tag='false'
 _meson_mode='release'
 _meson_compile=()
 _meson_install=()
+_systemd_src_dir="${pkgbase}"
 
 if ((_systemd_UPSTREAM)); then
   _meson_version="${pkgver}"
@@ -91,6 +99,15 @@ if ((_systemd_UPSTREAM)); then
   fi
 fi
 
+# Some heuristics to detect that we are building on OBS, with no network access. Skip
+# git verification, and use the OBS-provided tarball instead. The sources will be
+# unpacked by OBS in $package-$version/
+if [ -f /.build/build.dist ] && [ -d /usr/src/packages/SOURCES ] &&  [ -d /usr/src/packages/BUILD ] &&  [ -d /usr/src/packages/OTHER ]; then
+  source[0]="${pkgbase}-${pkgver}.tar.gz"
+  sha512sums[0]='SKIP'
+  _systemd_src_dir="${pkgbase}-${pkgver}"
+fi
+
 _backports=(
 )
 
@@ -98,7 +115,7 @@ _reverts=(
 )
 
 prepare() {
-  cd "${pkgbase}"
+  cd "${_systemd_src_dir}"
 
   local _c _l
   for _c in "${_backports[@]}"; do
@@ -189,7 +206,7 @@ build() {
     -Dsbat-distro-url="https://archlinux.org/packages/core/x86_64/${pkgname}/"
   )
 
-  arch-meson "${pkgbase}" build "${_meson_options[@]}" $MESON_EXTRA_CONFIGURE_OPTIONS
+  arch-meson "${_systemd_src_dir}" build "${_meson_options[@]}" $MESON_EXTRA_CONFIGURE_OPTIONS
 
   meson compile -C build "${_meson_compile[@]}"
 }
