@@ -1,0 +1,72 @@
+# Maintainer: AndyRTR <andyrtr@archlinux.org>
+
+pkgname=xorg-xwayland
+pkgver=24.1.6
+pkgrel=1.1 # Rebuild for holo
+arch=('x86_64')
+license=(
+    LicenseRef-Adobe-Display-PostScript
+    BSD-3-Clause
+    LicenseRef-DEC-3-Clause
+    HPND
+    LicenseRef-HPND-sell-MIT-disclaimer-xserver
+    HPND-sell-variant
+    ICU
+    ISC
+    MIT
+    MIT-open-group
+    NTP
+    SGI-B-2.0
+    SMLNJ
+    X11
+    X11-distribute-modifications-variant
+)
+groups=('xorg')
+url="https://xorg.freedesktop.org"
+pkgdesc="run X clients under wayland"
+depends=('nettle' 'libepoxy' 'libxfont2' 'pixman'
+         'xorg-server-common' 'libxcvt' 'mesa'
+         'libglvnd' 'libxau' 'wayland' 'libdrm' 'libtirpc'
+         'libei' 'libxshmfence' 'libdecor' 'glibc')
+makedepends=('meson' 'xorgproto' 'xtrans' 'libxkbfile' 'dbus'
+             'xorg-font-util' 'wayland-protocols' 'mesa-libgl'
+             'systemd')
+source=(https://xorg.freedesktop.org/archive/individual/xserver/xwayland-$pkgver.tar.xz{,.sig})
+sha512sums=('b6dcc87f5c4d880cb23216518171a704c2a501803ac2efd9d01760895d755a617cd82313c6516f27a888b0581c64d74e3f8db5c238e1ae0d13da6cc1a547c02f'
+            'SKIP')
+provides=('xorg-server-xwayland')
+conflicts=('xorg-server-xwayland')
+replaces=('xorg-server-xwayland')
+#validpgpkeys=('B09FAF35BE914521980951145A81AF8E6ADBB200') # "Michel Daenzer <michel@daenzer.net>"
+validpgpkeys=('67DC86F2623FC5FD4BB5225D14706DBE1E4B4540') # "Olivier Fourdan <fourdan@xfce.org>"
+validpgpkeys+=('3C2C43D9447D5938EF4551EBE23B7E70B467F0BF') # Peter Hutterer (Who-T) <office@who-t.net>
+
+
+build() {
+  arch-meson xwayland-$pkgver build \
+    -D ipv6=true \
+    -D xvfb=false \
+    -D xdmcp=false \
+    -D xcsecurity=true \
+    -D dri3=true \
+    -D glamor=true \
+    -D libdecor=true \
+    -D xkb_dir=/usr/share/X11/xkb \
+    -D xkb_output_dir=/var/lib/xkb
+
+  # Print config
+  meson configure build
+  ninja -C build
+}
+
+package() {
+
+  DESTDIR="${pkgdir}" ninja -C build install
+  # xorg-server-common file /usr/lib/xorg/protocol.txt
+  rm "${pkgdir}"/usr/lib/xorg/protocol.txt
+  rmdir "${pkgdir}"/usr/lib/xorg
+  rm "${pkgdir}"/usr/share/man/man1/Xserver.1
+
+  # license
+  install -m644 -Dt "${pkgdir}/usr/share/licenses/${pkgname}" xwayland-$pkgver/COPYING
+}
