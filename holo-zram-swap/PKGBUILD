@@ -2,7 +2,7 @@
 # Maintainer : Manuel A. Fernandez Montecelo <mafm@igalia.com>
 
 pkgname='holo-zram-swap'
-pkgver=0.2
+pkgver=0.3
 pkgrel=0
 pkgdesc='Configures ZRAM swap'
 arch=('any')
@@ -13,7 +13,7 @@ source=(
   'zswap-disable.conf'
 )
 sha256sums=('8434fa1700fe86b566eb95331d8bfffe104785597c43f797612b1d8eb63f2530'
-            '15079234c4bbf5c94160495d7311ebe541e5fd0bad829ed5bfaa64cc4d512163')
+            'c1d5889e70d4a75a94eae8ea5290b273b177d63ba37abb346db108d0fe024404')
 
 package() {
   depends=('zram-generator')
