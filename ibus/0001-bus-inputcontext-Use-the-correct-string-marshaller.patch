@@ -1,0 +1,31 @@
+From 351bf8de3b5168c2f23c5b3b38d9563a8ef19e45 Mon Sep 17 00:00:00 2001
+From: Ludovico de Nittis <ludovico.denittis@collabora.com>
+Date: Thu, 6 Mar 2025 16:29:49 +0100
+Subject: [PATCH] bus/inputcontext: Use the correct string marshaller
+
+As declared in the `g_signal_new()` function, the correct marshaller
+type should be `OBJECT__STRING`.
+
+Addresses https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1584
+
+Signed-off-by: Ludovico de Nittis <ludovico.denittis@collabora.com>
+---
+ bus/inputcontext.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/bus/inputcontext.c b/bus/inputcontext.c
+index 9a133c88..3e124f25 100644
+--- a/bus/inputcontext.c
++++ b/bus/inputcontext.c
+@@ -712,7 +712,7 @@ bus_input_context_class_init (BusInputContextClass *class)
+             G_TYPE_STRING | G_SIGNAL_TYPE_STATIC_SCOPE);
+     g_signal_set_va_marshaller (context_signals[REQUEST_ENGINE],
+                                 G_TYPE_FROM_CLASS (class),
+-                                bus_marshal_VOID__STRINGv);
++                                bus_marshal_OBJECT__STRINGv);
+ 
+     context_signals[SET_CONTENT_TYPE] =
+         g_signal_new (I_("set-content-type"),
+-- 
+2.48.1
+

@@ -1,0 +1,98 @@
+From 032b4496e990283dffc507153e97160b13c6ed67 Mon Sep 17 00:00:00 2001
+From: Ludovico de Nittis <ludovico.denittis@collabora.com>
+Date: Thu, 6 Mar 2025 14:25:23 +0100
+Subject: [PATCH] Partially revert "Fix tests cases to be run in Wayland"
+
+This partially reverts commit ee6b673fbea00fa0f4d4671fd4eaea92739a2b5c.
+
+That commit is making the Steam Client fail to use the IME input. We are
+only partially reverting the upstream commit, because it makes several
+changes to the tests as well. However those changes dont apply cleanly,
+so we are preserving them.
+
+Addresses https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1584
+
+Signed-off-by: Ludovico de Nittis <ludovico.denittis@collabora.com>
+---
+ bus/ibusimpl.c     | 8 --------
+ bus/ibusimpl.h     | 3 +--
+ bus/inputcontext.c | 9 ---------
+ src/ibusshare.c    | 2 +-
+ 4 files changed, 2 insertions(+), 20 deletions(-)
+
+diff --git a/bus/ibusimpl.c b/bus/ibusimpl.c
+index 4bed9bc0..445c062b 100644
+--- a/bus/ibusimpl.c
++++ b/bus/ibusimpl.c
+@@ -2463,14 +2463,6 @@ bus_ibus_impl_is_embed_preedit_text (BusIBusImpl *ibus)
+     return ibus->embed_preedit_text;
+ }
+ 
+-gboolean
+-bus_ibus_impl_is_use_global_engine (BusIBusImpl *ibus)
+-{
+-    g_assert (BUS_IS_IBUS_IMPL (ibus));
+-
+-    return ibus->use_global_engine;
+-}
+-
+ BusInputContext *
+ bus_ibus_impl_get_focused_input_context (BusIBusImpl *ibus)
+ {
+diff --git a/bus/ibusimpl.h b/bus/ibusimpl.h
+index 428b773b..e3b43f87 100644
+--- a/bus/ibusimpl.h
++++ b/bus/ibusimpl.h
+@@ -2,7 +2,7 @@
+ /* vim:set et sts=4: */
+ /* bus - The Input Bus
+  * Copyright (C) 2008-2013 Peng Huang <shawn.p.huang@gmail.com>
+- * Copyright (C) 2022-2024 Takao Fujiwara <takao.fujiwara1@gmail.com>
++ * Copyright (C) 2022-2023 Takao Fujiwara <takao.fujiwara1@gmail.com>
+  * Copyright (C) 2008-2022 Red Hat, Inc.
+  *
+  * This library is free software; you can redistribute it and/or
+@@ -94,7 +94,6 @@ BusComponent    *bus_ibus_impl_lookup_component_by_name
+ gboolean         bus_ibus_impl_is_use_sys_layout    (BusIBusImpl        *ibus);
+ gboolean         bus_ibus_impl_is_embed_preedit_text
+                                                     (BusIBusImpl        *ibus);
+-gboolean         bus_ibus_impl_is_use_global_engine (BusIBusImpl        *ibus);
+ BusInputContext *bus_ibus_impl_get_focused_input_context
+                                                     (BusIBusImpl        *ibus);
+ GHashTable      *bus_ibus_impl_get_engine_focus_id_table
+diff --git a/bus/inputcontext.c b/bus/inputcontext.c
+index 9a133c88..b51156fd 100644
+--- a/bus/inputcontext.c
++++ b/bus/inputcontext.c
+@@ -1361,15 +1361,6 @@ _ic_set_engine (BusInputContext       *context,
+                 GDBusMethodInvocation *invocation)
+ {
+     gchar *engine_name = NULL;
+-    BusIBusImpl *ibus = bus_ibus_impl_get_default ();
+-
+-    if (bus_ibus_impl_is_use_global_engine (ibus)) {
+-        g_dbus_method_invocation_return_error (invocation,
+-                G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+-                "Cannot set engines when use-global-engine is enabled.");
+-        return;
+-    }
+-
+     g_variant_get (parameters, "(&s)", &engine_name);
+ 
+     if (!bus_input_context_has_focus (context)) {
+diff --git a/src/ibusshare.c b/src/ibusshare.c
+index 57e3ef14..5ab6e889 100644
+--- a/src/ibusshare.c
++++ b/src/ibusshare.c
+@@ -2,7 +2,7 @@
+ /* vim:set et sts=4: */
+ /* ibus - The Input Bus
+  * Copyright (C) 2008-2010 Peng Huang <shawn.p.huang@gmail.com>
+- * Copyright (C) 2015-2024 Takao Fujiwara <takao.fujiwara1@gmail.com>
++ * Copyright (C) 2015-2023 Takao Fujiwara <takao.fujiwara1@gmail.com>
+  * Copyright (C) 2008-2018 Red Hat, Inc.
+  *
+  * This library is free software; you can redistribute it and/or
+-- 
+2.48.1
+
