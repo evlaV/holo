@@ -5,7 +5,7 @@
 
 pkgbase=podman
 pkgname=podman
-pkgver=5.2.5
+pkgver=5.3.2
 pkgrel=1.1 # Holo: build only podman and not podman-docker
 pkgdesc='Tool and library for running OCI-based containers in pods'
 arch=(x86_64)
@@ -36,7 +36,7 @@ validpgpkeys=(
   7CE1E6F8C90CB53E7E4D8F2D502E08DB0BBF8EEE  # Ashley Cui <acui@redhat.com>
   9E33DD8704CC03E2DEB84D9A1C1EDD7CC7C3A0DD  # Lokesh Mandvekar <lsm5@redhat.com>
 )
-sha256sums=('22afdc76311ec0696390724b0ce4a33d79973f9b2c8138f3d0c5403a4a3cd30c')
+sha256sums=('73399e271ea86c7a7de68222a6ff0fd4f0d9d60c7ceb45df2685ca4d86f2f53d')
 
 build() {
   export CGO_CPPFLAGS="${CPPFLAGS}"
