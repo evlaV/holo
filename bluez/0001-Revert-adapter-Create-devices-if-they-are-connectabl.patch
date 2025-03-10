@@ -1,0 +1,28 @@
+From d6b33c16f6c13b8ee6b43883bc9c012cc999455b Mon Sep 17 00:00:00 2001
+From: Ludovico de Nittis <ludovico.denittis@collabora.com>
+Date: Mon, 10 Mar 2025 13:52:29 +0100
+Subject: [PATCH] Revert "adapter: Create devices if they are connectable"
+
+This reverts commit 9391332938293b37cd29013dde65fdeeec614b5d.
+
+Workaround for https://github.com/bluez/bluez/issues/1103
+---
+ src/adapter.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/adapter.c b/src/adapter.c
+index 2bb94cf16..d54d2cbf2 100644
+--- a/src/adapter.c
++++ b/src/adapter.c
+@@ -7289,7 +7289,7 @@ void btd_adapter_device_found(struct btd_adapter *adapter,
+ 				MGMT_SETTING_ISO_SYNC_RECEIVER))
+ 			monitoring = true;
+ 
+-		if (!discoverable && !monitoring && not_connectable) {
++		if (!discoverable && !monitoring && !eir_data.rsi) {
+ 			eir_data_free(&eir_data);
+ 			return;
+ 		}
+-- 
+2.48.1
+
