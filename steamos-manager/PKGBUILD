@@ -2,7 +2,7 @@
 # Maintainer: Jeremy Whiting <jeremy.whiting@collabora.com>
 
 pkgname=steamos-manager
-_srctag=v25.1.1
+_srctag=v25.3.1
 pkgver=${_srctag##v}
 pkgrel=0
 pkgdesc='SteamOS Manager daemon for running various system management tasks'
