@@ -1,0 +1,32 @@
+From c25c7c943c1880d3a94b70fd7581d7d9b97004ad Mon Sep 17 00:00:00 2001
+From: Ludovico de Nittis <ludovico.denittis@collabora.com>
+Date: Tue, 25 Mar 2025 16:34:41 +0100
+Subject: [PATCH BlueZ 2/3] device: Preserve pending flags when setting the
+ wake allowed
+
+If there are already flags that are pending to be applied, we should
+keep them to avoid overwriting them.
+In device_set_wake_allowed() we only want to either add or remove the
+remote wakeup flag, while keeping the existing flags as-is.
+---
+ src/device.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/device.c b/src/device.c
+index e8bff718c..474ec5763 100644
+--- a/src/device.c
++++ b/src/device.c
+@@ -1605,6 +1605,10 @@ void device_set_wake_allowed(struct btd_device *device, bool wake_allowed,
+ 	device->pending_wake_allowed = wake_allowed;
+ 
+ 	flags = device->current_flags;
++
++	/* Include the pending flags, or they may get overwritten. */
++	flags |= device->pending_flags;
++
+ 	if (wake_allowed)
+ 		flags |= DEVICE_FLAG_REMOTE_WAKEUP;
+ 	else
+-- 
+2.49.0
+
