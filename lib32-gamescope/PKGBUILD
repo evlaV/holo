@@ -3,7 +3,7 @@
 # This is just for the Gamescope WSI layer.
 
 pkgname=lib32-gamescope
-_srctag=3.14.11
+_srctag=3.16.2
 pkgver=${_srctag//-/.}
 pkgrel=1.1
 pkgdesc="gaming shell based on Xwayland, powered by Vulkan and DRM (32-bit)"
