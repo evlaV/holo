@@ -7,7 +7,7 @@
 pkgbase=bluez
 pkgname=('bluez' 'bluez-utils' 'bluez-libs' 'bluez-cups' 'bluez-deprecated-tools' 'bluez-hid2hci' 'bluez-mesh')
 pkgver=5.79
-pkgrel=1.9
+pkgrel=1.10
 url="http://www.bluez.org/"
 arch=('x86_64')
 license=('GPL-2.0-only')
@@ -30,7 +30,7 @@ source=(https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz,
         # Holo: Fix toggling wake from suspend option.
         # These upstream patches fix toggling the WakeAllowed option.
         # Internal issue: https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1428
-        # Both patches are merged upstream, and expected to be included in BlueZ 5.80
+        # Both patches are merged upstream, and are part of BlueZ 5.80
         0001-device-Fix-not-being-able-to-set-WakeAllowed.patch
         0002-device-clear-pending_wake_allowed-on-error.patch
 
@@ -44,7 +44,7 @@ source=(https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz,
 
         # Holo: Additional fixes for the WakeAllowed property
         # All three fixes have been sent and merged upstream.
-        # We expect they should be included in BlueZ 5.80
+        # They are already included in BlueZ 5.80
         # Internal issue: https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1528
         0001-device-Clear-only-the-pending-flags-that-have-been-a.patch
         0001-device-Clear-pending_flags-on-error.patch
@@ -56,6 +56,13 @@ source=(https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz,
         # Internal issue: https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1557
         # Upstream issue: https://github.com/bluez/bluez/issues/1103
         0001-Revert-adapter-Create-devices-if-they-are-connectabl.patch
+
+        # Holo: Fix devices having a disabled wake allowed option after pairing
+        # These patches have been merged upstream and are expected to be included in BlueZ 5.81
+        # Internal issue: https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1612
+        0001-adapter-Preserve-pending-flags-when-setting-the-Devi.patch
+        0002-device-Preserve-pending-flags-when-setting-the-wake-.patch
+        0003-device-Try-to-set-the-wake_allowed-property-only-for.patch
 )
 # see https://www.kernel.org/pub/linux/bluetooth/sha256sums.asc
 sha256sums=('4164a5303a9f71c70f48c03ff60be34231b568d93a9ad5e79928d34e6aa0ea8a'
@@ -74,7 +81,10 @@ sha256sums=('4164a5303a9f71c70f48c03ff60be34231b568d93a9ad5e79928d34e6aa0ea8a'
             '8be65f6357ea73c55d508c49770553712f2c0c4a39a3f7160dc7aad70161c95d'
             '41ba81e3c8dbb3c7719c95266a4d258534ab567dddfba6edcaa19509c7678943'
             '662e7502790ac3943c9fe412463cb65f712f6e9af8e5e72483eebfbbbffeb13a'
-            '6e0f0f0bbce516d077b11b374b1817c1a2b8f5cb3a5a463dc74040180314774c')
+            '6e0f0f0bbce516d077b11b374b1817c1a2b8f5cb3a5a463dc74040180314774c'
+            '6157c99c3dd766f2bcfc52af55930e6efb5bc2c7b23c0de2511693f711952d9f'
+            '4d985204cb45bf27b88837bc3c6ae2022eadc23bd13bf6b258ebd5a984ba6862'
+            'bf69aaab559c7e0ee0297434f83de5b4f6e1916a8e20559ef8a2584cbf3159e9')
 validpgpkeys=('E932D120BC2AEC444E558F0106CA9F5D1DCF2659') # Marcel Holtmann <marcel@holtmann.org>
 
 build() {
