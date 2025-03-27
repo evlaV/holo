@@ -5,7 +5,7 @@
 pkgname=lib32-gamescope
 _srctag=3.16.2
 pkgver=${_srctag//-/.}
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc="gaming shell based on Xwayland, powered by Vulkan and DRM (32-bit)"
 arch=(x86_64)
 url="https://github.com/Plagman/gamescope"
@@ -13,7 +13,7 @@ license=('MIT')
 depends=('lib32-wayland' 'lib32-libx11' 'lib32-libxcb' 'lib32-vulkan-icd-loader')
 makedepends=(openssh git meson cmake wayland-protocols ninja glslang glm vulkan-headers lib32-glm)
 source=("lib32-gamescope::git+https://github.com/ValveSoftware/gamescope.git#tag=$_srctag")
-sha256sums=('SKIP')
+sha256sums=('928b91e4ee11d9b7f7cdc092632f6337da2ae1bb394089663df5a45699ab1b9b')
 
 prepare() {
 	cd "$pkgname"
@@ -43,4 +43,5 @@ package() {
 	rm -rf "$pkgdir"/usr/lib32/libwlroots*
 	rm -rf "$pkgdir"/usr/lib/pkgconfig
 	rm -rf "$pkgdir"/usr/lib32/pkgconfig
+	rm -rf "$pkgdir"/usr/share/gamescope/scripts
 }
