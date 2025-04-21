@@ -6,17 +6,20 @@
 # toolchain build order: linux-api-headers->glibc->binutils->gcc->glibc->binutils->gcc
 # NOTE: valgrind requires rebuilt with each major glibc version
 
+# Holo: temporary backport, drop after next rebase
+# https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1644
+
 pkgbase=glibc
 pkgname=(glibc lib32-glibc glibc-locales)
-pkgver=2.39
-_commit=31da30f23cddd36db29d5b6a1c7619361b271fb4 # Holo: include fix for CVE-2024-2961
-pkgrel=1.2
+pkgver=2.41+r47+g046b33800c3e
+_commit=046b33800c3e8c7ac21b48e3ce5dbed8901f7e37
+pkgrel=1
 arch=(x86_64)
 url='https://www.gnu.org/software/libc'
 license=(GPL-2.0-or-later LGPL-2.1-or-later)
-makedepends=(git gd lib32-gcc-libs 'python>=3.11' 'python<3.12')
+makedepends=(git gd lib32-gcc-libs python)
 options=(staticlibs !lto)
-source=(git+https://sourceware.org/git/glibc.git#commit=${_commit}
+source=("git+https://sourceware.org/git/glibc.git#commit=${_commit}"
         locale.gen.txt
         locale-gen
         lib32-glibc.conf
@@ -24,19 +27,23 @@ source=(git+https://sourceware.org/git/glibc.git#commit=${_commit}
 )
 validpgpkeys=(7273542B39962DF7B299931416792B4EA25340F8 # Carlos O'Donell
               BC7C7372637EC10C57D7AA6579C43DFBF1CF2187) # Siddhesh Poyarekar
-b2sums=('SKIP'
+b2sums=('9f7554ef74f99b731ea85f9808ff95c883c8c31fd6430d7a7339e3fd8850b90548708ef883bb99397bb11044516c9dad8f4689df118557e02f9d504f16962fa6'
         'c859bf2dfd361754c9e3bbd89f10de31f8e81fd95dc67b77d10cb44e23834b096ba3caa65fbc1bd655a8696c6450dfd5a096c476b3abf5c7e125123f97ae1a72'
         '04fbb3b0b28705f41ccc6c15ed5532faf0105370f22133a2b49867e790df0491f5a1255220ff6ebab91a462f088d0cf299491b3eb8ea53534cb8638a213e46e3'
         '7c265e6d36a5c0dff127093580827d15519b6c7205c2e1300e82f0fb5b9dd00b6accb40c56581f18179c4fbbc95bd2bf1b900ace867a83accde0969f7b609f8a'
         'a6a5e2f2a627cc0d13d11a82458cfd0aa75ec1c5a3c7647e5d5a3bb1d4c0770887a3909bfda1236803d5bc9801bfd6251e13483e9adf797e4725332cd0d91a0e'
         '214e995e84b342fe7b2a7704ce011b7c7fc74c2971f98eeb3b4e677b99c860addc0a7d91b8dc0f0b8be7537782ee331999e02ba48f4ccc1c331b60f27d715678')
 
+pkgver() {
+  cd glibc
+  git describe --abbrev=12 --tags | sed 's/[^-]*-//;s/[^-]*-/&r/;s/-/+/g'
+}
+
 prepare() {
   mkdir -p glibc-build lib32-glibc-build
 
   [[ -d glibc-$pkgver ]] && ln -s glibc-$pkgver glibc
   cd glibc
-
 }
 
 build() {
@@ -55,6 +62,10 @@ build() {
       --disable-werror
   )
 
+  # _FORTIFY_SOURCE=3 causes testsuite build failure and is unnecessary during
+  # actual builds (support is built-in via --enable-fortify-source).
+  CFLAGS=${CFLAGS/-Wp,-D_FORTIFY_SOURCE=3/}
+
   (
     cd glibc-build
 
@@ -62,11 +73,6 @@ build() {
     echo "rtlddir=/usr/lib" >> configparms
     echo "sbindir=/usr/bin" >> configparms
     echo "rootsbindir=/usr/bin" >> configparms
-
-    # Credits @allanmcrae
-    # https://github.com/allanmcrae/toolchain/blob/f18604d70c5933c31b51a320978711e4e6791cf1/glibc/PKGBUILD
-    # remove fortify for building libraries
-    # CFLAGS=${CFLAGS/-Wp,-D_FORTIFY_SOURCE=2/}
 
     "${srcdir}"/glibc/configure \
         --libdir=/usr/lib \
@@ -84,6 +90,10 @@ build() {
     cd lib32-glibc-build
     export CC="gcc -m32 -mstackrealign"
     export CXX="g++ -m32 -mstackrealign"
+
+    # remove frame pointer flags due to crashes of nvidia driver on steam starts
+    # See https://gitlab.archlinux.org/archlinux/packaging/packages/glibc/-/issues/10
+    CFLAGS=${CFLAGS/-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer/}
 
     echo "slibdir=/usr/lib32" >> configparms
     echo "rtlddir=/usr/lib32" >> configparms
@@ -110,16 +120,15 @@ build() {
 _skip_test() {
   test=${1}
   file=${2}
-  sed -i "/\b${test} /d" "${srcdir}"/glibc/${file}
+  sed -i "/\b${test} /d" "${srcdir}/glibc/${file}"
 }
 
 check() (
   cd glibc-build
 
   # adjust/remove buildflags that cause false-positive testsuite failures
-  sed -i '/FORTIFY/d' configparms                                     # failure to build testsuite
   sed -i 's/-Werror=format-security/-Wformat-security/' config.make   # failure to build testsuite
-  sed -i '/CFLAGS/s/-fno-plt//' config.make                           # 16 failures
+  sed -i '/CFLAGS/s/-fno-plt//' config.make                           # 27 failures
   sed -i '/CFLAGS/s/-fexceptions//' config.make                       # 1 failure
 
   # The following tests fail due to restrictions in the Arch build system
@@ -154,7 +163,7 @@ package_glibc() {
 
   cd glibc
 
-  install -dm755 "${pkgdir}"/usr/lib/{locale,systemd/system,tmpfiles.d}
+  install -dm755 "${pkgdir}"/usr/lib/locale
 
   install -m644 posix/gai.conf "${pkgdir}"/etc/gai.conf
 
@@ -187,6 +196,7 @@ package_lib32-glibc() {
   pkgdesc='GNU C Library (32-bit)'
   depends=("glibc=$pkgver")
   options+=('!emptydirs')
+  install=lib32-glibc.install
 
   cd lib32-glibc-build
 
