@@ -2,21 +2,14 @@
 
 pkgname=holo-glibc-locales
 pkgver=2.41+r47+g046b33800c3e
-pkgrel=1
+pkgrel=2
 pkgdesc="Substitute of glibc-locales with only the locales present in SteamOS"
 arch=('x86_64')
 license=(GPL LGPL)
-provides=(
-  "glibc-locales=${pkgver}-${pkgrel}"
-)
-conflicts=(
-  "glibc-locales"
-)
-replaces=(
-  "glibc-locales"
-)
-source=("https://archive.archlinux.org/packages/g/glibc-locales/glibc-locales-${pkgver}-${pkgrel}-x86_64.pkg.tar.zst")
-b2sums=('bc855d4a6f9862a3fc427c2612c26c206b3d4cc9c757c9567e6ee2ec197a71b9bef50b8cbf1ba8d3d0a2011378fecd661434b37323be40e46108bfac5c9030ae')
+makedepends=("glibc-locales=${pkgver}")
+provides=("glibc-locales=${pkgver}-${pkgrel}")
+conflicts=("glibc-locales")
+replaces=("glibc-locales")
 
 package() {
   # runtime depends only
@@ -26,7 +19,7 @@ package() {
   local destdir="${pkgdir}"/usr/lib/locale
   install -vdm 755 "${destdir}"
 
-  cd "${srcdir}/usr/lib/locale"
+  cd /usr/lib/locale
 
   # from https://github.com/evlav/holo/-/commit/fe318d980c317778f7a40eccdc3f24bf4634fb01
   local locales_supported=(
