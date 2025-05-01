@@ -7,7 +7,7 @@
 pkgbase=bluez
 pkgname=('bluez' 'bluez-utils' 'bluez-libs' 'bluez-cups' 'bluez-deprecated-tools' 'bluez-hid2hci' 'bluez-mesh')
 pkgver=5.79
-pkgrel=1.10
+pkgrel=1.11
 url="http://www.bluez.org/"
 arch=('x86_64')
 license=('GPL-2.0-only')
@@ -63,6 +63,16 @@ source=(https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz,
         0001-adapter-Preserve-pending-flags-when-setting-the-Devi.patch
         0002-device-Preserve-pending-flags-when-setting-the-wake-.patch
         0003-device-Try-to-set-the-wake_allowed-property-only-for.patch
+
+        # Holo: Add support for DualShock 3 gamepad.
+        # These patches have been merged upstream and are expected to be included in BlueZ 5.83
+        # Internal issue: https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1251
+        0001-src-Add-new-CablePairing-property.patch
+        0002-client-Print-CablePairing-property.patch
+        0003-sixaxis-Set-CablePairing-when-pairing-a-Sixaxis-with.patch
+        0004-adapter-Add-btd_adapter_has_cable_pairing_devices.patch
+        0005-input-Automatically-use-sec-level-low-when-using-a-c.patch
+        0006-sixaxis-Set-security-level-when-adding-a-sixaxis-dev.patch
 )
 # see https://www.kernel.org/pub/linux/bluetooth/sha256sums.asc
 sha256sums=('4164a5303a9f71c70f48c03ff60be34231b568d93a9ad5e79928d34e6aa0ea8a'
@@ -84,7 +94,13 @@ sha256sums=('4164a5303a9f71c70f48c03ff60be34231b568d93a9ad5e79928d34e6aa0ea8a'
             '6e0f0f0bbce516d077b11b374b1817c1a2b8f5cb3a5a463dc74040180314774c'
             '6157c99c3dd766f2bcfc52af55930e6efb5bc2c7b23c0de2511693f711952d9f'
             '4d985204cb45bf27b88837bc3c6ae2022eadc23bd13bf6b258ebd5a984ba6862'
-            'bf69aaab559c7e0ee0297434f83de5b4f6e1916a8e20559ef8a2584cbf3159e9')
+            'bf69aaab559c7e0ee0297434f83de5b4f6e1916a8e20559ef8a2584cbf3159e9'
+            '562a82c65d46d25be055a3be45b135532596a156f5879bd04c7dd1f50c35e675'
+            'a5fb2e8f9a7bbe1f696ac3295d6f7149dda552d9d5e8641e7e30771dfbac1710'
+            '2e5f11fab3e2939ced656dafc2c38c590110874108138cf263633fad5e67eda9'
+            'c869ff4452c0d3e5f52a8bb06f69b51cbb6031a2b48e01ae4928f1898efd5d4f'
+            '3e554a65dca0758baf51aeb27f8c2175a43533b736460fde9b25df95899e7ee4'
+            '77d2d046ee2f4bcf5e6cd8307229bee443a202e096f665c9fdf0b54b4e25de16')
 validpgpkeys=('E932D120BC2AEC444E558F0106CA9F5D1DCF2659') # Marcel Holtmann <marcel@holtmann.org>
 
 build() {
