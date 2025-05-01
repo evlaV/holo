@@ -1,0 +1,38 @@
+From f08df5bc6951179e3c1f0651da30aeb9b64e2a46 Mon Sep 17 00:00:00 2001
+From: Ludovico de Nittis <ludovico.denittis@collabora.com>
+Date: Thu, 24 Apr 2025 14:17:00 +0200
+Subject: [PATCH BlueZ v5 6/6] sixaxis: Set security level when adding a
+ sixaxis device
+
+When doing the cable pairing for a sixaxis, we may need to change the
+listening input server security level.
+This is because sixaxis gamepads can only work with the level
+BT_IO_SEC_LOW.
+---
+ plugins/sixaxis.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/plugins/sixaxis.c b/plugins/sixaxis.c
+index ea160c65d..1fab8ae59 100644
+--- a/plugins/sixaxis.c
++++ b/plugins/sixaxis.c
+@@ -36,6 +36,7 @@
+ #include "src/plugin.h"
+ #include "src/log.h"
+ #include "src/shared/util.h"
++#include "profiles/input/server.h"
+ #include "profiles/input/sixaxis.h"
+ 
+ struct authentication_closure {
+@@ -301,6 +302,8 @@ static void agent_auth_cb(DBusError *derr, void *user_data)
+ 						 SIXAXIS_HID_SDP_RECORD);
+ 
+ 		device_set_cable_pairing(closure->device, true);
++
++		server_set_cable_pairing(adapter_bdaddr, true);
+ 	}
+ 
+ 	ba2str(&closure->bdaddr, device_addr);
+-- 
+2.49.0
+
