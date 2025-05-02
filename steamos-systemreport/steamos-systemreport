@@ -61,6 +61,14 @@ function super () {
   pkexec "$HELPER" $1
 }
 
+# [DEPRECATED] --steam-mode flag
+if "$steam_mode"; then
+  echo "-------------------------------------------------"
+  echo "[DEPRECATED] --steam-mode was given as argument but it has no effect,"
+  echo "             supported for compatibility only."
+  echo
+fi
+
 # Check flag set by steamos-readonly when the rootfs has been mounted RW
 echo "---------------------------------------------------"
 echo -n "Root filesystem has been mounted RW: "
@@ -80,17 +88,17 @@ super firmware
 # metric to sort by
 run 'ps aux k-rss'
 
-if ! "$steam_mode"; then
-  run 'lspci -tv -nn'
-  run 'lsusb -t -v'
-  run 'coredumpctl -r --since -10d'
-  run 'journalctl --no-pager -b 0'
-  # NOTE: These journals are from _this_ OS slot.
-  # At present, both slots actually put their journals in a shared offload
-  # on the /home partition, so this works as a result - but if the offloads
-  # are ever split by partition set then this will become inaccurate:
-  run 'journalctl --no-pager -b -1'
-fi
+# Used to be run only when --steam-mode was not given, now as it is
+# deprecated, always run.
+run 'lspci -tv -nn'
+run 'lsusb -t -v'
+run 'coredumpctl -r --since -10d'
+run 'journalctl --no-pager -b 0'
+# NOTE: These journals are from _this_ OS slot.
+# At present, both slots actually put their journals in a shared offload
+# on the /home partition, so this works as a result - but if the offloads
+# are ever split by partition set then this will become inaccurate:
+run 'journalctl --no-pager -b -1'
 
 # wake-up information
 super wakeup-info
