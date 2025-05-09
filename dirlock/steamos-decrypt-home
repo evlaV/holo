@@ -1,0 +1,151 @@
+#!/bin/bash
+#
+# Copyright © 2025 Valve Corporation
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+set -eu
+
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+CYAN="\033[0;36m"
+NC="\033[0m"
+
+if [ "$(id -u)" != 0 ]; then
+    echo "This tool needs to be run as root" >&1
+    exit 1
+fi
+
+check_unencrypted_home() {
+    echo -en "** ${CYAN}Checking if /home/deck is encrypted${NC}: "
+    if dirlock status -b /home/deck | grep -qwE 'locked|unlocked'; then
+        echo -e "${GREEN}OK${NC}"
+    else
+        echo -e "${RED}NO${NC}"
+        echo "ERROR: /home/deck is already unencrypted" >&2
+        return 1
+    fi
+}
+
+check_unlocked_home() {
+    echo -en "** ${CYAN}Checking if /home/deck is unlocked${NC}: "
+    if dirlock status -b /home/deck | grep -q unlocked; then
+        echo -e "${GREEN}OK${NC}"
+    else
+        echo -e "${RED}NO${NC}"
+        echo "ERROR: /home/deck is locked, run 'dirlock unlock /home/deck' and try again" >&2
+        return 1
+    fi
+}
+
+check_free_space() {
+    home_size=$(du -s /home/deck | awk '{print $1}')
+    home_inodes=$(du -s --inodes /home/deck | awk '{print $1}')
+    avail_size=$(df --output=avail /home | tail -n 1)
+    avail_inodes=$(df --output=iavail /home | tail -n 1)
+
+    echo -en "** ${CYAN}Checking if there is enough free space in /home${NC}: "
+
+    if (($avail_size - $home_size < 2097152)); then
+        echo -e "${RED}NO${NC}"
+        echo "ERROR: There is not enough free space in /home to perform this operation" >&2
+        return 1
+    fi
+
+    if (($avail_inodes - $home_inodes < 2000)); then
+        echo -e "${RED}NO${NC}"
+        echo "ERROR: There are not enough free inodes in /home to perform this operation" >&2
+        return 1
+    fi
+
+    echo -e "${GREEN}OK${NC}"
+}
+
+stop_sddm() {
+    echo -en "** ${CYAN}Closing the current session (this can take a few seconds)${NC}: "
+
+    systemctl stop sddm
+    for f in {1..15}; do
+        pgrep -U deck > /dev/null || break
+        sleep 1
+    done
+    pkill -U deck || true
+
+    echo -e "${GREEN}OK${NC}"
+}
+
+decrypt_home() {
+    tempdir=$(mktemp -d /home/dirlock.tmp.XXXXXX)
+    trap "test -d $tempdir && rm -rf $tempdir" INT EXIT
+
+    echo -en "** ${CYAN}Decrypting /home/deck (this can take a while)${NC}: "
+    cp -a /home/deck "$tempdir/deck"
+    sync
+    exch /home/deck "$tempdir/deck"
+    sync
+    rm -rf "$tempdir"
+    echo -e "${GREEN}OK${NC}"
+
+    echo -e "** ${CYAN}Setting a new password for the deck user (/etc/shadow)${NC}"
+    passwd deck
+}
+
+fstrim_home() {
+    echo -en "** ${CYAN}Running fstrim on /home${NC}: "
+    sync
+    if fstrim /home; then
+        echo -e "${GREEN}OK${NC}"
+    else
+        echo -e "${RED}ERROR${NC}"
+    fi
+}
+
+cat <<EOF
+This tool will disable encryption in /home/deck.
+After this you will have again a plain, unencrypted directory.
+
+You should be running this tool as root from an ssh connection.
+
+The following tasks will be performed now:
+
+- The display manager will be stopped and the current session will be closed.
+- /home/deck will be decrypted
+- A new password for the 'deck' account will be set
+- The system will be rebooted
+
+EOF
+echo -e "${RED}WARNING${NC}: This feature is currently experimental."
+echo "Use it at your own risk and make a backup first if you have valuable data."
+echo
+echo -n "Do you want to proceed? [y/N] "
+read n
+if [ "$n" != "y" ]; then
+    echo "Aborting"
+    exit 0
+fi
+
+check_unencrypted_home
+check_unlocked_home
+check_free_space
+stop_sddm
+decrypt_home
+fstrim_home
+
+echo
+echo "====================================="
+echo -e "${CYAN}/home/deck is no longer encrypted.${NC}"
+cat <<EOF
+
+You can encrypt it again with the following command:
+
+   /usr/lib/steamos/steamos-encrypt-home
+
+EOF
+echo -n "Do you want to reboot the system now? [Y/n] "
+read n
+if [ "$n" != "y" ] && [ "$n" != "" ]; then
+    echo "Aborting"
+    exit 0
+fi
+reboot

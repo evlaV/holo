@@ -1,0 +1,221 @@
+#!/bin/sh
+#
+# Copyright © 2025 Valve Corporation
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+set -eu
+
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+CYAN="\033[0;36m"
+NC="\033[0m"
+
+if [ "$(id -u)" != 0 ]; then
+    echo "This tool needs to be run as root" >&1
+    exit 1
+fi
+
+enable_fs_encryption() {
+    echo -en "** ${CYAN}Checking if encryption support is enabled in the /home filesytem${NC}: "
+    if dumpe2fs -h /dev/disk/by-label/home 2> /dev/null | grep -q '^Filesystem features:.*encrypt'; then
+        echo -e "${GREEN}OK${NC}"
+    else
+        echo -e "NO"
+        echo -en "** ${CYAN}Enabling encryption support in the /home filesystem${NC}: "
+        if tune2fs -O encrypt /dev/disk/by-label/home > /dev/null; then
+            echo -e "${GREEN}OK${NC}"
+        else
+            echo -e "${RED}ERROR${NC}"
+        fi
+    fi
+}
+
+enable_atomic_update_conf() {
+    echo -en "** ${CYAN}Creating /etc/atomic-update.conf.d/dirlock.conf${NC}: "
+    cat > /etc/atomic-update.conf.d/dirlock.conf <<-EOF
+	/etc/dirlock.conf
+	/etc/pam.d/sudo
+	/etc/pam.d/system-auth
+	EOF
+    echo -e "${GREEN}OK${NC}"
+}
+
+enable_systemd_service() {
+    echo -en "** ${CYAN}Checking if dirlock-sddm.service is enabled${NC}: "
+    if systemctl is-enabled -q dirlock-sddm.service; then
+        echo -e "${GREEN}OK${NC}"
+    else
+        echo -e "NO"
+        echo -en "** ${CYAN}Enabling the dirlock-sddm.service${NC}: "
+        if systemctl enable -q dirlock-sddm.service; then
+            echo -e "${GREEN}OK${NC}"
+        else
+            echo -e "${RED}ERROR${NC}"
+        fi
+    fi
+}
+
+update_pam_entry() {
+    local pamfile="$1"
+    local group="$2"
+
+    if grep -q "^${group}.*pam_dirlock.so" "$pamfile"; then
+        return 0
+    fi
+
+    local value=$(sed -En "/^-?${group}.*success=[0-9]/{s|.*success=([0-9]).*|\1|;p}" \
+                   "$pamfile" | sort -nr | head -n 1)
+
+    if [ -z "$value" ]; then
+        echo -e "${RED}WARNING${NC}: unexpected contents, refusing to update the file"
+        return 1
+    fi
+
+    local next=$(($value + 1))
+
+    sed -f - -i "$pamfile" <<-EOF
+	/^-\?$group.*success=$value/ {
+		i\
+		$group       [success=$next user_unknown=ignore default=die]   pam_dirlock.so
+	}
+	EOF
+}
+
+update_pam_config() {
+    local retcode=0
+
+    tempfile=$(mktemp /tmp/pam.XXXXXX)
+    trap "rm -f $tempfile" INT EXIT
+
+    echo -en "** ${CYAN}Checking if dirlock is enabled in /etc/pam.d/system-auth${NC}: "
+    if grep -q '^auth\s.*\spam_dirlock.so' /etc/pam.d/system-auth && grep -q '^password\s.*\spam_dirlock.so' /etc/pam.d/system-auth; then
+        echo -e "${GREEN}OK${NC}"
+    else
+        echo -e "NO"
+        echo -en "** ${CYAN}Enabling dirlock in /etc/pam.d/system-auth${NC}: "
+        if [ -e "/var/lib/overlays/etc/upper/pam.d/system-auth" ]; then
+            echo -e "${RED}NO${NC}"
+            echo -e "${RED}WARNING${NC}: the file has local changes, refusing to update it."
+            retcode=1
+        else
+            cp /etc/pam.d/system-auth "$tempfile"
+            if update_pam_entry "$tempfile" auth && update_pam_entry "$tempfile" password; then
+                cp "$tempfile" /etc/pam.d/system-auth
+                echo -e "${GREEN}OK${NC}"
+            else
+                echo -e "${RED}ERROR${NC}"
+                retcode=1
+            fi
+        fi
+    fi
+
+
+    echo -en "** ${CYAN}Checking if dirlock is enabled in /etc/pam.d/sudo${NC}: "
+    if grep -q '^auth\s.*\spam_dirlock.so' /etc/pam.d/sudo; then
+        echo -e "${GREEN}OK${NC}"
+    else
+        echo -e "NO"
+        echo -en "** ${CYAN}Enabling dirlock in /etc/pam.d/sudo${NC}: "
+        if [ -e "/var/lib/overlays/etc/upper/pam.d/sudo" ]; then
+            echo -e "${RED}NO${NC}"
+            echo -e "${RED}WARNING${NC}: the file has local changes, refusing to update it."
+            retcode=1
+        else
+            cp /etc/pam.d/sudo "$tempfile"
+            if update_pam_entry "$tempfile" auth; then
+                cp "$tempfile" /etc/pam.d/sudo
+                echo -e "${GREEN}OK${NC}"
+            else
+                echo -e "${RED}ERROR${NC}"
+                retcode=1
+            fi
+        fi
+    fi
+    return $retcode
+}
+
+check_tpm_support() {
+    echo -en "** ${CYAN}Checking if a TPM is available and usable${NC}: "
+    if dirlock tpm2-test &> /dev/null; then
+        echo -e "${GREEN}OK${NC}"
+    else
+        echo -e "${RED}NO${NC}"
+        echo -e "${RED}WARNING${NC}: dirlock will use a normal password if a TPM is not available"
+    fi
+}
+
+cat <<EOF
+This tool will guide you through enabling filesystem encryption
+on SteamOS using the dirlock tool.
+
+The process will enable encryption support in the system but it won't
+encrypt your data yet.
+
+Once encryption support is enabled you will be able to encrypt the
+data in /home/deck and protect it with a PIN or password, and if you
+want you will also be able to revert the changes later and come back
+to a normal, unencrypted home.
+
+The following tasks will be performed now:
+
+- Encryption support in the /home filesystem will be enabled.
+- The SDDM integration service will be enabled. This is used to ask
+  for a PIN or password when the home directory is locked.
+- The PAM configuration will be updated to support encrypted accounts.
+- /etc/atomic-update.conf.d/dirlock.conf will be created so the PAM
+  configuration survives OS updates.
+
+EOF
+
+echo -e "${RED}WARNING${NC}: This feature is currently experimental."
+echo "Use it at your own risk and make a backup first if you have valuable data."
+echo
+echo -n "Do you want to proceed? [y/N] "
+read n
+if [ "$n" != "y" ]; then
+    echo "Aborting"
+    exit 0
+fi
+
+enable_fs_encryption
+enable_atomic_update_conf
+enable_systemd_service
+needs_pam_review=0
+if ! update_pam_config; then
+    needs_pam_review=1
+fi
+check_tpm_support
+
+echo
+echo "====================================="
+echo -e "${CYAN}Filesystem encryption is now enabled.${NC}"
+cat <<EOF
+
+You can now encrypt the home directory with the following command:
+
+   /usr/lib/steamos/steamos-encrypt-home
+
+After that, reboot the system and you should see the login screen where
+you have to introduce your PIN or password.
+EOF
+
+if [ "$needs_pam_review" != "0" ]; then
+    echo
+    echo -e "${RED}IMPORTANT${NC}: some PAM configuration files were not updated."
+    echo "Before encrypting anything please review the following files manually"
+    echo "and make sure that they have the indicated lines."
+    echo "You might need to replace 'success=XXX' with the appropriate number:"
+    echo
+    echo " - /etc/pam.d/system-auth:"
+    echo -en "$GREEN"
+    echo "auth       [success=3 user_unknown=ignore default=die]   pam_dirlock.so"
+    echo "password   [success=2 user_unknown=ignore default=die]   pam_dirlock.so"
+    echo -en "$NC"
+    echo
+    echo " - /etc/pam.d/sudo:"
+    echo -en "$GREEN"
+    echo "auth       [success=3 user_unknown=ignore default=die]   pam_dirlock.so"
+    echo -en "$NC"
+fi

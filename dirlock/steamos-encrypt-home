@@ -1,0 +1,184 @@
+#!/bin/bash
+#
+# Copyright © 2025 Valve Corporation
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+set -eu
+
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+CYAN="\033[0;36m"
+NC="\033[0m"
+
+if [ "$(id -u)" != 0 ]; then
+    echo "This tool needs to be run as root" >&1
+    exit 1
+fi
+
+check_encryption_enabled() {
+    echo -en "** ${CYAN}Checking if encryption is enabled${NC}: "
+    if dumpe2fs -h /dev/disk/by-label/home 2> /dev/null | grep -q '^Filesystem features:.*encrypt' && \
+            test -f /etc/atomic-update.conf.d/dirlock.conf && \
+            systemctl is-enabled -q dirlock-sddm.service && \
+            grep -q '^auth\s.*\spam_dirlock.so' /etc/pam.d/system-auth; then
+        echo -e "${GREEN}OK${NC}"
+    else
+        echo -e "${RED}NO${NC}"
+        echo "ERROR: Encryption does not seem to be enabled. Run /usr/lib/steamos/steamos-enable-dirlock first" >&2
+        return 1
+    fi
+}
+
+check_unencrypted_home() {
+    echo -en "** ${CYAN}Checking if /home/deck is unencrypted${NC}: "
+    if dirlock status -b /home/deck | grep -qwE 'locked|unlocked'; then
+        echo -e "${RED}NO${NC}"
+        echo "ERROR: /home/deck is already encrypted" >&2
+        return 1
+    else
+        echo -e "${GREEN}OK${NC}"
+    fi
+}
+
+check_free_space() {
+    home_size=$(du -s /home/deck | awk '{print $1}')
+    home_inodes=$(du -s --inodes /home/deck | awk '{print $1}')
+    avail_size=$(df --output=avail /home | tail -n 1)
+    avail_inodes=$(df --output=iavail /home | tail -n 1)
+
+    echo -en "** ${CYAN}Checking if there is enough free space in /home${NC}: "
+
+    if (($avail_size - $home_size < 2097152)); then
+        echo -e "${RED}NO${NC}"
+        echo "ERROR: There is not enough free space in /home to perform this operation" >&2
+        return 1
+    fi
+
+    if (($avail_inodes - $home_inodes < 2000)); then
+        echo -e "${RED}NO${NC}"
+        echo "ERROR: There are not enough free inodes in /home to perform this operation" >&2
+        return 1
+    fi
+
+    echo -e "${GREEN}OK${NC}"
+}
+
+stop_sddm() {
+    echo -en "** ${CYAN}Closing the current session (this can take a few seconds)${NC}: "
+
+    systemctl stop sddm
+    for f in {1..15}; do
+        pgrep -U deck > /dev/null || break
+        sleep 1
+    done
+    pkill -U deck || true
+
+    echo -e "${GREEN}OK${NC}"
+}
+
+encrypt_home() {
+    tempdir=$(mktemp -d /home/dirlock.tmp.XXXXXX)
+    trap "test -d $tempdir && rm -rf $tempdir" INT EXIT
+    mkdir "$tempdir/enc"
+
+    echo -en "** ${CYAN}Checking if a TPM is available and usable${NC}: "
+    protector=password
+    if dirlock tpm2-test &> /dev/null; then
+        echo -e "${GREEN}OK${NC}"
+        cat <<-EOF
+		The TPM is a hardware module that can lock your encryption keys
+		and is safer than a regular password.
+
+		You need to enter a PIN to unlock your encryption keys and the TPM
+		will lock you out after several failed authentication attempts.
+
+		The TPM support in dirlock is functional but still basic and under development.
+		If unsure, say no. You can always start using the TPM later.
+
+	EOF
+        echo -n "Do you want to use the TPM to protect your data? [y/N] "
+        read n
+        if [ "$n" = "y" ]; then
+            protector=tpm2
+        fi
+    else
+        echo "NO"
+        echo "Using a password to protect your data"
+    fi
+
+    echo -e "** ${CYAN}Initializing encryption for /home/deck${NC}"
+    dirlock encrypt --protector-type "$protector" --protector-name "Protector for /home/deck" "$tempdir/enc"
+    echo -en "** ${CYAN}Encrypting /home/deck (this can take a while)${NC}: "
+    cp -a /home/deck "$tempdir/enc/deck"
+    mv "$tempdir/enc/deck" "$tempdir/deck"
+    sync
+    exch /home/deck "$tempdir/deck"
+    sync
+    rm -rf "$tempdir"
+    echo -e "${GREEN}OK${NC}"
+
+    echo -en "** ${CYAN}Disabling the old password for the deck user (/etc/shadow)${NC}: "
+    usermod -p '*' deck
+    echo -e "${GREEN}OK${NC}"
+}
+
+fstrim_home() {
+    echo -en "** ${CYAN}Running fstrim on /home${NC}: "
+    sync
+    if fstrim /home; then
+        echo -e "${GREEN}OK${NC}"
+    else
+        echo -e "${RED}ERROR${NC}"
+    fi
+}
+
+cat <<EOF
+This tool will encrypt the /home/deck directory using the dirlock tool.
+
+You should be running this tool as root from an ssh connection.
+
+The following tasks will be performed now:
+
+- The display manager will be stopped and the current session will be closed.
+- /home/deck will be encrypted (you will need to enter a new PIN or password)
+- The old password for the 'deck' account will be disabled (you will need to use
+  the encryption PIN or password from now on)
+- The system will be rebooted
+
+EOF
+echo -e "${RED}WARNING${NC}: This feature is currently experimental."
+echo "Use it at your own risk and make a backup first if you have valuable data."
+echo
+echo -n "Do you want to proceed? [y/N] "
+read n
+if [ "$n" != "y" ]; then
+    echo "Aborting"
+    exit 0
+fi
+
+check_encryption_enabled
+check_unencrypted_home
+check_free_space
+stop_sddm
+encrypt_home
+fstrim_home
+
+echo
+echo "====================================="
+echo -e "${CYAN}/home/deck is now encrypted.${NC}"
+cat <<EOF
+
+You can go back to a normal, unencrypted home with the following command:
+
+   /usr/lib/steamos/steamos-decrypt-home
+
+EOF
+echo -n "Do you want to reboot the system now? [Y/n] "
+read n
+if [ "$n" != "y" ] && [ "$n" != "" ]; then
+    echo "Aborting"
+    exit 0
+fi
+reboot

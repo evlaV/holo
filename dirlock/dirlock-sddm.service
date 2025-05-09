@@ -1,0 +1,11 @@
+[Unit]
+Description=Disable autologin in SDDM if the home directory is encrypted
+Before=sddm.service
+PartOf=sddm.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/steamos/dirlock-sddm-helper
+
+[Install]
+WantedBy=sddm.service

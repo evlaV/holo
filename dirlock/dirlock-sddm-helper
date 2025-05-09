@@ -1,0 +1,59 @@
+#!/bin/sh
+#
+# Copyright © 2025 Valve Corporation
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+set -eu
+
+SDDM_CONF=/etc/sddm.conf.d/steamos.conf
+SDDM_STATE_CONF=/var/lib/sddm/state.conf
+SDDM_AUTOLOGIN_CONF=/etc/sddm.conf.d/zz-steamos-autologin.conf
+SDDM_DIRLOCK_CONF=/etc/sddm.conf.d/zz-steamos-dirlock.conf
+
+# Get the Autologin user from the SDDM configuration
+user=$(sed -n '/^\[Autologin\]$/,/^$/{s/^User=//p}' "$SDDM_CONF")
+
+# Check if the home directory of the default user is locked
+if eval dirlock status -b ~"${user}" 2>&1 | grep -qw locked ; then
+    logger -t dirlock-sddm-helper "${user}'s homedir is locked, disabling autologin"
+
+    # If the home directory is locked disable autologin in SDDM
+    cat > "$SDDM_DIRLOCK_CONF" <<-EOF
+	[General]
+	InputMethod=qtvirtualkeyboard
+
+	[Autologin]
+	User=
+
+	[X11]
+	DisplayStopCommand=$0 display-stop
+	EOF
+
+    # Set the default session in the SDDM login screen
+    if [ "$(id -u)" = 0 ] && [ -f "$SDDM_STATE_CONF" ]; then
+        session=$(sed -n '/^\[Autologin\]$/,/^$/{s/^Session=//p}' "$SDDM_AUTOLOGIN_CONF")
+        for f in "/usr/share/xsessions/$session" "/usr/share/wayland-sessions/$session"; do
+            if [ -f "$f" ]; then
+                sed -i "s|^Session=.*|Session=$f|" "$SDDM_STATE_CONF"
+            fi
+        done
+    fi
+else
+    logger -t dirlock-sddm-helper "${user}'s homedir is not locked, enabling autologin"
+
+    # If the home directory is not locked don't override the autologin configuration
+    :> "$SDDM_DIRLOCK_CONF"
+fi
+
+# Change the ownership so the sddm user can update this file from DisplayStopCommand
+chown sddm:sddm "$SDDM_DIRLOCK_CONF"
+
+# Run the original DisplayStopCommand
+if [ "${1:-}" = "display-stop" ]; then
+   cmd=$(grep -s DisplayStopCommand "$SDDM_CONF" | cut -d = -f 2-)
+   if [ -x "$cmd" ]; then
+      exec $cmd
+   fi
+fi
