@@ -4,7 +4,7 @@
 # Contributor: Mirco Tischler <mt-ml at gmx dot de>
 
 pkgname=fwupd-minimal
-pkgver=2.0.6
+pkgver=2.0.9
 pkgrel=1
 pkgdesc="Simple daemon to allow session software to update firmware"
 arch=(x86_64)
@@ -36,12 +36,14 @@ depends=(
   zlib
 )
 makedepends=(
+  git
   bash-completion
   gnu-efi-libs
   libdrm
   meson
   noto-fonts
   noto-fonts-cjk
+  protobuf-c
   python-cairo
   python-dbus
   python-gobject
@@ -51,14 +53,12 @@ makedepends=(
   valgrind
 )
 source=(
-  "https://github.com/fwupd/fwupd/releases/download/${pkgver}/fwupd-${pkgver}.tar.xz"{,.asc}
+  "git+https://github.com/fwupd/fwupd.git#tag=${pkgver}?signed"
   fwupd.sysusers
 )
-sha512sums=('44ad50ea0f3072dcb4fd204bd406fa2933705d77f6647c5dc917f74534d7218918ba8a174dab2319528905421bbe2e192a86a397fc5e336d2f15213fb96d8b32'
-            'SKIP'
+sha512sums=('0a0e00f294b333d2695437ded1ebb4efc9c6c7b520d25097e54587657274ccecf20b0385257e50ff81865fc9639f8f8013f31fa9e23ffd8dc9f98eb4ad24501f'
             '637203080b55eda74a659f58c853a9a723a2dad5da70915b2b0e036c6145a649468ebec700cc83975d9cb5378b9dced8b3a3b26bdbcc75ddc774837355e75deb')
-b2sums=('2fe757f2a78dfe5255de551713d50e68c43765d80195d41663abae2f207469c9c2f0a4056c8b7b52b150eacf948810e64701c98f435e3c9ab7971c5d727c41b7'
-        'SKIP'
+b2sums=('00d0810260f4ac208d739dafde83f89d1aaf3d258d3c6cce61fea8608e98c481f4a89ef658bdea03feaa836a0109eb7ca41857d22ea6550c6ce74e8ed222d8bf'
         'e65ca7da22a20a40882cfc1fe4479643f9a38c90a4f2c3e71e6e5e3de1d6db212a0f17d600097619fe3cdb0a9b860422f8b0b9a9d45441518e51a7eb12a918bb')
 validpgpkeys=(163EB50119225DB3DF8F49EA17ACBA8DFA970E17) # Richard Hughes <richard@hughsie.com>
 
@@ -66,27 +66,18 @@ build() {
   local meson_options=(
     -D docs=disabled
     -D efi_binary=false
-    -D launchd=disabled
     -D supported_build=enabled
     -D systemd_unit_user=fwupd
     -D hsi=disabled
     -D introspection=disabled
     -D umockdev_tests=disabled
-    -D plugin_redfish=disabled
-    -D plugin_tpm=disabled
     -D plugin_flashrom=disabled
-    -D plugin_logitech_bulkcontroller=disabled
     -D passim=disabled
-    -D plugin_cpu=disabled
     -D plugin_modem_manager=disabled
-    -D plugin_scsi=disabled
-    -D plugin_bcm57xx=disabled
-    -D plugin_redfish=disabled
-    -D plugin_powerd=disabled
     -D fish_completion=false
   )
 
-  arch-meson fwupd-${pkgver} build "${meson_options[@]}"
+  arch-meson fwupd build "${meson_options[@]}"
   meson compile -C build
 }
 
