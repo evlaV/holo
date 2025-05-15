@@ -3,7 +3,7 @@
 pkgname=dirlock
 _commit=99e94bca948d249a860c6038c5889f52ea54ef77
 pkgver=0.0.1.141.99e94bc
-pkgrel=1
+pkgrel=2
 pkgdesc='Tool for managing encrypted directories'
 arch=('x86_64')
 source=("git+https://github.com/evlav/$pkgname.git#commit=$_commit"
@@ -381,7 +381,7 @@ build () {
 
 package() {
   # Runtime dependency
-  depends+=('qt6-virtualkeyboard')
+  depends+=('qt6-virtualkeyboard' 'tpm2-tools')
 
   cd "$srcdir/$pkgname"
 

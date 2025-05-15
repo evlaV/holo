@@ -138,6 +138,8 @@ cat <<EOF
 This tool will encrypt the /home/deck directory using the dirlock tool.
 
 You should be running this tool as root from an ssh connection.
+It's important that you ssh directly as root rather than using sudo from
+a regular 'deck' user session.
 
 The following tasks will be performed now:
 

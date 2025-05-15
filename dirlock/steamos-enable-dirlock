@@ -78,7 +78,7 @@ update_pam_entry() {
     sed -f - -i "$pamfile" <<-EOF
 	/^-\?$group.*success=$value/ {
 		i\
-		$group       [success=$next user_unknown=ignore default=die]   pam_dirlock.so
+		$group       [success=$next user_unknown=ignore module_unknown=ignore default=die]   pam_dirlock.so
 	}
 	EOF
 }
@@ -140,6 +140,14 @@ check_tpm_support() {
     echo -en "** ${CYAN}Checking if a TPM is available and usable${NC}: "
     if dirlock tpm2-test &> /dev/null; then
         echo -e "${GREEN}OK${NC}"
+        echo -en "** ${CYAN}Setting the TPM dictionary attack parameters${NC}: "
+        # Set saner values for maxAuthFail and lockoutInterval
+        if tpm2_dictionarylockout -s -n 31 -t 600 &> /dev/null; then
+            echo -e "${GREEN}OK${NC}"
+        else
+            echo -e "${RED}ERROR${NC}"
+            echo -e "${RED}WARNING${NC}: the dictionary attack parameters could not be changed"
+        fi
     else
         echo -e "${RED}NO${NC}"
         echo -e "${RED}WARNING${NC}: dirlock will use a normal password if a TPM is not available"
@@ -210,12 +218,12 @@ if [ "$needs_pam_review" != "0" ]; then
     echo
     echo " - /etc/pam.d/system-auth:"
     echo -en "$GREEN"
-    echo "auth       [success=3 user_unknown=ignore default=die]   pam_dirlock.so"
-    echo "password   [success=2 user_unknown=ignore default=die]   pam_dirlock.so"
+    echo "auth       [success=3 user_unknown=ignore module_unknown=ignore default=die]   pam_dirlock.so"
+    echo "password   [success=2 user_unknown=ignore module_unknown=ignore default=die]   pam_dirlock.so"
     echo -en "$NC"
     echo
     echo " - /etc/pam.d/sudo:"
     echo -en "$GREEN"
-    echo "auth       [success=3 user_unknown=ignore default=die]   pam_dirlock.so"
+    echo "auth       [success=3 user_unknown=ignore module_unknown=ignore default=die]   pam_dirlock.so"
     echo -en "$NC"
 fi
