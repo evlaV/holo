@@ -2,9 +2,9 @@
 # Maintainer: Jeremy Whiting <jeremy.whiting@collabora.com>
 
 pkgname=steamos-manager
-_srctag=v25.4.1
+_srctag=v25.5.1
 pkgver=${_srctag##v}
-pkgrel=0
+pkgrel=1
 pkgdesc='SteamOS Manager daemon for running various system management tasks'
 arch=('x86_64')
 url='https://store.steampowered.com/steamos/'
@@ -343,33 +343,16 @@ EOF
 
 build() {
 	cd "$pkgname-$pkgver"
-	cargo build -r
+	make build
 }
 
 package () {
 	cd "$pkgname-$pkgver"
-	install -d -m0755 "$pkgdir/usr/share/dbus-1/services/"
-	install -d -m0755 "$pkgdir/usr/share/dbus-1/system-services/"
-	install -d -m0755 "$pkgdir/usr/share/dbus-1/system.d/"
-	install -d -m0755 "$pkgdir/usr/lib/systemd/system/"
-	install -d -m0755 "$pkgdir/usr/lib/systemd/user/gamescope-session.service.wants/"
-
-	install -Ds -m755 "target/release/steamos-manager" "$pkgdir/usr/lib/steamos-manager"
-	install -D -m755 "target/release/steamosctl" "$pkgdir/usr/bin/steamosctl"
-	install -D -m644 -t "$pkgdir/usr/share/steamos-manager/platforms" "data/platforms/"*
-	install -D -m644 LICENSE "$pkgdir/usr/share/licenses/$pkgname"
-
-	install -m644 "data/system/com.steampowered.SteamOSManager1.service" "$pkgdir/usr/share/dbus-1/system-services/"
-	install -m644 "data/system/com.steampowered.SteamOSManager1.conf" "$pkgdir/usr/share/dbus-1/system.d/"
-	install -m644 "data/system/steamos-manager.service" "$pkgdir/usr/lib/systemd/system/"
-
-	install -m644 "data/user/com.steampowered.SteamOSManager1.service" "$pkgdir/usr/share/dbus-1/services/"
-	install -m644 "data/user/steamos-manager.service" "$pkgdir/usr/lib/systemd/user/"
-
+	make install DESTDIR="$pkgdir"
 	ln -s ../steamos-manager.service "$pkgdir/usr/lib/systemd/user/gamescope-session.service.wants/"
 }
 
 check() {
 	cd "$pkgname-$pkgver"
-	dbus-run-session cargo test
+	dbus-run-session make test
 }
