@@ -1,0 +1,298 @@
+From abee3a7b322928ccd2042af634d46a66be70ea47 Mon Sep 17 00:00:00 2001
+From: Mario Limonciello <mario.limonciello@amd.com>
+Date: Fri, 16 May 2025 00:49:08 -0500
+Subject: [PATCH 1/4] Use the 'OnBattery' property from upower to tell if
+ plugged in
+
+Some devices report true status of charging and discharging at all
+times and when at the charging limit (or max battery) it will oscillate.
+
+This could be smoothed out by software like upower, but arguably this
+doesn't even matter to fwupd.  We only care if you're on AC or on Battery
+not whether you are charging or discharging.
+
+Switch to using 'OnBattery' to decide whether AC or DC.
+---
+ plugins/upower/fu-upower-plugin.c | 51 ++++++++++++++++---------------
+ 1 file changed, 26 insertions(+), 25 deletions(-)
+
+diff --git a/plugins/upower/fu-upower-plugin.c b/plugins/upower/fu-upower-plugin.c
+index a7d401a8e..93f8cdc6a 100644
+--- a/plugins/upower/fu-upower-plugin.c
++++ b/plugins/upower/fu-upower-plugin.c
+@@ -39,7 +39,6 @@ fu_upower_plugin_rescan_devices(FuPlugin *plugin)
+ 	/* check that we "have" a battery */
+ 	type_val = g_dbus_proxy_get_cached_property(self->proxy, "Type");
+ 	if (type_val == NULL || g_variant_get_uint32(type_val) == 0) {
+-		fu_context_set_power_state(ctx, FU_POWER_STATE_UNKNOWN);
+ 		fu_context_set_battery_level(ctx, FWUPD_BATTERY_LEVEL_INVALID);
+ 		return;
+ 	}
+@@ -57,35 +56,12 @@ fu_upower_plugin_rescan_devices(FuPlugin *plugin)
+ 	state_val = g_dbus_proxy_get_cached_property(self->proxy, "State");
+ 	if (state_val == NULL || g_variant_get_uint32(state_val) == 0) {
+ 		g_warning("failed to query power state");
+-		fu_context_set_power_state(ctx, FU_POWER_STATE_UNKNOWN);
+ 		fu_context_set_battery_level(ctx, FWUPD_BATTERY_LEVEL_INVALID);
+-		return;
+-	}
+-
+-	/* map from UpDeviceState to FuPowerState */
+-	switch (g_variant_get_uint32(state_val)) {
+-	case UP_DEVICE_STATE_CHARGING:
+-	case UP_DEVICE_STATE_PENDING_CHARGE:
+-		fu_context_set_power_state(ctx, FU_POWER_STATE_AC_CHARGING);
+-		break;
+-	case UP_DEVICE_STATE_DISCHARGING:
+-	case UP_DEVICE_STATE_PENDING_DISCHARGE:
+-		fu_context_set_power_state(ctx, FU_POWER_STATE_BATTERY_DISCHARGING);
+-		break;
+-	case UP_DEVICE_STATE_EMPTY:
+-		fu_context_set_power_state(ctx, FU_POWER_STATE_BATTERY_EMPTY);
+-		break;
+-	case UP_DEVICE_STATE_FULLY_CHARGED:
+-		fu_context_set_power_state(ctx, FU_POWER_STATE_AC_FULLY_CHARGED);
+-		break;
+-	default:
+-		fu_context_set_power_state(ctx, FU_POWER_STATE_UNKNOWN);
+-		break;
+ 	}
+ }
+ 
+ static void
+-fu_upower_plugin_rescan_manager(FuPlugin *plugin)
++fu_upower_plugin_update_lid(FuPlugin *plugin)
+ {
+ 	FuUpowerPlugin *self = FU_UPOWER_PLUGIN(plugin);
+ 	FuContext *ctx = fu_plugin_get_context(plugin);
+@@ -111,6 +87,31 @@ fu_upower_plugin_rescan_manager(FuPlugin *plugin)
+ 	fu_context_set_lid_state(ctx, FU_LID_STATE_OPEN);
+ }
+ 
++static void
++fu_upower_plugin_update_battery(FuPlugin *plugin)
++{
++	FuUpowerPlugin *self = FU_UPOWER_PLUGIN(plugin);
++	FuContext *ctx = fu_plugin_get_context(plugin);
++	g_autoptr(GVariant) on_battery = NULL;
++
++	on_battery = g_dbus_proxy_get_cached_property(self->proxy_manager, "OnBattery");
++	if (on_battery == NULL) {
++		fu_context_set_power_state(ctx, FU_POWER_STATE_UNKNOWN);
++		return;
++	}
++	if (g_variant_get_boolean(on_battery))
++		fu_context_set_power_state(ctx, FU_POWER_STATE_BATTERY);
++	else
++		fu_context_set_power_state(ctx, FU_POWER_STATE_AC);
++}
++
++static void
++fu_upower_plugin_rescan_manager(FuPlugin *plugin)
++{
++	fu_upower_plugin_update_lid(plugin);
++	fu_upower_plugin_update_battery(plugin);
++}
++
+ static void
+ fu_upower_plugin_proxy_changed_cb(GDBusProxy *proxy,
+ 				  GVariant *changed_properties,
+-- 
+2.43.0
+
+
+From 5f0d30a49c5c2a9661baad95064917c66c9ad541 Mon Sep 17 00:00:00 2001
+From: Mario Limonciello <mario.limonciello@amd.com>
+Date: Fri, 16 May 2025 00:50:50 -0500
+Subject: [PATCH 2/4] Revert "Add a power quirk for Framework systems"
+
+This reverts commit 6ab157f1911c9b9b980a73e6ebe665e21d7ee519.
+---
+ data/power.quirk            |  4 ----
+ libfwupdplugin/fu-context.c | 10 ----------
+ 2 files changed, 14 deletions(-)
+
+diff --git a/data/power.quirk b/data/power.quirk
+index 2a9e5e95d..bfddd35e6 100644
+--- a/data/power.quirk
++++ b/data/power.quirk
+@@ -8,7 +8,3 @@ BatteryThreshold = 30
+ 
+ [HP]
+ BatteryThreshold = 50
+-
+-# Framework
+-[2185e781-ed4b-5fc2-8839-b5ddb1e7d649]
+-Flags = discharging-when-fully-changed
+diff --git a/libfwupdplugin/fu-context.c b/libfwupdplugin/fu-context.c
+index 70c7dea05..637c5ee39 100644
+--- a/libfwupdplugin/fu-context.c
++++ b/libfwupdplugin/fu-context.c
+@@ -1236,16 +1236,6 @@ fu_context_set_power_state(FuContext *self, FuPowerState power_state)
+ {
+ 	FuContextPrivate *priv = GET_PRIVATE(self);
+ 	g_return_if_fail(FU_IS_CONTEXT(self));
+-
+-	/* quirk for behavior on Framework systems where the EC reports as discharging
+-	 * while on AC but at 100% */
+-	if (power_state == FU_POWER_STATE_BATTERY_DISCHARGING && priv->battery_level == 100 &&
+-	    fu_context_has_hwid_flag(self, "discharging-when-fully-changed")) {
+-		power_state = FU_POWER_STATE_AC_FULLY_CHARGED;
+-		g_debug("quirking power state to %s", fu_power_state_to_string(power_state));
+-	}
+-
+-	/* is the same */
+ 	if (priv->power_state == power_state)
+ 		return;
+ 	priv->power_state = power_state;
+-- 
+2.43.0
+
+
+From 8d7d81f6e9cff3c6cc983739c0d44d42bcc246d5 Mon Sep 17 00:00:00 2001
+From: Mario Limonciello <mario.limonciello@amd.com>
+Date: Fri, 16 May 2025 08:14:21 -0500
+Subject: [PATCH 3/4] Map powerd states to boolean AC vs DC
+
+---
+ plugins/powerd/fu-powerd-plugin.c | 35 ++++++-------------------------
+ 1 file changed, 6 insertions(+), 29 deletions(-)
+
+diff --git a/plugins/powerd/fu-powerd-plugin.c b/plugins/powerd/fu-powerd-plugin.c
+index 34cd0ea5a..9abee24b7 100644
+--- a/plugins/powerd/fu-powerd-plugin.c
++++ b/plugins/powerd/fu-powerd-plugin.c
+@@ -88,38 +88,15 @@ fu_powerd_plugin_rescan(FuPlugin *plugin, GVariant *parameters)
+ 	/* plugged in */
+ 	if (power_type == FU_POWERD_EXTERNAL_POWER_AC ||
+ 	    power_type == FU_POWERD_EXTERNAL_POWER_USB) {
+-		switch (current_state) {
+-		case FU_POWERD_BATTERY_STATE_CHARGING:
+-			fu_context_set_power_state(ctx, FU_POWER_STATE_AC_CHARGING);
+-			break;
+-		case FU_POWERD_BATTERY_STATE_FULLY_CHARGED:
+-			fu_context_set_power_state(ctx, FU_POWER_STATE_AC_FULLY_CHARGED);
+-			break;
+-		default:
+-			fu_context_set_power_state(ctx, FU_POWER_STATE_AC);
+-			break;
+-		}
++		fu_context_set_power_state(ctx, FU_POWER_STATE_AC);
+ 		return;
+ 	}
+ 
+-	/* fallback */
+-	switch (current_state) {
+-	case FU_POWERD_BATTERY_STATE_CHARGING:
+-		fu_context_set_power_state(ctx, FU_POWER_STATE_AC_CHARGING);
+-		break;
+-	case FU_POWERD_BATTERY_STATE_DISCHARGING:
+-		fu_context_set_power_state(ctx, FU_POWER_STATE_BATTERY_DISCHARGING);
+-		break;
+-	case FU_POWERD_BATTERY_STATE_EMPTY:
+-		fu_context_set_power_state(ctx, FU_POWER_STATE_BATTERY_EMPTY);
+-		break;
+-	case FU_POWERD_BATTERY_STATE_FULLY_CHARGED:
+-		fu_context_set_power_state(ctx, FU_POWER_STATE_AC_FULLY_CHARGED);
+-		break;
+-	default:
+-		fu_context_set_power_state(ctx, FU_POWER_STATE_UNKNOWN);
+-		break;
+-	}
++	if (current_state == FU_POWERD_BATTERY_STATE_FULLY_CHARGED ||
++	    current_state == FU_POWERD_BATTERY_STATE_CHARGING)
++		fu_context_set_power_state(ctx, FU_POWER_STATE_AC);
++	else
++		fu_context_set_power_state(ctx, FU_POWER_STATE_BATTERY);
+ }
+ 
+ static void
+-- 
+2.43.0
+
+
+From c68f7a38175447b8c71877738aa97ff2d9c129a3 Mon Sep 17 00:00:00 2001
+From: Mario Limonciello <mario.limonciello@amd.com>
+Date: Fri, 16 May 2025 08:20:57 -0500
+Subject: [PATCH 4/4] Drop all power states from context except AC or DC
+
+---
+ libfwupdplugin/fu-common.c        | 6 +-----
+ libfwupdplugin/fu-common.rs       | 4 ----
+ libfwupdplugin/fu-self-test.c     | 6 +++---
+ plugins/upower/fu-upower-plugin.c | 2 +-
+ 4 files changed, 5 insertions(+), 13 deletions(-)
+
+diff --git a/libfwupdplugin/fu-common.c b/libfwupdplugin/fu-common.c
+index 2016e5c67..b960b26b3 100644
+--- a/libfwupdplugin/fu-common.c
++++ b/libfwupdplugin/fu-common.c
+@@ -232,11 +232,7 @@ fu_common_align_up(gsize value, guint8 alignment)
+ gboolean
+ fu_power_state_is_ac(FuPowerState power_state)
+ {
+-	if (power_state == FU_POWER_STATE_UNKNOWN || power_state == FU_POWER_STATE_AC ||
+-	    power_state == FU_POWER_STATE_AC_CHARGING ||
+-	    power_state == FU_POWER_STATE_AC_FULLY_CHARGED)
+-		return TRUE;
+-	return FALSE;
++	return power_state != FU_POWER_STATE_BATTERY;
+ }
+ 
+ /**
+diff --git a/libfwupdplugin/fu-common.rs b/libfwupdplugin/fu-common.rs
+index 28d29654c..9531ef8eb 100644
+--- a/libfwupdplugin/fu-common.rs
++++ b/libfwupdplugin/fu-common.rs
+@@ -11,11 +11,7 @@ enum FuCpuVendor {
+ enum FuPowerState {
+     Unknown,
+     Ac,                     // On AC power
+-    AcCharging,             // Charging on AC
+-    AcFullyCharged,         // Fully charged on AC
+     Battery,                // On system battery
+-    BatteryDischarging,     // System battery discharging
+-    BatteryEmpty,           // System battery empty
+ }
+ 
+ #[derive(ToString)]
+diff --git a/libfwupdplugin/fu-self-test.c b/libfwupdplugin/fu-self-test.c
+index 53410f310..d91260543 100644
+--- a/libfwupdplugin/fu-self-test.c
++++ b/libfwupdplugin/fu-self-test.c
+@@ -881,8 +881,8 @@ fu_context_state_func(void)
+ 	g_assert_cmpint(fu_context_get_display_state(ctx), ==, FU_DISPLAY_STATE_UNKNOWN);
+ 	g_assert_cmpint(fu_context_get_battery_level(ctx), ==, FWUPD_BATTERY_LEVEL_INVALID);
+ 
+-	fu_context_set_power_state(ctx, FU_POWER_STATE_BATTERY_DISCHARGING);
+-	fu_context_set_power_state(ctx, FU_POWER_STATE_BATTERY_DISCHARGING);
++	fu_context_set_power_state(ctx, FU_POWER_STATE_BATTERY);
++	fu_context_set_power_state(ctx, FU_POWER_STATE_BATTERY);
+ 	fu_context_set_lid_state(ctx, FU_LID_STATE_CLOSED);
+ 	fu_context_set_lid_state(ctx, FU_LID_STATE_CLOSED);
+ 	fu_context_set_display_state(ctx, FU_DISPLAY_STATE_CONNECTED);
+@@ -890,7 +890,7 @@ fu_context_state_func(void)
+ 	fu_context_set_battery_level(ctx, 50);
+ 	fu_context_set_battery_level(ctx, 50);
+ 
+-	g_assert_cmpint(fu_context_get_power_state(ctx), ==, FU_POWER_STATE_BATTERY_DISCHARGING);
++	g_assert_cmpint(fu_context_get_power_state(ctx), ==, FU_POWER_STATE_BATTERY);
+ 	g_assert_cmpint(fu_context_get_lid_state(ctx), ==, FU_LID_STATE_CLOSED);
+ 	g_assert_cmpint(fu_context_get_display_state(ctx), ==, FU_DISPLAY_STATE_CONNECTED);
+ 	g_assert_cmpint(fu_context_get_battery_level(ctx), ==, 50);
+diff --git a/plugins/upower/fu-upower-plugin.c b/plugins/upower/fu-upower-plugin.c
+index 93f8cdc6a..b5305da6d 100644
+--- a/plugins/upower/fu-upower-plugin.c
++++ b/plugins/upower/fu-upower-plugin.c
+@@ -96,7 +96,7 @@ fu_upower_plugin_update_battery(FuPlugin *plugin)
+ 
+ 	on_battery = g_dbus_proxy_get_cached_property(self->proxy_manager, "OnBattery");
+ 	if (on_battery == NULL) {
+-		fu_context_set_power_state(ctx, FU_POWER_STATE_UNKNOWN);
++		fu_context_set_power_state(ctx, FU_POWER_STATE_AC);
+ 		return;
+ 	}
+ 	if (g_variant_get_boolean(on_battery))
+-- 
+2.43.0
+
