@@ -3,7 +3,7 @@
 pkgbase=steamos-customizations-git
 #pkgname=('steamos-customizations-git' 'holo-desync' 'holo-pacman' 'holo-sudo')
 pkgname=('steamos-customizations-git' 'holo-desync' 'holo-sudo')
-_srctag=jupiter-20250521.2
+_srctag=jupiter-20250521.3
 _srcver=${_srctag#jupiter-}
 pkgver=${_srcver}
 pkgrel=1
@@ -14,7 +14,7 @@ license=('LGPLv2+')
 depends=('e2fsprogs' 'gptfdisk' 'rsync' 'util-linux' 'mkinitcpio')
 makedepends=('git' 'systemd')
 source=("${pkgbase%-git}::git+https://github.com/evlav/${pkgbase%-git}.git#tag=${_srctag}")
-sha256sums=('7fadcae03ea18a340ae1a7aec26b5378f346d433ee6ad231a3116cd22b131300')
+sha256sums=('9668a7f72f61de009c8f79e56538f2c5ee15796b7fcdb314d571230446207b4f')
 
 package_steamos-customizations-git() {
 	provides=("${pkgbase%-git}")
