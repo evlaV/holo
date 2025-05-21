@@ -57,3 +57,18 @@ if [ "${1:-}" = "display-stop" ]; then
       exec $cmd
    fi
 fi
+
+# Earlier versions of this package didn't enable the PAM session entry, so
+# this is a temporary hack to enable it without user intervention.
+if [ "$(id -u)" = "0" ] && \
+       ! grep -q '^session.*pam_dirlock.so' /etc/pam.d/system-auth && \
+         grep -q '^auth.*pam_dirlock.so' /etc/pam.d/system-auth && \
+         grep -q '^-\?session.*pam_systemd_home.so' /etc/pam.d/system-auth; then
+    logger -t dirlock-sddm-helper "/etc/pam.d/system-auth is outdated, fixing it"
+    sed -f - -i /etc/pam.d/system-auth <<-EOF
+	/^-\?session.*pam_systemd_home.so/ {
+		i\
+		session    optional                    pam_dirlock.so
+	}
+	EOF
+fi

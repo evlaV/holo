@@ -65,6 +65,16 @@ update_pam_entry() {
         return 0
     fi
 
+    if [ "$group" = "session" ]; then
+        sed -f - -i "$pamfile" <<-EOF
+		/^-\?session.*pam_systemd_home.so/ {
+			i\
+			session    optional                    pam_dirlock.so
+		}
+		EOF
+        return 0
+    fi
+
     local value=$(sed -En "/^-?${group}.*success=[0-9]/{s|.*success=([0-9]).*|\1|;p}" \
                    "$pamfile" | sort -nr | head -n 1)
 
@@ -90,7 +100,9 @@ update_pam_config() {
     trap "rm -f $tempfile" INT EXIT
 
     echo -en "** ${CYAN}Checking if dirlock is enabled in /etc/pam.d/system-auth${NC}: "
-    if grep -q '^auth\s.*\spam_dirlock.so' /etc/pam.d/system-auth && grep -q '^password\s.*\spam_dirlock.so' /etc/pam.d/system-auth; then
+    if grep -q '^auth\s.*\spam_dirlock.so' /etc/pam.d/system-auth && \
+       grep -q '^password\s.*\spam_dirlock.so' /etc/pam.d/system-auth && \
+       grep -q '^session\s.*\spam_dirlock.so' /etc/pam.d/system-auth; then
         echo -e "${GREEN}OK${NC}"
     else
         echo -e "NO"
@@ -101,7 +113,9 @@ update_pam_config() {
             retcode=1
         else
             cp /etc/pam.d/system-auth "$tempfile"
-            if update_pam_entry "$tempfile" auth && update_pam_entry "$tempfile" password; then
+            if update_pam_entry "$tempfile" auth && \
+               update_pam_entry "$tempfile" password && \
+               update_pam_entry "$tempfile" session; then
                 cp "$tempfile" /etc/pam.d/system-auth
                 echo -e "${GREEN}OK${NC}"
             else
@@ -142,7 +156,7 @@ check_tpm_support() {
         echo -e "${GREEN}OK${NC}"
         echo -en "** ${CYAN}Setting the TPM dictionary attack parameters${NC}: "
         # Set saner values for maxAuthFail and lockoutInterval
-        if tpm2_dictionarylockout -s -n 31 -t 600 &> /dev/null; then
+        if /usr/lib/dirlock/tpm2-dict-setup 31 600 &> /dev/null; then
             echo -e "${GREEN}OK${NC}"
         else
             echo -e "${RED}ERROR${NC}"
@@ -220,6 +234,7 @@ if [ "$needs_pam_review" != "0" ]; then
     echo -en "$GREEN"
     echo "auth       [success=3 user_unknown=ignore module_unknown=ignore default=die]   pam_dirlock.so"
     echo "password   [success=2 user_unknown=ignore module_unknown=ignore default=die]   pam_dirlock.so"
+    echo "session    optional   pam_dirlock.so"
     echo -en "$NC"
     echo
     echo " - /etc/pam.d/sudo:"

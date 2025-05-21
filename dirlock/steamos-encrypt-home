@@ -93,6 +93,7 @@ encrypt_home() {
 
 		You need to enter a PIN to unlock your encryption keys and the TPM
 		will lock you out after several failed authentication attempts.
+		The PIN can contain any character, not just numbers.
 
 		The TPM support in dirlock is functional but still basic and under development.
 		If unsure, say no. You can always start using the TPM later.
