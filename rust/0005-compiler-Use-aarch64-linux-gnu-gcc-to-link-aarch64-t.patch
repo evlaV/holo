@@ -23,7 +23,7 @@ index 18711cb399d7..dded1fc32352 100644
          },
      }
 diff --git a/compiler/rustc_target/src/spec/targets/aarch64_unknown_linux_musl.rs b/compiler/rustc_target/src/spec/targets/aarch64_unknown_linux_musl.rs
-index bb65048a56d6..89b79cb69068 100644
+index 4fefdfa5c5e1..add72c5f8af6 100644
 --- a/compiler/rustc_target/src/spec/targets/aarch64_unknown_linux_musl.rs
 +++ b/compiler/rustc_target/src/spec/targets/aarch64_unknown_linux_musl.rs
 @@ -11,6 +11,7 @@ pub(crate) fn target() -> Target {
@@ -32,5 +32,5 @@ index bb65048a56d6..89b79cb69068 100644
          | SanitizerSet::THREAD;
 +    base.linker = Some("aarch64-linux-gnu-gcc".into());
  
-     Target {
-         llvm_target: "aarch64-unknown-linux-musl".into(),
+     // FIXME(compiler-team#422): musl targets should be dynamically linked by default.
+     base.crt_static_default = true;
