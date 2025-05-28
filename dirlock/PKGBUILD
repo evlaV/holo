@@ -1,8 +1,8 @@
 # Maintainer: Alberto Garcia <berto@igalia.com>
 
 pkgname=dirlock
-_commit=70aa248e6b8496aa54ab74fd62558513def07614
-pkgver=0.0.1.152.70aa248
+_commit=9e3b956ba04fb3bd45584aa985ea493e2001d1a5
+pkgver=0.0.1.160.9e3b956
 pkgrel=1
 pkgdesc='Tool for managing encrypted directories'
 arch=('x86_64')

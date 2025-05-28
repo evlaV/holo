@@ -12,8 +12,26 @@ GREEN="\033[0;32m"
 CYAN="\033[0;36m"
 NC="\033[0m"
 
+tempdir="/home/dirlock.tmp"
+
+cleanup() {
+    if [ -d "$tempdir" ]; then
+        echo "Cleaning temporary directory $tempdir, please wait"
+        rm -rf "$tempdir"
+    fi
+}
+
+trap cleanup INT EXIT
+
 if [ "$(id -u)" != 0 ]; then
     echo "This tool needs to be run as root" >&1
+    exit 1
+fi
+
+if [ -z "${SSH_CONNECTION:-}" ]; then
+    echo -e "${RED}WARNING${NC}: You should be running this tool as root from an ssh connection."
+    echo "It's important that you ssh directly as root rather than using sudo from"
+    echo "a regular 'deck' user session."
     exit 1
 fi
 
@@ -79,10 +97,6 @@ stop_sddm() {
 }
 
 encrypt_home() {
-    tempdir=$(mktemp -d /home/dirlock.tmp.XXXXXX)
-    trap "test -d $tempdir && rm -rf $tempdir" INT EXIT
-    mkdir "$tempdir/enc"
-
     echo -en "** ${CYAN}Checking if a TPM is available and usable${NC}: "
     protector=password
     if dirlock tpm2-test &> /dev/null; then
@@ -110,15 +124,16 @@ encrypt_home() {
     fi
 
     echo -e "** ${CYAN}Initializing encryption for /home/deck${NC}"
+    rm -rf "$tempdir"
+    mkdir -p "$tempdir/enc"
     dirlock encrypt --protector-type "$protector" --protector-name "Protector for /home/deck" "$tempdir/enc"
-    echo -en "** ${CYAN}Encrypting /home/deck (this can take a while)${NC}: "
-    cp -a /home/deck "$tempdir/enc/deck"
+    echo -e "** ${CYAN}Encrypting /home/deck (this can take a while)${NC}"
+    rsync -aAXH --open-noatime --info=progress2 /home/deck/ "$tempdir/enc/deck/"
     mv "$tempdir/enc/deck" "$tempdir/deck"
     sync
     exch /home/deck "$tempdir/deck"
     sync
     rm -rf "$tempdir"
-    echo -e "${GREEN}OK${NC}"
 
     echo -en "** ${CYAN}Disabling the old password for the deck user (/etc/shadow)${NC}: "
     usermod -p '*' deck
@@ -151,6 +166,11 @@ The following tasks will be performed now:
 - The system will be rebooted
 
 EOF
+if [ -z "${TMUX:-}" ]; then
+    echo -e "${RED}WARNING${NC}: You don't seem to be running this script from a tmux session."
+    echo "It's recommended to do it in case you lose the network connection."
+    echo
+fi
 echo -e "${RED}WARNING${NC}: This feature is currently experimental."
 echo "Use it at your own risk and make a backup first if you have valuable data."
 echo
