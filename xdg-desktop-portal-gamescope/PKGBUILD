@@ -5,8 +5,8 @@
 # Maintainer: Olivier Tilloy <otilloy@igalia.com>
 
 pkgname=xdg-desktop-portal-gamescope
-_commit=05b8e662ec90046c136c92d96c3bbfd8ca1e9a7f
-pkgver=0.1.17.05b8e66
+_commit=89fcd9adc577c95de61bac7c7b7e4a2559d74bd3
+pkgver=0.1.19.89fcd9a
 pkgrel=1
 pkgdesc='A backend implementation for xdg-desktop-portal talking to gamescope'
 url='https://github.com/evlav/xdg-desktop-portal-gamescope'
