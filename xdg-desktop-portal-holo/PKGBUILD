@@ -1,8 +1,8 @@
 # Maintainer: Olivier Tilloy <otilloy@igalia.com>
 
 pkgname=xdg-desktop-portal-holo
-_commit=0ae41c9ee1e237e68d69cc92017e6a33f5323b5f
-pkgver=0.1.10.0ae41c9
+_commit=c1b8cf151122636dc16b723e4d9b19aa30b851a6
+pkgver=0.1.11.c1b8cf1
 pkgrel=1
 pkgdesc='A backend implementation for xdg-desktop-portal of holo-specific interfaces'
 url="https://github.com/evlav/$pkgname"
