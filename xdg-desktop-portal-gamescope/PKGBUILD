@@ -5,8 +5,8 @@
 # Maintainer: Olivier Tilloy <otilloy@igalia.com>
 
 pkgname=xdg-desktop-portal-gamescope
-_commit=c54d9735bed8c35f1d507fc1176fd01cd8b2416f
-pkgver=0.1.20.c54d973
+_commit=20ac8204acbb0a9735e9b5de8fa814e95beabfe3
+pkgver=0.1.21.20ac820
 pkgrel=1
 pkgdesc='A backend implementation for xdg-desktop-portal talking to gamescope'
 url='https://github.com/evlav/xdg-desktop-portal-gamescope'
@@ -77,6 +77,8 @@ source=("git+https://github.com/evlav/$pkgname.git#commit=$_commit"
         'idna-1.0.3.tar.gz::https://crates.io/api/v1/crates/idna/1.0.3/download'
         'idna_adapter-1.2.0.tar.gz::https://crates.io/api/v1/crates/idna_adapter/1.2.0/download'
         'indexmap-2.9.0.tar.gz::https://crates.io/api/v1/crates/indexmap/2.9.0/download'
+        'inotify-0.11.0.tar.gz::https://crates.io/api/v1/crates/inotify/0.11.0/download'
+        'inotify-sys-0.1.5.tar.gz::https://crates.io/api/v1/crates/inotify-sys/0.1.5/download'
         'js-sys-0.3.77.tar.gz::https://crates.io/api/v1/crates/js-sys/0.3.77/download'
         'libc-0.2.172.tar.gz::https://crates.io/api/v1/crates/libc/0.2.172/download'
         'libsystemd-0.5.0.tar.gz::https://crates.io/api/v1/crates/libsystemd/0.5.0/download'
@@ -275,6 +277,8 @@ sha256sums=('SKIP'
             '686f825264d630750a544639377bae737628043f20d38bbc029e8f29ea968a7e'
             'daca1df1c957320b2cf139ac61e7bd64fed304c5040df000a745aa1de3b4ef71'
             'cea70ddb795996207ad57735b50c5982d8844f38ba9ee5f1aedcfb708a2aa11e'
+            'f37dccff2791ab604f9babef0ba14fbe0be30bd368dc541e2b08d07c8aa908f3'
+            'e05c02b5e89bff3b946cedeca278abc628fe811e604f027c45a8aa3cf793d0eb'
             '1cfaf33c695fc6e08064efbc1f72ec937429614f25eef83af942d0e227c3a28f'
             'd750af042f7ef4f724306de029d18836c26c1765a54a6a3f094cbd23a7267ffa'
             '8144587c71c16756b1055d3dcb0c75cb605a10ecd6523cc33702d5f90902bf6d'
