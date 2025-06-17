@@ -1,0 +1,44 @@
+# Maintainer: Sébastien Luttringer <seblu@seblu.net>
+
+pkgname=wayland-protocols
+pkgver=1.44
+pkgrel=1
+pkgdesc='Specifications of extended Wayland protocols'
+arch=('any')
+url='https://wayland.freedesktop.org/'
+license=('MIT')
+makedepends=('wayland' 'meson')
+validpgpkeys=('8307C0A224BABDA1BABD0EB9A6EEEC9E0136164A'  # Jonas Ådahl
+              'A66D805F7C9329B4C5D82767CCC4F07FAC641EFF') # Daniel Stone
+source=("https://gitlab.freedesktop.org/wayland/$pkgname/-/releases/$pkgver/downloads/$pkgname-$pkgver.tar.xz"{,.sig})
+sha256sums=('3df1107ecf8bfd6ee878aeca5d3b7afd81248a48031e14caf6ae01f14eebb50e'
+            'SKIP')
+
+prepare() {
+  cd $pkgname-$pkgver
+  # apply patch from the source array (should be a pacman feature)
+  local src
+  for src in "${source[@]}"; do
+    src="${src%%::*}"
+    src="${src##*/}"
+    [[ $src = *.patch ]] || continue
+    echo "Applying patch $src..."
+    patch -Np1 < "../$src"
+  done
+}
+
+build() {
+  arch-meson $pkgname-$pkgver build
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
+}
+
+package() {
+  meson install -C build --destdir "$pkgdir"
+  install -Dt "$pkgdir/usr/share/licenses/$pkgname" -m 644 "$pkgname-$pkgver/COPYING"
+}
+
+# vim:set ts=2 sw=2 et:
