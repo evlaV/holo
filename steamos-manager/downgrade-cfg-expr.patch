@@ -1,0 +1,15 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 531f9f4..3029a46 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -107,9 +107,8 @@ checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
+ 
+ [[package]]
+ name = "cfg-expr"
+-version = "0.20.0"
++version = "0.18.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "e34e221e91c7eb5e8315b5c9cf1a61670938c0626451f954a51693ed44b37f45"
+ dependencies = [
+  "smallvec",
+  "target-lexicon",
