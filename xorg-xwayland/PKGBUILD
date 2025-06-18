@@ -5,8 +5,8 @@
 # together properly again.
 
 pkgname=xorg-xwayland
-pkgver=24.1.6
-pkgrel=1.2 # Add seamless boot fixes
+pkgver=24.1.8
+pkgrel=1.1 # Add seamless boot fixes
 arch=('x86_64')
 license=(
     LicenseRef-Adobe-Display-PostScript
@@ -41,11 +41,12 @@ makedepends=('meson' 'xorgproto' 'xtrans' 'libxkbfile' 'dbus'
 # The details are given in
 # https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1390
 # https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1649
-source=("xwayland::git+https://gitlab.freedesktop.org/xorg/xserver.git#tag=xwayland-${pkgver}"
+source=(https://xorg.freedesktop.org/archive/individual/xserver/xwayland-$pkgver.tar.xz{,.sig}
         "0001-Revert-xwayland-Restrict-allow-commit-to-the-window-.patch"
         "0002-Revert-xwayland-present-Check-allow_commits-in-xwl_p.patch"
 )
-sha512sums=('71b69ce5832bc7c1369b6465428afc1bbb609aacd0a9950ed36807c3ddda5a48f0860684d97f99359f6065862172a690f63be3265275ff92bc68e9c6afd5620e'
+sha512sums=('417498baa87e6bfc11a778d31788a2b2d381efa08f2ac8308cfd8b1828ea62ba1da43542f798f124c25b51e8229ad1bdffc252462c0abf51be8fa0337f26d7e2'
+            'SKIP'
             'cc214c44d0c4c06627a4359a6a6d07349643c901cee555187314d9bd846e78c4238184adad732bb4bcf241b2db822785b96b3a035be175a766b9511d899f6999'
             '99f0935a4efc26c0f992063cd03c121a68f9972fbf6938c40585e9f2b20d15068e722e85ac945511af3cfa206132ca980aaae36a3734f65c2829327ea471ec4f'
 )
@@ -58,7 +59,7 @@ validpgpkeys+=('3C2C43D9447D5938EF4551EBE23B7E70B467F0BF') # Peter Hutterer (Who
 
 prepare () {
   local patch=
-  cd xwayland
+  cd xwayland-$pkgver
 
   for patch in "${source[@]}"
   do
@@ -72,7 +73,7 @@ prepare () {
 }
 
 build() {
-  arch-meson xwayland build \
+  arch-meson xwayland-$pkgver build \
     -D ipv6=true \
     -D xvfb=false \
     -D xdmcp=false \
@@ -97,5 +98,5 @@ package() {
   rm "${pkgdir}"/usr/share/man/man1/Xserver.1
 
   # license
-  install -m644 -Dt "${pkgdir}/usr/share/licenses/${pkgname}" xwayland/COPYING
+  install -m644 -Dt "${pkgdir}/usr/share/licenses/${pkgname}" xwayland-$pkgver/COPYING
 }
