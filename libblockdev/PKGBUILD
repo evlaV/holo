@@ -1,0 +1,396 @@
+# Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Maintainer (Holo): Alberto Garcia <berto@igalia.com>
+
+pkgbase=libblockdev
+pkgname=(
+  libblockdev
+  libblockdev-{btrfs,crypto,dm,fs,loop,lvm,mdraid,mpath,nvdimm,nvme,part,smart,swap}
+  python-libblockdev
+)
+pkgver=3.2.1
+pkgrel=3.1 # Holo: Apply fix for CVE-2025-6019
+pkgdesc="A library for manipulating block devices"
+arch=('x86_64')
+url="https://github.com/storaged-project/libblockdev"
+license=(LGPL-2.1-or-later)
+makedepends=(
+  'autoconf-archive'
+  'btrfs-progs'
+  'cryptsetup'
+  'device-mapper'
+  'dosfstools'
+  'e2fsprogs'
+  'exfatprogs'
+  'gcc-libs'
+  'glib2'
+  'glibc'
+  'gobject-introspection'
+  'gtk-doc'
+  'json-glib'
+  'kmod'
+  'keyutils'
+  'libatasmart'
+  'libbytesize'
+  'libnvme'
+  'libyaml'
+  'lvm2'
+  'mdadm'
+  'ndctl'
+  'nss'
+  'parted'
+  'python'
+  'systemd-libs'
+  'util-linux'
+  'util-linux-libs'
+  'volume_key'
+)
+source=(
+  "$url/releases/download/$pkgver/$pkgname-$pkgver.tar.gz"
+  fix-cve-2025-6019.patch
+)
+sha512sums=('f810233932f399f1fbcef8352bd7179a1bf586b3bc73792d11e7b5e781a3d9e712fd7b2054ef4f54d774b98b92599993a3b6b1ec470838283862c5d1f2cc5dba'
+            '772dacbe0dcfe9b7972ab4c0deae56f107795ae4361ab4f8c4d63d78687c7ab1c26507bb0cef80f09b2a1d3990b13e4c52a82a2f6cf334e0c6ad61af422176ee')
+b2sums=('75a74e327ace4f5d87d7a1c085f38b734ef84a5165055375354932f7f171de7ea558ed6ac87475423b3c184afa383d9c4a6cd9dae60d0ec31718ba9da8f50c77'
+        'b02ceff1eef7cf906cb7a0dbae73ba505ed006138bac21fbe10c0e85636b0c6c984e6c2f7b0d44c9b7c71614c654425e138d14e5ec7e8940e73a89a5a4ea65de')
+
+_pick() {
+  local p="$1" f d; shift
+  for f; do
+    d="$srcdir/$p/${f#$pkgdir/}"
+    mkdir -p "$(dirname "$d")"
+    mv "$f" "$d"
+    rmdir -p --ignore-fail-on-non-empty "$(dirname "$f")"
+  done
+}
+
+prepare() {
+  cd $pkgname-$pkgver
+  patch -p1 < "${srcdir}/fix-cve-2025-6019.patch"
+}
+
+build() {
+  local configure_options=(
+    --prefix=/usr
+    --sysconfdir=/etc
+  )
+
+  cd $pkgname-$pkgver
+  ./configure "${configure_options[@]}"
+  # prevent libtool from overlinking everything
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  make
+}
+
+check() {
+  cd $pkgname-$pkgver
+  make check
+}
+
+package_libblockdev() {
+  depends=(
+    glib2 libglib-2.0.so libgio-2.0.so libgobject-2.0.so
+    glibc
+    kmod libkmod.so
+    systemd-libs libudev.so
+  )
+  optdepends=(
+    'libblockdev-btrfs: for BTRFS support'
+    'libblockdev-crypto: for crypto support'
+    'libblockdev-dm: for device-mapper support'
+    'libblockdev-fs: for filesystem support'
+    'libblockdev-loop: for loop device support'
+    'libblockdev-lvm: for LVM support'
+    'libblockdev-mdraid: for MDRAID support'
+    'libblockdev-mpath: for multipath support'
+    'libblockdev-nvdimm: for NVDIMM support'
+    'libblockdev-nvme: for NVME support'
+    'libblockdev-part: for partitioning support'
+    'libblockdev-smart: for S.M.A.R.T. support'
+    'libblockdev-swap: for swap support'
+    'python-libblockdev: for Python support'
+  )
+  provides=(
+    libbd_utils.so
+    libblockdev.so
+  )
+  conflicts=(libblockdev-utils)
+  replaces=(libblockdev-utils)
+
+  make DESTDIR="$pkgdir" install -C $pkgname-$pkgver
+
+  cd "$pkgdir"
+
+  _pick $pkgbase-btrfs usr/include/blockdev/btrfs.h
+  _pick $pkgbase-btrfs usr/lib/libbd_btrfs.*
+
+  _pick $pkgbase-crypto usr/include/blockdev/crypto.h
+  _pick $pkgbase-crypto usr/lib/libbd_crypto.*
+
+  _pick $pkgbase-dm usr/include/blockdev/dm.h
+  _pick $pkgbase-dm usr/lib/libbd_dm.*
+
+  _pick $pkgbase-fs usr/bin/vfat-resize  # the libbd_fs.so library calls this executable
+  _pick $pkgbase-fs usr/include/blockdev/fs.h
+  _pick $pkgbase-fs usr/include/blockdev/fs/*.h
+  _pick $pkgbase-fs usr/lib/libbd_fs.*
+
+  _pick $pkgbase-loop usr/include/blockdev/loop.h
+  _pick $pkgbase-loop usr/lib/libbd_loop.*
+
+  _pick $pkgbase-lvm etc/libblockdev/3/conf.d/10-lvm-dbus.cfg
+  _pick $pkgbase-lvm usr/bin/lvm-cache-stats
+  _pick $pkgbase-lvm usr/include/blockdev/lvm.h
+  _pick $pkgbase-lvm usr/lib/libbd_lvm.*
+  _pick $pkgbase-lvm usr/lib/libbd_lvm-dbus.*
+
+  _pick $pkgbase-mdraid usr/include/blockdev/mdraid.h
+  _pick $pkgbase-mdraid usr/lib/libbd_mdraid.*
+
+  _pick $pkgbase-mpath usr/include/blockdev/mpath.h
+  _pick $pkgbase-mpath usr/lib/libbd_mpath.*
+
+  _pick $pkgbase-nvdimm usr/include/blockdev/nvdimm.h
+  _pick $pkgbase-nvdimm usr/lib/libbd_nvdimm.*
+
+  _pick $pkgbase-nvme usr/include/blockdev/nvme.h
+  _pick $pkgbase-nvme usr/lib/libbd_nvme.*
+
+  _pick $pkgbase-part usr/include/blockdev/part.h
+  _pick $pkgbase-part usr/lib/libbd_part.*
+
+  _pick $pkgbase-smart usr/include/blockdev/smart.h
+  _pick $pkgbase-smart usr/lib/libbd_smart*
+
+  _pick $pkgbase-swap usr/include/blockdev/swap.h
+  _pick $pkgbase-swap usr/lib/libbd_swap.*
+
+  _pick python-$pkgbase usr/lib/python*
+}
+
+package_libblockdev-btrfs() {
+  pkgdesc+=" - BTRFS support"
+  depends=(
+    btrfs-progs
+    glib2 libglib-2.0.so
+    glibc
+    "libblockdev=$pkgver" libbd_utils.so
+    libbytesize
+  )
+  provides=(libbd_btrfs.so)
+
+  mv -v $pkgname/* "$pkgdir"
+}
+
+package_libblockdev-crypto() {
+  pkgdesc+=" - crypto support"
+  depends=(
+    cryptsetup libcryptsetup.so
+    gcc-libs
+    glib2 libglib-2.0.so
+    glibc
+    keyutils libkeyutils.so
+    "libblockdev=$pkgver" libbd_utils.so
+    nss
+    util-linux-libs libblkid.so
+    volume_key
+  )
+  provides=(libbd_crypto.so)
+
+  mv -v $pkgname/* "$pkgdir"
+}
+
+package_libblockdev-dm() {
+  pkgdesc+=" - device mapper support"
+  depends=(
+    device-mapper libdevmapper.so
+    glib2 libglib-2.0.so
+    glibc
+    "libblockdev=$pkgver" libbd_utils.so
+  )
+  provides=(libbd_dm.so)
+
+  mv -v $pkgname/* "$pkgdir"
+}
+
+package_libblockdev-fs() {
+  pkgdesc+=" - filesystem support"
+  depends=(
+    e2fsprogs libext2fs.so libe2p.so
+    gcc-libs
+    glib2 libglib-2.0.so
+    glibc
+    "libblockdev=$pkgver" libbd_utils.so
+    libbytesize
+    parted
+    util-linux-libs libblkid.so libmount.so libuuid.so
+  )
+  optdepends=(
+    'btrfs-progs: for BTRFS filesystem support'
+    'dosfstools: for VFAT filesystem support'
+    'exfatprogs: for exFAT filesystem support'
+    'f2fs-tools: for F2FS filesystem support'
+    'nilfs-utils: for nilfs filesystem support'
+    'ntfs-3g: for NTFS filesystem support'
+    'udftools: for UDF filesystem support'
+    'xfsprogs: for XFS filesystem support'
+  )
+  provides=(libbd_fs.so)
+  conflicts=(libblockdev-tools)
+  replaces=(libblockdev-tools)
+
+  mv -v $pkgname/* "$pkgdir"
+}
+
+package_libblockdev-loop() {
+  pkgdesc+=" - loop device support"
+  depends=(
+    gcc-libs
+    glib2 libglib-2.0.so
+    glibc
+    "libblockdev=$pkgver" libbd_utils.so
+  )
+  provides=(libbd_loop.so)
+
+  mv -v $pkgname/* "$pkgdir"
+}
+
+package_libblockdev-lvm() {
+  pkgdesc+=" - LVM support"
+  depends=(
+    device-mapper libdevmapper.so
+    gcc-libs
+    glib2 libglib-2.0.so
+    glibc
+    "libblockdev=$pkgver" libbd_utils.so libblockdev.so
+    libyaml
+    libbytesize
+  )
+  provides=(
+    libbd_lvm.so
+    libbd_lvm-dbus.so
+  )
+  conflicts=(
+    libblockdev-lvm-dbus
+    libblockdev-tools
+  )
+  replaces=(
+    libblockdev-lvm-dbus
+    libblockdev-tools
+  )
+
+  mv -v $pkgname/* "$pkgdir"
+}
+
+package_libblockdev-mdraid() {
+  pkgdesc+=" - MDRAID support"
+  depends=(
+    gcc-libs
+    glib2 libglib-2.0.so
+    glibc
+    "libblockdev=$pkgver" libbd_utils.so
+    libbytesize
+    mdadm  # the libbd_mdraid.so library calls the mdadm executable
+  )
+  provides=(libbd_mdraid.so)
+
+  mv -v $pkgname/* "$pkgdir"
+}
+
+package_libblockdev-mpath() {
+  pkgdesc+=" - multipath device support"
+  depends=(
+    device-mapper libdevmapper.so
+    glib2 libglib-2.0.so
+    glibc
+    "libblockdev=$pkgver" libbd_utils.so
+  )
+  provides=(libbd_mpath.so)
+
+  mv -v $pkgname/* "$pkgdir"
+}
+
+package_libblockdev-nvdimm() {
+  pkgdesc+=" - NVDIMM support"
+  depends=(
+    glib2 libglib-2.0.so
+    glibc
+    "libblockdev=$pkgver" libbd_utils.so
+    ndctl
+    util-linux-libs libuuid.so
+  )
+  provides=(libbd_nvdimm.so)
+
+  mv -v $pkgname/* "$pkgdir"
+}
+
+package_libblockdev-nvme() {
+  pkgdesc+=" - NVME support"
+  depends=(
+    glib2 libglib-2.0.so
+    glibc
+    "libblockdev=$pkgver" libbd_utils.so
+    libnvme
+  )
+  provides=(libbd_nvme.so)
+
+  mv -v $pkgname/* "$pkgdir"
+}
+
+package_libblockdev-part() {
+  pkgdesc+=" - partitioning support"
+  depends=(
+    glib2 libglib-2.0.so
+    glibc
+    "libblockdev=$pkgver" libbd_utils.so
+    util-linux-libs libfdisk.so
+  )
+  provides=(libbd_part.so)
+
+  mv -v $pkgname/* "$pkgdir"
+}
+
+package_libblockdev-smart() {
+  pkgdesc+=" - S.M.A.R.T. support"
+  depends=(
+    glib2 libglib-2.0.so
+    glibc
+    json-glib
+    libatasmart
+    "libblockdev=$pkgver" libbd_utils.so
+  )
+  optdepends=(
+    'smartmontools: for experimental smartmontools-based plugin'
+  )
+  provides=(
+    libbd_smart.so
+    libbd_smartmontools.so
+  )
+
+  mv -v $pkgname/* "$pkgdir"
+}
+
+package_libblockdev-swap() {
+  pkgdesc+=" - swap device support"
+  depends=(
+    gcc-libs
+    glib2 libglib-2.0.so
+    glibc
+    "libblockdev=$pkgver" libbd_utils.so
+    util-linux-libs libblkid.so
+  )
+  provides=(libbd_swap.so)
+
+  mv -v $pkgname/* "$pkgdir"
+}
+
+package_python-libblockdev() {
+  pkgdesc+=" - Python support"
+  depends=(
+    glib2
+    libbytesize
+    python
+    python-gobject
+  )
+
+  mv -v $pkgname/* "$pkgdir"
+}
