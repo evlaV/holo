@@ -2,12 +2,10 @@
 # Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
 # Contributor: Jan de Groot <jgc@archlinux.org>
 # Contributor: William Rea <sillywilly@gmail.com>
-# Holo: backport of upstream, no changes (except version bump)
 
 pkgname=orca
-_srctag=47.5
-pkgver=${_srctag##v}
-pkgrel=1
+pkgver=48.2
+pkgrel=1.1
 pkgdesc="Screen reader for individuals who are blind or visually impaired"
 url="https://orca.gnome.org/"
 arch=(any)
@@ -43,8 +41,10 @@ makedepends=(
   yelp-tools
 )
 groups=(gnome)
-source=("git+https://gitlab.gnome.org/GNOME/orca.git#tag=${_srctag}")
-b2sums=('24bf49a6d2fa6a350f6175713a85ce189510eedbd9c2f3c47ab20c5799a9db32243a00e82ee6d209b6f2baf88de6d1b0d6b96a4800e5dc5daa2c57a40b0787ec')
+source=("git+https://gitlab.gnome.org/GNOME/orca.git?signed#tag=${pkgver/[a-z]/.&}"
+  0001-Use-signals-to-perform-a-couple-of-actions.patch)
+b2sums=('375ea7e15a7363e5f0265e3a8823af81c10692f4794a46011a368e3f5b4f549dc5ef755bb537c9b5f2c5a6471ae47e873f815b7f4675f434dc098eeeef8ab5de'
+        'e1c15d7ec55da4d3604e5751cbaa33a9cabea134acb6260b357e5de9528964ff46796e67616a5e972d2debd83cac18830c9f333f733d32e3eb88b8c8307a37fd')
 validpgpkeys=(
   DBDB67681333AA61BBCB97140A042BFD3DA3816C # Joanmarie Diggs <jdiggs@igalia.com>, older
   85D0D0B3FB02946101A46295E7A697B5609D4701 # Joanmarie Diggs <jdiggs@igalia.com>, newer
@@ -52,6 +52,7 @@ validpgpkeys=(
 
 prepare() {
   cd orca
+  patch -p1 < ../0001-Use-signals-to-perform-a-couple-of-actions.patch
 }
 
 build() {

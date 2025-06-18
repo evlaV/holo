@@ -1,0 +1,43 @@
+From dcecf5c27cc0a204a172b1cb5d108a69389baef4 Mon Sep 17 00:00:00 2001
+From: Jeremy Whiting <jpwhiting@kde.org>
+Date: Tue, 17 Jun 2025 10:46:00 -0600
+Subject: [PATCH] Use signals to perform a couple of actions.
+
+Long term will use dbus api, but short term we need a way to
+a) reload settings and
+b) stop speaking
+
+So use SIGUSR1 and SIGUSR2 for these two actions for now.
+---
+ src/orca/orca.py | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/orca/orca.py b/src/orca/orca.py
+index 8898ded7c..56376ad90 100644
+--- a/src/orca/orca.py
++++ b/src/orca/orca.py
+@@ -165,6 +165,12 @@ def shutdownOnSignal(signum, frame):
+     debug.print_message(debug.LEVEL_INFO, msg, True)
+     shutdown(signum=signum)
+ 
++def reloadSettings(signum, frame):
++    loadUserSettings(skipReloadMessage=True)
++
++def stopSpeakingOnSignal(signum, frame):
++    speech_and_verbosity_manager.get_manager().interrupt_speech()
++
+ def main():
+     """The main entry point for Orca.  The exit codes for Orca will
+     loosely be based on signals, where the exit code will be the
+@@ -180,6 +186,8 @@ def main():
+     signal.signal(signal.SIGINT, shutdownOnSignal)
+     signal.signal(signal.SIGTERM, shutdownOnSignal)
+     signal.signal(signal.SIGQUIT, shutdownOnSignal)
++    signal.signal(signal.SIGUSR1, reloadSettings)
++    signal.signal(signal.SIGUSR2, stopSpeakingOnSignal)
+ 
+     debug.print_message(debug.LEVEL_INFO, "ORCA: Enabling accessibility (if needed).", True)
+     if not settings_manager.get_manager().is_accessibility_enabled():
+-- 
+2.49.0
+
