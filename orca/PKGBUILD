@@ -4,8 +4,8 @@
 # Contributor: William Rea <sillywilly@gmail.com>
 
 pkgname=orca
-pkgver=48.2
-pkgrel=1.1
+pkgver=48.3
+pkgrel=0.1
 pkgdesc="Screen reader for individuals who are blind or visually impaired"
 url="https://orca.gnome.org/"
 arch=(any)
@@ -43,7 +43,7 @@ makedepends=(
 groups=(gnome)
 source=("git+https://gitlab.gnome.org/GNOME/orca.git?signed#tag=${pkgver/[a-z]/.&}"
   0001-Use-signals-to-perform-a-couple-of-actions.patch)
-b2sums=('375ea7e15a7363e5f0265e3a8823af81c10692f4794a46011a368e3f5b4f549dc5ef755bb537c9b5f2c5a6471ae47e873f815b7f4675f434dc098eeeef8ab5de'
+b2sums=('ae284a27d86d4419ba9d47dcea1aa4db67e163bd785faca59ee3a92a8ad1d293afb9b500b3a3584ab6f4717471ffb54b04eab0dddba9725cfc020881e5684ecb'
         'e1c15d7ec55da4d3604e5751cbaa33a9cabea134acb6260b357e5de9528964ff46796e67616a5e972d2debd83cac18830c9f333f733d32e3eb88b8c8307a37fd')
 validpgpkeys=(
   DBDB67681333AA61BBCB97140A042BFD3DA3816C # Joanmarie Diggs <jdiggs@igalia.com>, older
