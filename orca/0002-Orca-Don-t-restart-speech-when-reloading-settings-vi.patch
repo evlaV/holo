@@ -1,0 +1,86 @@
+From 36a7ac7d4cf4ef5427aa5175cdd10115389d8ee4 Mon Sep 17 00:00:00 2001
+From: Joanmarie Diggs <jdiggs@igalia.com>
+Date: Mon, 23 Jun 2025 17:44:50 +0200
+Subject: [PATCH] Orca: Don't restart speech when reloading settings via
+ SIGUSR2
+
+The use of SIGUSR2 is a downstream workaround for the problem that
+upstream Orca does not recognize changes to settings written to file
+immediately. Using SIGUSR2 as a means to trigger a call to
+loadUserSettings() solves that. However, loadUserSettings() will shutdown
+and restart speech. This is not necessary when settings such as volume,
+rate, pitch, and voice are changed. And more importantly, it has an
+unwanted side effect. Consider the following scenario:
+
+1. Rate is changed.
+2. SIGUSR2 is used to trigger a settings reload creating a new client.
+3. Orca announces the new rate using the speech-dispatcher client
+   from step 2.
+4. While Orca is announcing the new rate, the rate is changed again.
+5. SIGUSR2 is used to trigger a settings reload causing the client from
+   step 2 to be freed and a new client created.
+6. Orca interrupts spech using the client from step 5, but it's the
+   client from step 2 that is speaking. Thus Orca never shuts up.
+
+Orca deliberately does not interrupt speech during shutdown in order
+to allow final messages (e.g. "Screen Reader off") to be fully spoken.
+Therefore, to solve the immediate problem of voice settings sliders
+not being interrupted, modify the downstream solution to not shut down
+and reload speech. Doing so causes speech to be interrupted and the
+new setting spoken in the appropriate voice.
+
+As long as the synthesizer is not being changed (e.g. switching from
+espeak to voxin), Orca should use the new settings without the shutdown.
+---
+ src/orca/orca.py | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/src/orca/orca.py b/src/orca/orca.py
+index 56376ad90..031779e79 100644
+--- a/src/orca/orca.py
++++ b/src/orca/orca.py
+@@ -61,7 +61,7 @@ from .ax_utilities import AXUtilities
+ #
+ _userSettings = None
+ 
+-def loadUserSettings(script=None, skipReloadMessage=False):
++def loadUserSettings(script=None, skipReloadMessage=False, restartSpeech=True):
+     """(Re)Loads the user settings module, re-initializing things such as speech if necessary."""
+ 
+     debug.print_message(debug.LEVEL_INFO, 'ORCA: Loading User Settings', True)
+@@ -72,7 +72,8 @@ def loadUserSettings(script=None, skipReloadMessage=False):
+ 
+     player = sound.getPlayer()
+     player.shutdown()
+-    speech_and_verbosity_manager.get_manager().shutdown_speech()
++    if restartSpeech:
++        speech_and_verbosity_manager.get_manager().shutdown_speech()
+     braille.shutdown()
+     mouse_review.get_reviewer().deactivate()
+ 
+@@ -93,7 +94,8 @@ def loadUserSettings(script=None, skipReloadMessage=False):
+     settings_manager.get_manager().load_app_settings(script)
+ 
+     if settings_manager.get_manager().get_setting('enableSpeech'):
+-        speech_and_verbosity_manager.get_manager().start_speech()
++        if restartSpeech:
++            speech_and_verbosity_manager.get_manager().start_speech()
+         if reloaded and not skipReloadMessage:
+             script.speakMessage(messages.SETTINGS_RELOADED)
+ 
+@@ -166,7 +168,11 @@ def shutdownOnSignal(signum, frame):
+     shutdown(signum=signum)
+ 
+ def reloadSettings(signum, frame):
+-    loadUserSettings(skipReloadMessage=True)
++    # If we restart speech, the speech-dispatcher client will be freed and a new one created.
++    # As a result, attempts to interrupt speech in the accessible-event callbacks can fail
++    # because the client to be interrupted from the previous event is no longer valid and
++    # we're interrupting speech on a client which might not have even spoken anything.
++    loadUserSettings(skipReloadMessage=True, restartSpeech=False)
+ 
+ def stopSpeakingOnSignal(signum, frame):
+     speech_and_verbosity_manager.get_manager().interrupt_speech()
+-- 
+2.49.0
+
