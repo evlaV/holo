@@ -1,6 +1,5 @@
 /*
  * Copyright © 2025 Valve Corporation
- * Author: Alberto Garcia <berto@igalia.com>
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
