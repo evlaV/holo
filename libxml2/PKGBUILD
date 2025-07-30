@@ -10,7 +10,7 @@ pkgname=(
   libxml2-docs
 )
 pkgver=2.13.8
-pkgrel=1.1 # Holo: This is 2.13.8-1 from Arch rebuilt for Holo, there are no other changes
+pkgrel=1.2 # Holo: This is 2.13.8-1 from Arch with some security fixes applied, see below
 pkgdesc="XML C parser and toolkit"
 url="https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home"
 arch=(x86_64)
@@ -50,6 +50,13 @@ prepare() {
   git cherry-pick -n 064a02114a0e35ac9d87dd1a0952e6c474273a68
   git apply -3 ../0001-meson-Install-a-xml2-config-script.patch
   git apply -3 ../0002-meson-Build-fixes.patch
+
+  # Fixes from the 2.13 branch: https://gitlab.gnome.org/GNOME/libxml2/-/commits/2.13
+  git cherry-pick -n 17d950ae33c23f87692aa179bacedb6743f3188a # Holo: Fix CVE-2025-6021
+  git cherry-pick -n 5e9ec5c107d3f5b5179c3dbc19df43df041cd55b # Holo: Fix CVE-2025-6170
+  git cherry-pick -n 62048278a4c5fdf14d287dfb400005c0a0caa69f # Holo: Fix CVE-2025-49795
+  git cherry-pick -n 81cef8c5b5aec2acdf5707e57a6db0c8d1d0abca # Holo: Fix CVE-2025-49794 and CVE-2025-49796
+  git cherry-pick -n 2491c632a44d8bbfa58ce84bc0c18a40cd1121be # Holo: Fix handling of invalid char refs in recovery mode
 }
 
 build() {
