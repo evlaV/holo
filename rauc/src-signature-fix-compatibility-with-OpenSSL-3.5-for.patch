@@ -1,0 +1,39 @@
+From 4ce93ea53d726a56730b1f9a402b2f2da1999d16 Mon Sep 17 00:00:00 2001
+From: Jan Luebbe <jlu@pengutronix.de>
+Date: Tue, 15 Apr 2025 16:47:40 +0200
+Subject: [PATCH 2/2] src/signature: fix compatibility with OpenSSL 3.5 for
+ purpose registration
+
+OpenSSL 3.5 warns that there may be gaps, so we need to search. When our
+minimum version is at least 3.5, we can switch this to
+X509_PURPOSE_get_unused_id().
+
+Signed-off-by: Jan Luebbe <jlu@pengutronix.de>
+Origin: https://github.com/rauc/rauc/pull/1697
+---
+ src/signature.c | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
+
+diff --git a/src/signature.c b/src/signature.c
+index 88f6e790c7a9..d7c9b3bd7c38 100644
+--- a/src/signature.c
++++ b/src/signature.c
+@@ -93,14 +93,10 @@ gboolean signature_init(GError **error)
+ 		return FALSE;
+ 	}
+ 
+-	id = X509_PURPOSE_get_count() + 1;
+-	if (X509_PURPOSE_get_by_id(id) >= 0) {
+-		g_set_error_literal(
+-				error,
+-				R_SIGNATURE_ERROR,
+-				R_SIGNATURE_ERROR_CRYPTOINIT_FAILED,
+-				"Failed to calculate free OpenSSL X509 purpose id");
+-		return FALSE;
++	/* OpenSSL 3.5 warns that there may be gaps, so we need to search. */
++	id = X509_PURPOSE_MAX + 1;
++	while (X509_PURPOSE_get_by_id(id) >= 0) {
++		id++;
+ 	}
+ 
+ 	/* X509_TRUST_OBJECT_SIGN maps to the Code Signing ID (via OpenSSL's NID_code_sign) */

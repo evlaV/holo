@@ -9,7 +9,7 @@ pkgver=22.02.122
 # Scaling fixes
 # - explicit workaround DeviceScale=1, since our kernel is missing rotation
 # Disable on start, allow deactivate to fail
-pkgrel=1.6
+pkgrel=1.7
 pkgdesc="A graphical boot splash screen with kernel mode-setting support"
 url="https://www.freedesktop.org/wiki/Software/Plymouth/"
 arch=('i686' 'x86_64')
