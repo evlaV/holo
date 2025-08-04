@@ -6,8 +6,8 @@
 
 pkgbase=clang
 pkgname=(clang clang-libs)
-pkgver=18.1.8
-pkgrel=4.2
+pkgver=20.1.8
+pkgrel=1.1
 pkgdesc="C language family frontend for LLVM"
 arch=('x86_64')
 url="https://clang.llvm.org/"
@@ -24,23 +24,22 @@ source=($_source_base/clang-$pkgver.src.tar.xz{,.sig}
         $_source_base/llvm-$pkgver.src.tar.xz{,.sig}
         $_source_base/cmake-$pkgver.src.tar.xz{,.sig}
         $_source_base/third-party-$pkgver.src.tar.xz{,.sig}
-        clang-disable-float128-diagnostics-for-device-compilation.patch::https://github.com/llvm/llvm-project/commit/318bff6811e7.patch
-        support-__GCC_-CON-DE-STRUCTIVE_SIZE.patch
+        0001-Revert-clang-driver-When-fveclib-ArmPL-flag-is-in-us.patch
         enable-fstack-protector-strong-by-default.patch)
-sha256sums=('5724fe0a13087d5579104cedd2f8b3bc10a212fb79a0fcdac98f4880e19f4519'
+sha256sums=('b7a1b7b0af7b9c7596af6bd46e36d11321926eaa66a7a7dc957ab0a1375ee4b0'
             'SKIP'
-            'e58877fcd95ed106824bd1a31276dd17ed0c53adcd60ca75289eac0654f0a7f1'
+            '7d5ce15f84a098d79b5369d3c03857065abc3cb2f3435f08b1e4bc2a829aa2fc'
             'SKIP'
-            'f68cf90f369bc7d0158ba70d860b0cb34dbc163d6ff0ebc6cfa5e515b9b2e28d'
+            'e1363888216b455184dbb8a74a347bf5612f56a3f982369e1cba6c7e0726cde1'
             'SKIP'
-            '59badef592dd34893cd319d42b323aaa990b452d05c7180ff20f23ab1b41e837'
+            '3319203cfd1172bbac50f06fa68e318af84dcb5d65353310c0586354069d6634'
             'SKIP'
-            'b76b810f3d3dc5d08e83c4236cb6e395aa9bd5e3ea861e8c319b216d093db074'
+            '9a4e452a8163732d417db067a89190fcda823cb3aa33199e834ac7c028923f4b'
             'SKIP'
-            '94a3d4df2443f9dc9e256e6c0c661ff4a4ca4f34a5ca351f065511b9694faf2a'
-            '8832b4ee02fe8a0e57fca608288242f80e348ee9b60be3eb0069c8b91a42fbf4'
+            'e88768730a7a46e7952758ec80f831997e30e7dbab53077decae3f71f4fc315e'
             'ef319e65f927718e1d3b1a23c480d686b1d292e2a0bf27229540964f9734117a')
-validpgpkeys=('474E22316ABF4785A88C6E8EA2C794A986419D8A') # Tom Stellard <tstellar@redhat.com>
+validpgpkeys=('474E22316ABF4785A88C6E8EA2C794A986419D8A'  # Tom Stellard <tstellar@redhat.com>
+              'D574BD5D1D0E98895E3BF90044F2485E45D59042') # Tobias Hieta <tobias@hieta.se>
 
 # Utilizing LLVM_DISTRIBUTION_COMPONENTS to avoid
 # installing static libraries; inspired by Gentoo
@@ -67,8 +66,13 @@ prepare() {
   mkdir build
   mv "$srcdir/clang-tools-extra-$pkgver.src" tools/extra
   patch -Np2 -i ../enable-fstack-protector-strong-by-default.patch
-  patch -Np2 -i ../clang-disable-float128-diagnostics-for-device-compilation.patch
-  patch -Np2 -i ../support-__GCC_-CON-DE-STRUCTIVE_SIZE.patch
+
+  # Revert always linking against libamath when -fveclib=ArmPL
+  patch -Np2 -i ../0001-Revert-clang-driver-When-fveclib-ArmPL-flag-is-in-us.patch
+
+  # Fix hardcoded test path
+  sed -i 's/clang-tools-extra/tools\/extra/g' tools/extra/test/clang-doc/enum.cpp
+  sed -i 's/clang-tools-extra/tools\/extra/g' tools/extra/test/clang-doc/namespace.cpp
 }
 
 build() {
@@ -96,6 +100,7 @@ build() {
     -DLLVM_LINK_LLVM_DYLIB=ON
     -DLLVM_MAIN_SRC_DIR="$srcdir/llvm-$pkgver.src"
     -DSPHINX_WARNINGS_AS_ERRORS=OFF
+    -DPACKAGE_BUGREPORT=https://gitlab.archlinux.org/archlinux/packaging/packages/clang/-/issues
   )
 
   cmake .. "${cmake_args[@]}"
@@ -132,6 +137,11 @@ package_clang() {
 
   DESTDIR="$pkgdir" ninja install-distribution
   install -Dm644 ../LICENSE.TXT "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  # Move bash completion
+  local bash_completion_destdir="$pkgdir/usr/share/bash-completion/completions"
+  install -d $bash_completion_destdir
+  mv "$pkgdir/usr/share/clang/bash-autocomplete.sh" "$bash_completion_destdir/clang"
 
   # Remove documentation sources
   rm -r "$pkgdir"/usr/share/doc/clang{,-tools}/html/{_sources,.buildinfo}
@@ -174,8 +184,6 @@ package_clang-libs() {
 
   # Compile Python scripts
   _python_optimize "$pkgdir/usr/share" "$pkgdir/$site_packages"
-
-  install -Dm644 ../LICENSE.TXT "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
 # vim:set ts=2 sw=2 et:
