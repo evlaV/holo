@@ -3,8 +3,8 @@
 # Contributor: Patrick Griffis <tingping@tingping.se>
 
 pkgname=xdg-desktop-portal-gtk
-pkgver=1.15.1
-pkgrel=2.1 # Holo: Drop the gtk-portal.conf that Arch adds
+pkgver=1.15.3
+pkgrel=1.1 # Holo: Drop the gtk-portal.conf that Arch adds
 pkgdesc="A backend implementation for xdg-desktop-portal using GTK"
 url="https://github.com/flatpak/xdg-desktop-portal-gtk"
 arch=(x86_64)
@@ -29,7 +29,7 @@ makedepends=(
 optdepends=("evince: Print preview")
 provides=(xdg-desktop-portal-impl)
 source=("git+$url#tag=$pkgver")
-b2sums=('417e43bb375c15bb351dd5434fdbc1665a22cc409d839408d99d29b7a2747f54c8440d9dc3087ac0246ff3e332d5a86f10025c48ec45f12894d26a0074111ec9')
+b2sums=('5acf381c294f59542268b888f543871e178679604ca5d22aa7b60882916ee0b274b5374d99910341aef27e2e9dfc8c1f047505bae2acd7c238ab9f0abf553a5a')
 
 prepare() {
   cd $pkgname

@@ -3,7 +3,7 @@
 pkgname=xdg-desktop-portal-holo
 _commit=bb73298cd763e0ce131912e48c766a4032c9f910
 pkgver=0.1.14.bb73298
-pkgrel=1
+pkgrel=2
 pkgdesc='A backend implementation for xdg-desktop-portal of holo-specific interfaces'
 url="https://github.com/evlav/$pkgname"
 arch=('x86_64')
