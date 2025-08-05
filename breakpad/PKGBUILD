@@ -7,7 +7,7 @@
 # Contributor: Geoffrey Teale <tealeg@googlemail.com>
 
 pkgname=breakpad
-pkgver=v2023.06.01
+pkgver=v2024.02.16
 pkgrel=1
 _lssver=v2024.02.01
 pkgdesc="An open-source multi-platform crash reporting system"
@@ -18,20 +18,16 @@ makedepends=('git')
 depends=('gcc-libs')
 provides=('google-breakpad')
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/google/breakpad/archive/refs/tags/${pkgver}.tar.gz"
-        "lss-${_lssver}.tar.gz::https://chromium.googlesource.com/linux-syscall-support/+archive/refs/tags/${_lssver}.tar.gz"
-        # Patch taken from upstream. Without it, the build fails because it doesn't know about 'find_if'
-        "0001-Fixed-missing-include-for-std-find_if.patch")
+	"lss-${_lssver}.tar.gz::https://chromium.googlesource.com/linux-syscall-support/+archive/refs/tags/${_lssver}.tar.gz")
 noextract=("lss-${_lssver}.tar.gz")
-sha256sums=('81555be3595e25e8be0fe6dd34e9490beba224296e0a8a858341e7bced67674d'
-            'SKIP' # This file is constructed on the fly without a consistent hash
-            'fbad998e3752a3e27b9be7d4bc5964646b21cbed2a82735b187c43981d0c638d')
+sha256sums=(
+    'b1940cd9231822f1d332d1776456afa8d452e59799cbeef70641885c39547b28'
+    'SKIP' # This file is constructed on the fly without a consistent hash
+)
 
 prepare() {
   mkdir -p "$srcdir/${pkgname}-${pkgver##v}/src/third_party/lss"
   tar xf lss-${_lssver}.tar.gz -C "$srcdir/${pkgname}-${pkgver##v}/src/third_party/lss"
-
-  cd "$srcdir/${pkgname}-${pkgver##v}"
-  patch -Np1 < "$srcdir/0001-Fixed-missing-include-for-std-find_if.patch"
 }
 
 build() {

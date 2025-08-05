@@ -2,7 +2,7 @@
 
 pkgname='bmap-tools'
 pkgver=3.6
-pkgrel=6.3
+pkgrel=6.4
 pkgdesc="Tool optimized for copying largely sparse files using information from a block map (bmap) file"
 arch=('any')
 url='https://github.com/intel/bmap-tools'

@@ -7,7 +7,7 @@
 
 pkgname=desync
 pkgver=0.9.6
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc="Alternative casync implementation"
 arch=(x86_64)
 url="https://github.com/folbricht/desync"

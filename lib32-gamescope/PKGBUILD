@@ -3,7 +3,7 @@
 # This is just for the Gamescope WSI layer.
 
 pkgname=lib32-gamescope
-_srctag=3.16.11
+_srctag=3.16.15
 pkgver=${_srctag//-/.}
 pkgrel=1
 pkgdesc="gaming shell based on Xwayland, powered by Vulkan and DRM (32-bit)"
@@ -17,7 +17,7 @@ source=("lib32-gamescope::git+https://github.com/ValveSoftware/gamescope.git#tag
         #       revision when bumping the version here such that the build is reproducible.
         "git+https://github.com/nothings/stb.git#commit=af1a5bc352164740c1cc1354942b1c6b72eacb8a"
         "git+https://github.com/g-truc/glm.git#commit=0af55ccecd98d4e5a8d1fad7de25ba429d60e863")
-sha256sums=('3c0d13eb0827ba76fe9ec82a560fceefa2dbe533799e1927f4543f910e813f4f'
+sha256sums=('e41df706604e97715a509222e3a839c7b10fd83f0746e1ab0a3a387fde091599'
             'e39e0c91b297bfd707afcda84ecdc15a08c22e2ad4c347fc3533b1ed98fb3f85'
             '85f3e55fb527e9853bd4fc31300253587198831660a743eaa55f6b40fe1b9c90')
 

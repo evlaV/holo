@@ -6,7 +6,7 @@
 
 pkgname=libversion
 pkgver=3.0.3
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc='Advanced version string comparison library'
 url='https://github.com/repology/libversion'
 license=('MIT')

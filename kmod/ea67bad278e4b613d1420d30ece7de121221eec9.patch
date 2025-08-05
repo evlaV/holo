@@ -1,0 +1,79 @@
+From ea67bad278e4b613d1420d30ece7de121221eec9 Mon Sep 17 00:00:00 2001
+From: Lucas De Marchi <lucas.de.marchi@gmail.com>
+Date: Fri, 27 Jun 2025 12:01:15 -0500
+Subject: [PATCH] testsuite: Handle KDIR=any
+
+I update my kernel frequently and may not be running a kernel with
+headers installed. That always leads me to:
+
+	1) run `meson test -C build`
+	2) Oh, crap, it fails: no kernel headers
+	3) Find whatever kernel header is installed and point KDIR to it
+
+We can do better and tell KDIR=any to use whatever it finds.
+
+Signed-off-by: Lucas De Marchi <lucas.de.marchi@gmail.com>
+Reviewed-by: Emil Velikov <emil.l.velikov@gmail.com>
+Link: https://github.com/kmod-project/kmod/pull/384
+---
+ README.md                            | 12 ++++++++++++
+ testsuite/module-playground/Makefile | 22 +++++++++++++++-------
+ 2 files changed, 27 insertions(+), 7 deletions(-)
+
+diff --git a/README.md b/README.md
+index 5b19af44..57344500 100644
+--- a/README.md
++++ b/README.md
+@@ -65,6 +65,18 @@ When working on kmod, use the included `build-dev.ini` file, as:
+ 
+     meson setup --native-file build-dev.ini builddir/
+ 
++The testsuite can be executed with:
++
++    meson test -C builddir
++
++It builds test kernel modules, so kernel headers need to be pre-installed. By
++default it tries to use the kernel header for the currently running kernel.
++`KDIR=any` environment variable can be used to tell it to use any installed
++kernel header or `KDIR=/path/to/specific/headers` when a specific one is
++needed. Example:
++
++    KDIR=any meson test -C builddir
++
+ Make sure to read [our contributing guide](CONTRIBUTING.md) and the other
+ READMEs: [libkmod](libkmod/README) and [testsuite](testsuite/README).
+ 
+diff --git a/testsuite/module-playground/Makefile b/testsuite/module-playground/Makefile
+index 191f7458..61072c7a 100644
+--- a/testsuite/module-playground/Makefile
++++ b/testsuite/module-playground/Makefile
+@@ -1,14 +1,22 @@
+ # When KDIR is not manually set, use the MODULE_DIRECTORY for the pre-existent
+ # kmod, not the one being built, to figure out how to get to the kernel
+-# sources/headers for building our own dummy kernel modules.  The final
+-# location of the modules may change later by scripts/setup-rootfs.sh that
+-# assembles a per-test-rootfs.
++# sources/headers of the currently running kernel for building our own dummy
++# kernel modules. The final location of the modules may change later by
++# scripts/setup-rootfs.sh that assembles a per-test-rootfs.
++#
++# KDIR=any can also be used to use any installed headers, not necessarily the
++# currently running one. This makes it easier to handle distros that
++# install modules in a different dir even for minor updates.
++
++MODULE_DIRECTORY := $(shell pkg-config --variable module_directory kmod)
++ifeq ($(MODULE_DIRECTORY),)
++  MODULE_DIRECTORY := /lib/modules
++endif
++
+ ifndef KDIR
+-  MODULE_DIRECTORY := $(shell pkg-config --variable module_directory kmod)
+-  ifeq ($(MODULE_DIRECTORY),)
+-    MODULE_DIRECTORY := /lib/modules
+-  endif
+   KDIR := $(MODULE_DIRECTORY)/$$(uname -r)/build
++else ifeq ($(KDIR),any)
++  KDIR := $(shell find $(MODULE_DIRECTORY) -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n1)/build
+ endif
+ 
+ ARCH_SPECIFIC_MODULES := mod-simple-x86_64.ko mod-simple-i386.ko mod-simple-sparc64.ko
