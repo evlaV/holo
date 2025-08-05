@@ -2,7 +2,7 @@
 
 pkgname=atomupd-daemon
 pkgver=0.20250711.0
-pkgrel=1
+pkgrel=2
 pkgdesc='Atomic updates daemon'
 arch=('x86_64')
 url='https://github.com/evlav/atomupd-daemon'
