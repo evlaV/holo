@@ -3,7 +3,7 @@
 pkgname=dirlock
 _commit=dba841d9ac7ea5f408ff8bdad1647d76354f1b97
 pkgver=0.0.1.173.dba841d
-pkgrel=1
+pkgrel=2
 pkgdesc='Tool for managing encrypted directories'
 url='https://github.com/evlav/dirlock/'
 arch=('x86_64')
