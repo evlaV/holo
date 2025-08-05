@@ -1,11 +1,12 @@
-# Maintainer (upstream): Bruno Pagani <archange@archlinux.org>
-# Maintainer (upstream): Filipe Laíns (FFY00) <lains@archlinux.org>
-# Maintainer (upstream): Frederik Schwan <freswa at archlinux dot org>
+# Maintainer:  Holo Team
+# Contributor: Bruno Pagani <archange@archlinux.org>
+# Contributor: Filipe Laíns (FFY00) <lains@archlinux.org>
+# Contributor: Frederik Schwan <freswa at archlinux dot org>
 # Contributor: Mirco Tischler <mt-ml at gmx dot de>
 
 # Holo: Variant of fwupd disabling some less common plugins/features to save on disk space/dependencies
 pkgname=fwupd-minimal
-pkgver=2.0.12
+pkgver=2.0.13
 pkgrel=1
 pkgdesc="Simple daemon to allow session software to update firmware"
 arch=(x86_64)
@@ -37,8 +38,8 @@ depends=(
   zlib
 )
 makedepends=(
-  git
   bash-completion
+  git
   gnu-efi-libs
   libdrm
   meson
@@ -57,13 +58,12 @@ source=(
   "git+https://github.com/fwupd/fwupd.git#tag=${pkgver}?signed"
   fwupd.sysusers
   fwupd.conf
-  # Holo: Backports from next release
 )
-sha512sums=('fe2b0a2d3a0738f2389781b14e0a23de1d659b09a22cd835c954c6ad5c356bece091857ae7e1e84b4bc4ac9922c7427ac74f3a0af1b6d380cfdb97c5a1716f06'
-            '637203080b55eda74a659f58c853a9a723a2dad5da70915b2b0e036c6145a649468ebec700cc83975d9cb5378b9dced8b3a3b26bdbcc75ddc774837355e75deb'
+sha512sums=('bdd23d62b13fff3e7383a3f33b8ce926bb1f9b60f4aceffe0957c19f1b6db2daf14329cd0d78c5d495bbd5413ca5abafa1abac5ca7d51db3cf02cc614f4e9d0d'
+            'f9a99c60786a2b98e0de439a9288af61b2c0716f8339a4c93e2df7108d2a7f9ef8128967dcaa1e12022ffa647945bf5eb3749e38cac83e00a28cbc5b015fbee9'
             '8ebedc0437788337e8433cd67c9868fce1cdc01383a37092bfb83b6deac28ff5c79e0987390c3960b3a44b2acef2216b7489325741c4210a715f34d7bd9c8da1')
-b2sums=('00cde2246f0026bc5ccdee3561ac95d08510e559425a274004cecb832e10a954f62bb6eae5b92913c8e94801f585b692a7f5d6f931ce9d85dc7353dfee5806bc'
-        'e65ca7da22a20a40882cfc1fe4479643f9a38c90a4f2c3e71e6e5e3de1d6db212a0f17d600097619fe3cdb0a9b860422f8b0b9a9d45441518e51a7eb12a918bb'
+b2sums=('bb672f69c1e22450e7beecfa0fb645c6501c0a42293d591518cfce86db82baece70d68344d22c8b148bc8fb7562b14f743d126d5cee79eb94177a3f93c4a8ca0'
+        'c294c6dd324c0ad0d752affdc459d427d34f4bf865def099ac0e25db6b5dfbfcf645ca325e4e7732d1256e75c624ff27094d5c814726909c7e348128a9dd93f9'
         'd0154258fa07cfef0ae8c79f90cb6e79a962aa8293b5c107e5fc129f303ad72aa656d49321192c2341149b9d35f84e75144bda0c88aa33343e005c5a4bfbd1f7')
 validpgpkeys=(163EB50119225DB3DF8F49EA17ACBA8DFA970E17) # Richard Hughes <richard@hughsie.com>
 
@@ -87,6 +87,9 @@ build() {
   meson compile -C build
 }
 
+check() {
+  meson test -C build --print-errorlogs
+}
 
 _pick() {
   local p="$1" f d; shift
@@ -103,7 +106,6 @@ package() {
     libarchive.so
     libcbor.so
     libcurl.so
-    libgudev-1.0.so
     libjson-glib-1.0.so
   )
   optdepends=(
