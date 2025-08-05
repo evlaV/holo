@@ -1,7 +1,8 @@
 # Maintainer (upstream): emersion <contact emersion fr>
 # Maintainer (ugly holo vendoring of meson stuff sorry): John Schoenick <johns@valvesoftware.com>
 pkgname=drm_info
-pkgver=2.7.0
+pkgver=2.8.0
+_libdrm_pkgver=2.4.125
 pkgrel=1
 license=('MIT')
 pkgdesc='Small utility to dump info about DRM devices'
@@ -11,9 +12,9 @@ arch=("x86_64")
 url='https://gitlab.freedesktop.org/emersion/drm_info'
 source=("${pkgname}::git+https://gitlab.freedesktop.org/emersion/drm_info.git#tag=v${pkgver}"
         # Meson subproject
-        "git+https://gitlab.freedesktop.org/mesa/drm.git")
-sha1sums=('SKIP'
-          'SKIP')
+        "drm::git+https://gitlab.freedesktop.org/mesa/libdrm.git#tag=libdrm-${_libdrm_pkgver}")
+sha256sums=('20aae97ee84d84cf79d991c0849b349978fed386ce30c025c41d2465e75c0617'
+            '374a308a3b9f5473dfb52768166d53ce08f5ce4ee3c701fcaea4843ebd4b7c17')
 
 prepare() {
   # meson subprojects
@@ -24,7 +25,7 @@ prepare() {
   #
   # Why isn't there a way to vendor git deps without half-tricking meson?
   git clone "$srcdir/drm" subprojects/libdrm
-  ( cd subprojects/libdrm && git remote set-url origin https://gitlab.freedesktop.org/mesa/drm.git )
+  ( cd subprojects/libdrm && git remote set-url origin https://gitlab.freedesktop.org/mesa/libdrm.git )
   meson subprojects update libdrm
 
   # We do not need to vendor the json-c subproject, as it wont be used so long as the system one is present.
