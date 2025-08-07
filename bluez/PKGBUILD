@@ -6,8 +6,8 @@
 
 pkgbase=bluez
 pkgname=('bluez' 'bluez-utils' 'bluez-libs' 'bluez-cups' 'bluez-deprecated-tools' 'bluez-hid2hci' 'bluez-mesh')
-pkgver=5.79
-pkgrel=1.11
+pkgver=5.83
+pkgrel=1.1
 url="http://www.bluez.org/"
 arch=('x86_64')
 license=('GPL-2.0-only')
@@ -27,13 +27,6 @@ source=(https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz,
         # https://lore.kernel.org/all/CABBYNZKFEBuW2OeU4uOSfku=-jCnn3oXJENDMBGmkqP-4rybDA@mail.gmail.com/t/#u
         0001-BlueZ-adapter-Fix-execute-LE-Add-Device-To-Resolving.patch
 
-        # Holo: Fix toggling wake from suspend option.
-        # These upstream patches fix toggling the WakeAllowed option.
-        # Internal issue: https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1428
-        # Both patches are merged upstream, and are part of BlueZ 5.80
-        0001-device-Fix-not-being-able-to-set-WakeAllowed.patch
-        0002-device-clear-pending_wake_allowed-on-error.patch
-
         # Holo: Fix devices that don't work correctly after being re-connected, like
         # the Steam Controller. Keep this patch until we figure out the root cause and
         # propose a patch upstream.
@@ -41,41 +34,9 @@ source=(https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz,
         # https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1247
         # Upstream issue https://github.com/bluez/bluez/issues/919
         0001-Revert-hog-lib-Use-bt_uhid-functions.patch
-
-        # Holo: Additional fixes for the WakeAllowed property
-        # All three fixes have been sent and merged upstream.
-        # They are already included in BlueZ 5.80
-        # Internal issue: https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1528
-        0001-device-Clear-only-the-pending-flags-that-have-been-a.patch
-        0001-device-Clear-pending_flags-on-error.patch
-        0001-adapter-Fix-the-pending-changing-flags-check.patch
-
-        # Holo: Fix Creative Zen Air Pro showing an unexpected all zero MAC address device
-        # Reverting this commit is only a short term temporary solution.
-        # In the medium term we should do a proper fix and push it upstream.
-        # Internal issue: https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1557
-        # Upstream issue: https://github.com/bluez/bluez/issues/1103
-        0001-Revert-adapter-Create-devices-if-they-are-connectabl.patch
-
-        # Holo: Fix devices having a disabled wake allowed option after pairing
-        # These patches have been merged upstream and are expected to be included in BlueZ 5.81
-        # Internal issue: https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1612
-        0001-adapter-Preserve-pending-flags-when-setting-the-Devi.patch
-        0002-device-Preserve-pending-flags-when-setting-the-wake-.patch
-        0003-device-Try-to-set-the-wake_allowed-property-only-for.patch
-
-        # Holo: Add support for DualShock 3 gamepad.
-        # These patches have been merged upstream and are expected to be included in BlueZ 5.83
-        # Internal issue: https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1251
-        0001-src-Add-new-CablePairing-property.patch
-        0002-client-Print-CablePairing-property.patch
-        0003-sixaxis-Set-CablePairing-when-pairing-a-Sixaxis-with.patch
-        0004-adapter-Add-btd_adapter_has_cable_pairing_devices.patch
-        0005-input-Automatically-use-sec-level-low-when-using-a-c.patch
-        0006-sixaxis-Set-security-level-when-adding-a-sixaxis-dev.patch
 )
 # see https://www.kernel.org/pub/linux/bluetooth/sha256sums.asc
-sha256sums=('4164a5303a9f71c70f48c03ff60be34231b568d93a9ad5e79928d34e6aa0ea8a'
+sha256sums=('108522d909d220581399bfec93daab62035539ceef3dda3e79970785c63bd24c'
             'SKIP'
             '46c021be659c9a1c4e55afd04df0c059af1f3d98a96338236412e449bf7477b4'
             '42ca8090a4b04854210c7b3a4618e5bb09457247993151549b4db2c9109dacc6'
@@ -85,30 +46,32 @@ sha256sums=('4164a5303a9f71c70f48c03ff60be34231b568d93a9ad5e79928d34e6aa0ea8a'
             '0919781b35efb1e53b60dbad947ec282ad82f413879fd3e58af38a7b49a91941'
             '5800e6f6ff74a2a1b2c4482a393c65a83b10b0be52a53d51588e7a192d16fa0f'
             '24e49ec04e5c985d7f42acceb7c2dd9bad6ad6f8be80ff12368e18293448c42a'
-            '48e17914960c91a6dc53c0025bf1118408ff24f6f37ea1dd1a57614eacffe3af'
-            'ecb389bb42a49e97ff066e92606bc4f9511542accaf05928d989546805aa24bb'
-            '8b2a57b97964e5a4579a7c5f91863210e21c1bf8b9ace6510746ae3eb0c26779'
-            '8be65f6357ea73c55d508c49770553712f2c0c4a39a3f7160dc7aad70161c95d'
-            '41ba81e3c8dbb3c7719c95266a4d258534ab567dddfba6edcaa19509c7678943'
-            '662e7502790ac3943c9fe412463cb65f712f6e9af8e5e72483eebfbbbffeb13a'
-            '6e0f0f0bbce516d077b11b374b1817c1a2b8f5cb3a5a463dc74040180314774c'
-            '6157c99c3dd766f2bcfc52af55930e6efb5bc2c7b23c0de2511693f711952d9f'
-            '4d985204cb45bf27b88837bc3c6ae2022eadc23bd13bf6b258ebd5a984ba6862'
-            'bf69aaab559c7e0ee0297434f83de5b4f6e1916a8e20559ef8a2584cbf3159e9'
-            '562a82c65d46d25be055a3be45b135532596a156f5879bd04c7dd1f50c35e675'
-            'a5fb2e8f9a7bbe1f696ac3295d6f7149dda552d9d5e8641e7e30771dfbac1710'
-            '2e5f11fab3e2939ced656dafc2c38c590110874108138cf263633fad5e67eda9'
-            'c869ff4452c0d3e5f52a8bb06f69b51cbb6031a2b48e01ae4928f1898efd5d4f'
-            '3e554a65dca0758baf51aeb27f8c2175a43533b736460fde9b25df95899e7ee4'
-            '77d2d046ee2f4bcf5e6cd8307229bee443a202e096f665c9fdf0b54b4e25de16')
+            '8b2a57b97964e5a4579a7c5f91863210e21c1bf8b9ace6510746ae3eb0c26779')
 validpgpkeys=('E932D120BC2AEC444E558F0106CA9F5D1DCF2659') # Marcel Holtmann <marcel@holtmann.org>
+
+prepare() {
+  # Remove the vendored ell to avoid conflicts in header search paths
+  rm -r "${pkgname}-${pkgver}"/ell
+
+  for patch in "${source[@]}"
+  do
+    case $patch in
+      *.patch)
+        echo "# Applying ${patch}"
+        patch -d "${pkgname}"-${pkgver} -p1 -i "${srcdir}"/"${patch}"
+        ;;
+    esac
+  done
+}
 
 build() {
   cd "${pkgname}"-${pkgver}
 
-  # we patched a new plugin into Makefile.plugins so we need to re-run this:
+  # Holo: we patched a new plugin into Makefile.plugins so we need to re-run this:
   autoreconf -ivf
 
+  # Holo: disable obex
+  # Related to https://gitlab.steamos.cloud/holo-team/tasks/-/issues/487
   ./configure \
           --prefix=/usr \
           --mandir=/usr/share/man \
@@ -124,6 +87,7 @@ build() {
           --enable-hid2hci \
           --enable-experimental \
           --enable-datafiles \
+          --enable-external-ell \
           --enable-library --enable-deprecated # libraries and these tools are deprecated
   make
 
@@ -155,18 +119,6 @@ check() {
   # by -flto (the tests pass individually but not when run as a group)
   # upstream just does "make check || true" which is… an approach.
   make check
-}
-
-prepare() {
-  for patch in "${source[@]}"
-  do
-    case $patch in
-      *.patch)
-        echo "# Applying ${patch}"
-        patch -d "${pkgname}"-${pkgver} -p1 -i "${srcdir}"/"${patch}"
-        ;;
-    esac
-  done
 }
 
 package_bluez() {
@@ -208,12 +160,12 @@ package_bluez-utils() {
   provides=('bluez-plugins')
   replaces=('bluez-plugins')
 
-  _install fakeinstall/usr/bin/{advtest,amptest,avinfo,avtest,bcmfw,bdaddr,bluemoon,bluetoothctl,bluetooth-player,bneptest,btattach,btconfig,btgatt-client,btgatt-server,btinfo,btiotest,btmgmt,btmon,btpclient,btpclientctl,btproxy,btsnoop,check-selftest,cltest,create-image,eddystone,gatt-service,hcieventmask,hcisecfilter,hex2hcd,hid2hci,hwdb,ibeacon,isotest,l2ping,l2test,mcaptest,mpris-proxy,nokfw,oobtest,rctest,rtlfw,scotest,seq2bseq,test-runner}
+  _install fakeinstall/usr/bin/{advtest,avinfo,avtest,bcmfw,bdaddr,bluemoon,bluetoothctl,bluetooth-player,bneptest,btattach,btconfig,btgatt-client,btgatt-server,btinfo,btiotest,btmgmt,btmon,btpclient,btpclientctl,btproxy,btsnoop,check-selftest,cltest,create-image,eddystone,gatt-service,hcieventmask,hcisecfilter,hex2hcd,hid2hci,hwdb,ibeacon,isotest,l2ping,l2test,mcaptest,mpris-proxy,nokfw,oobtest,rctest,rtlfw,scotest,seq2bseq,test-runner}
   _install fakeinstall/usr/lib/systemd/user/mpris-proxy.service
   _install fakeinstall/usr/share/man/man1/bluetoothctl*.1
   _install fakeinstall/usr/share/man/man1/{btattach,btmgmt,btmon,isotest,l2ping,rctest}.1
   _install fakeinstall/usr/share/man/man5/org.bluez.{A,B,D,G,I,L,M,N,P}*.5
-  _install fakeinstall/usr/share/man/man7/{hci,l2cap}.7
+  _install fakeinstall/usr/share/man/man7/{hci,l2cap,mgmt,sco}.7
   _install fakeinstall/usr/share/zsh/site-functions/_bluetoothctl
 }
 
@@ -254,7 +206,7 @@ package_bluez-hid2hci() {
 
 package_bluez-mesh() {
   pkgdesc="Services for bluetooth mesh"
-  depends=('json-c' 'readline' 'glibc')
+  depends=('ell' 'json-c' 'readline' 'glibc')
   backup=('etc/bluetooth/mesh-main.conf')
 
   _install fakeinstall/etc/bluetooth/mesh-main.conf
