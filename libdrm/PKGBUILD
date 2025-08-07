@@ -6,7 +6,7 @@
 
 pkgname=libdrm
 pkgver=2.4.123
-pkgrel=1
+pkgrel=1.1
 pkgdesc="Userspace interface to kernel DRM services"
 url="https://dri.freedesktop.org/"
 arch=(x86_64)
