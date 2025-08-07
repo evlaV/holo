@@ -13,13 +13,13 @@ pkgname=('systemd'
          'systemd-libs'
          'systemd-resolvconf'
          'systemd-sysvcompat'
+         'systemd-tests'
          'systemd-ukify')
-_tag='257.2'
 # Upstream versioning is incompatible with pacman's version comparisons, one
-# way or another. So we replace dashes and tildes with the empty string to
-# make sure pacman's version comparing does the right thing for rc versions:
-pkgver="${_tag/[-~]/}"
-pkgrel=1.1
+# way or another. We use proper version for pacman here (no dash for rc
+# release!), and change in source array below.
+pkgver=257.7
+pkgrel=2.1
 arch=('x86_64')
 license=('LGPL-2.1-or-later')
 url='https://www.github.com/systemd/systemd'
@@ -37,7 +37,9 @@ validpgpkeys=('63CDA1E5D3FC22B998D20DD6327F26951A015CC4'  # Lennart Poettering <
               'A9EA9081724FFAE0484C35A1A81CEA22BC8C7E2E'  # Luca Boccassi <luca.boccassi@gmail.com>
               '9A774DB5DB996C154EBBFBFDA0099A18E29326E1'  # Yu Watanabe <watanabe.yu+github@gmail.com>
               '5C251B5FC54EB2F80F407AAAC54CA336CFEB557E') # Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl>
-source=("git+https://github.com/systemd/systemd#tag=v${_tag}?signed"
+# For pacman's version comparisons $pkgver is missing the dash that would be
+# in an upstream rc version so add it back when fetching the tag from github.
+source=("git+https://github.com/systemd/systemd#tag=v${pkgver/rc/-rc}?signed"
         '0001-Use-Arch-Linux-device-access-groups.patch'
         # Holo - don't reap "old" files while running, only on boot
         '0002-Make-the-tmp-and-var-tmp-reapers-fire-only-during-bo.patch'
@@ -60,13 +62,13 @@ source=("git+https://github.com/systemd/systemd#tag=v${_tag}?signed"
         '30-systemd-tmpfiles.hook'
         '30-systemd-udev-reload.hook'
         '30-systemd-update.hook')
-sha512sums=('60e09576738abf1d328d06daae8981780a9a4facc5b09e2a3ae24b8461e23d3be2a192a2261ec0e85f004a89eb77e76c4483b268f3d4d918146baf5b201fa49d'
+sha512sums=('94c4f1fa540395653594d25a9633a47d2ce3053f0511b041b0ec73ddbb0db7877a50563be6c3ac3c9c5d1f5964b88a7de17f5fbd843e1391123ee6f0227fbd02'
             '78065bde708118b7d6e4ed492e096c763e4679a1c54bd98750d5d609d8cc2f1373023f308880f14fc923ae7f9fea34824917ef884c0f996b1f43d08ef022c0fb'
             'f0a8a7ec9ab53ad5273c491f3b8d94cf76b51434a030e572178bd04d3ebb5936b38bf17a708290f4d054d5cb93545b2e2049113268b234f12004d0c7d296989e'
             '61032d29241b74a0f28446f8cf1be0e8ec46d0847a61dadb2a4f096e8686d5f57fe5c72bcf386003f6520bc4b5856c32d63bf3efe7eb0bc0deefc9f68159e648'
             'c416e2121df83067376bcaacb58c05b01990f4614ad9de657d74b6da3efa441af251d13bf21e3f0f71ddcb4c9ea658b81da3d915667dc5c309c87ec32a1cb5a5'
             '5a1d78b5170da5abe3d18fdf9f2c3a4d78f15ba7d1ee9ec2708c4c9c2e28973469bc19386f70b3cf32ffafbe4fcc4303e5ebbd6d5187a1df3314ae0965b25e75'
-            'b90c99d768dc2a4f020ba854edf45ccf1b86a09d2f66e475de21fe589ff7e32c33ef4aa0876d7f1864491488fd7edb2682fc0d68e83a6d4890a0778dc2d6fe19'
+            '32580b82e97573d3e499821e2ce415ff134c0ec52c9b44a3c0862c4007d347f55636d6afac3dfc6831a9b384c7448075bdf3a12f369b4d8b62b24dfdb9c8a76a'
             '81baa1ae439b0f4d1f09371a82c02db06a97a4fc35545fc2654f7905b4422fc8cf085f70304919a4323f39e662df1e05aa8d977d1dde73507527abe3072c386b'
             '299dcc7094ce53474521356647bdd2fb069731c08d14a872a425412fcd72da840727a23664b12d95465bf313e8e8297da31259508d1c62cc2dcea596160e21c5'
             '0d6bc3d928cfafe4e4e0bc04dbb95c5d2b078573e4f9e0576e7f53a8fab08a7077202f575d74a3960248c4904b5f7f0661bf17dbe163c524ab51dd30e3cb80f7'
@@ -81,29 +83,17 @@ sha512sums=('60e09576738abf1d328d06daae8981780a9a4facc5b09e2a3ae24b8461e23d3be2a
             '825b9dd0167c072ba62cabe0677e7cd20f2b4b850328022540f122689d8b25315005fa98ce867cf6e7460b2b26df16b88bb3b5c9ebf721746dce4e2271af7b97')
 
 _meson_version="${pkgver}-${pkgrel}"
-_meson_vcs_tag='false'
-_meson_mode='release'
-_meson_compile=()
-_meson_install=()
 _systemd_src_dir="${pkgbase}"
 
 if ((_systemd_UPSTREAM)); then
   _meson_version="${pkgver}"
-  _meson_vcs_tag='true'
-  _meson_mode='developer'
-  pkgname+=('systemd-tests')
-  if ((_systemd_QUIET)); then
-    _meson_install=('--quiet')
-  else
-    _meson_compile=('--verbose')
-  fi
 fi
 
 # Some heuristics to detect that we are building on OBS, with no network access. Skip
 # git verification, and use the OBS-provided tarball instead. The sources will be
 # unpacked by OBS in $package-$version/
 if [ -f /.build/build.dist ] && [ -d /usr/src/packages/SOURCES ] &&  [ -d /usr/src/packages/BUILD ] &&  [ -d /usr/src/packages/OTHER ]; then
-  source[0]="${pkgbase}-${pkgver}.tar.gz"
+  source[0]="$(find . -name "${pkgbase}-${pkgver}.tar.*" -print -quit)"
   sha512sums[0]='SKIP'
   _systemd_src_dir="${pkgbase}-${pkgver}"
 fi
@@ -116,6 +106,11 @@ _reverts=(
 
 prepare() {
   cd "${_systemd_src_dir}"
+
+  # return if not a git repository
+  if ! git status >/dev/null 2>&1; then
+    return
+  fi
 
   local _c _l
   for _c in "${_backports[@]}"; do
@@ -163,9 +158,9 @@ build() {
 
   local _meson_options=(
     -Dversion-tag="${_meson_version}-arch"
-    -Dvcs-tag="${_meson_vcs_tag}"
+    -Dvcs-tag=false
     -Dshared-lib-tag="${_meson_version}"
-    -Dmode="${_meson_mode}"
+    -Dmode=release
 
     -Dapparmor=disabled
     -Dbootloader=enabled
@@ -176,7 +171,6 @@ build() {
     -Dlibidn2=enabled
     -Dlz4=enabled
     -Dman=enabled
-    -Dnscd=false
     -Dselinux=disabled
     -Dsshdprivsepdir=/usr/share/empty.sshd
     -Dvmlinux-h=provided
@@ -208,7 +202,7 @@ build() {
 
   arch-meson "${_systemd_src_dir}" build "${_meson_options[@]}" $MESON_EXTRA_CONFIGURE_OPTIONS
 
-  meson compile -C build "${_meson_compile[@]}"
+  meson compile -C build
 }
 
 check() {
@@ -247,8 +241,7 @@ package_systemd() {
               'libfido2: unlocking LUKS2 volumes with FIDO2 token'
               'libp11-kit: support PKCS#11'
               'tpm2-tss: unlocking LUKS2 volumes with TPM2')
-  backup=(etc/pam.d/systemd-user
-          etc/systemd/coredump.conf
+  backup=(etc/systemd/coredump.conf
           etc/systemd/homed.conf
           etc/systemd/journald.conf
           etc/systemd/journal-remote.conf
@@ -266,7 +259,7 @@ package_systemd() {
           etc/udev/udev.conf)
   install=systemd.install
 
-  meson install -C build --no-rebuild --destdir "$pkgdir" "${_meson_install[@]}"
+  meson install -C build --no-rebuild --destdir "$pkgdir" --quiet
 
   # we'll create this on installation
   rmdir "$pkgdir"/var/log/journal/remote
@@ -323,7 +316,7 @@ package_systemd() {
   install -D -m0644 -t "$pkgdir"/usr/share/libalpm/hooks *.hook
 
   # overwrite the systemd-user PAM configuration with our own
-  install -D -m0644 systemd-user.pam "$pkgdir"/etc/pam.d/systemd-user
+  install -D -m0644 systemd-user.pam "$pkgdir"/usr/lib/pam.d/systemd-user
 
   # create a directory for cryptsetup keys
   install -d -m0700 "$pkgdir"/etc/cryptsetup-keys.d
