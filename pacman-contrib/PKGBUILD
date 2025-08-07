@@ -3,32 +3,37 @@
 # Maintainer: Daniel M. Capella <polyzen@archlinux.org>
 
 pkgname=pacman-contrib
-pkgver=1.10.6
-pkgrel=2.1
+pkgver=1.12.0
+pkgrel=1.1
 pkgdesc='Contributed scripts and tools for pacman systems'
-arch=('x86_64')
+arch=(x86_64)
 url=https://gitlab.archlinux.org/pacman/pacman-contrib
-license=('GPL-2.0-or-later')
-depends=('pacman')
-makedepends=('asciidoc' 'git')
+license=(GPL-2.0-or-later)
+depends=(pacman)
+makedepends=(
+  asciidoc
+  git
+)
 optdepends=(
   'diffutils: for pacdiff'
   'fakeroot: for checkupdates'
   'findutils: for pacdiff --find'
   'mlocate: for pacdiff --locate'
+  'plocate: faster mlocate alternative'
   'perl: for pacsearch'
   'sudo: privilege elevation for several scripts'
-  'vim: default merge program for pacdiff'
+  'vim: default diff program for pacdiff'
+  'neovim: default diff program for pacdiff if EDITOR=nvim'
 )
 source=("git+$url.git#tag=v$pkgver"
         # Holo: Get the pacman db path from the config. Needed for supermin / virt-sparsify
         # https://github.com/evlav/tasks/-/issues/836
         # https://gitlab.archlinux.org/pacman/pacman-contrib/-/issues/30
         "pacman-db.patch")
-b2sums=('SKIP'
+b2sums=('1c278a80a13d6e074056cff440a9f9792161c7f9987ea68f23849d849916a7a8b65b16137ce5f61bcf47d63783f84b743c42ef5130dd21e5d65a73f914f1b48d'
         'c33489e28df16738f52a78a290594688756daf4c2ae7ac58064d877a5d2345005c60680cdb5c7b814d6b1e2fe4f46bf79393118e3ad6f55d712de01c6dad3a9b')
-validpgpkeys=('04DC3FB1445FECA813C27EFAEA4F7B321A906AD9') # Daniel M. Capella <polyzen@archlinux.org>
-#             '5134EF9EAF65F95B6BB1608E50FB9B273A9D0BB5')  # Johannes Löthberg <johannes@kyriasis.com>
+validpgpkeys=(04DC3FB1445FECA813C27EFAEA4F7B321A906AD9 44A62127789A949F2F082ED429C71CE612B57264) # Daniel M. Capella <polyzen@archlinux.org>
+#             5134EF9EAF65F95B6BB1608E50FB9B273A9D0BB5)  # Johannes Löthberg <johannes@kyriasis.com>
 
 prepare() {
   cd $pkgname

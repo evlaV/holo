@@ -1,9 +1,9 @@
-# Maintainer: Collabora Ltd <gael.portay@collabora.com>
+# Maintainer: Holo Team
 
 pkgname=steamos-efi
 _srctag=jupiter-20250718.1
 pkgver=${_srctag#jupiter-}
-pkgrel=1
+pkgrel=2
 arch=('x86_64')
 url='https://github.com/evlav/steamos-efi'
 pkgdesc='Stage 1 bootloader for SteamOS 3+'

@@ -6,7 +6,7 @@
 
 pkgname=python-libversion
 pkgver=1.2.4
-pkgrel=1.3
+pkgrel=1.4
 pkgdesc="Python bindings for libversion"
 url='https://pypi.org/project/libversion'
 license=('MIT')

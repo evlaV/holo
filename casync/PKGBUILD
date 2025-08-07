@@ -5,7 +5,7 @@ pkgname=casync
 _commit=99559cd
 # Should match what pkgver() generates below
 pkgver=2.r227.g99559cd
-pkgrel=4.4
+pkgrel=4.5
 pkgdesc="Content-Addressable Data Synchronization Tool"
 arch=(x86 x86_64)
 url="https://github.com/systemd/casync"
