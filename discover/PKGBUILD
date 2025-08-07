@@ -2,12 +2,12 @@
 # Maintainer (Holo): David Redondo <kde@david-redondo.de>
 
 pkgname=discover
-pkgver=6.2.5
+pkgver=6.4.3
 _dirver=$(echo $pkgver | cut -d. -f1-3)
-pkgrel=1.1 # Holo change to enable steamos backend.
+pkgrel=1
 pkgdesc='KDE and Plasma resources management GUI'
 arch=(x86_64)
-url='https://kde.org/plasma-desktop/'
+url='https://apps.kde.org/discover/'
 license=(LGPL-2.0-or-later)
 depends=(appstream-qt
          archlinux-appstream-data
@@ -37,6 +37,7 @@ depends=(appstream-qt
          kwindowsystem
          purpose
          qcoro
+         qqc2-desktop-style
          qt6-base
          qt6-declarative
          qt6-webview)
@@ -49,7 +50,7 @@ optdepends=('flatpak: Flatpak packages support'
             'packagekit-qt6: to manage packages from Arch Linux repositories (not recommended, use at your own risk)')
 groups=(plasma)
 source=(https://download.kde.org/stable/plasma/$_dirver/$pkgname-$pkgver.tar.xz{,.sig})
-sha256sums=('8ccbb881392a4bad540ab0bb465637a0e206ef6b53e7bf02e71bc8fb6453a4a4'
+sha256sums=('c2dd8238aaa8c801a12c6f29d70f24467bad59209c5fc8fae97cbbbac45dde10'
             'SKIP')
 validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>
               '0AAC775BB6437A8D9AF7A3ACFE0784117FBCE11D'  # Bhushan Shah <bshah@kde.org>
@@ -59,8 +60,7 @@ validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell
 build() {
   cmake -B build -S $pkgname-$pkgver \
     -DCMAKE_INSTALL_LIBEXECDIR=lib \
-    -DBUILD_TESTING=OFF \
-    -DBUILD_SteamOSBackend=ON
+    -DBUILD_TESTING=OFF
   cmake --build build
 }
 
