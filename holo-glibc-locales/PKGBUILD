@@ -1,8 +1,8 @@
 # Maintainer (Holo): Manuel A. Fernandez Montecelo <mafm@igalia.com>
 
 pkgname=holo-glibc-locales
-pkgver=2.41+r47+g046b33800c3e
-pkgrel=2
+pkgver=2.41+r65+ge7c419a29575
+pkgrel=1
 pkgdesc="Substitute of glibc-locales with only the locales present in SteamOS"
 arch=('x86_64')
 license=(GPL LGPL)
