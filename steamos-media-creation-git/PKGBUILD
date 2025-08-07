@@ -2,7 +2,7 @@
 
 pkgname=steamos-media-creation-git
 pkgver=r115.dca5287
-pkgrel=7
+pkgrel=8
 pkgdesc='SteamOS Media Creation'
 arch=('x86_64')
 url='http://repo.steampowered.com'

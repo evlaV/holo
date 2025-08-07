@@ -1,4 +1,4 @@
-# Maintainer: Collabora Ltd <gael.portay@collabora.com>
+# Maintainer: Holo Team
 
 pkgbase=steamos-customizations-git
 #pkgname=('steamos-customizations-git' 'holo-desync' 'holo-pacman' 'holo-sudo')
@@ -6,7 +6,7 @@ pkgname=('steamos-customizations-git' 'holo-desync' 'holo-sudo')
 _srctag=jupiter-20250527.1
 _srcver=${_srctag#jupiter-}
 pkgver=${_srcver}
-pkgrel=1
+pkgrel=2
 pkgdesc='SteamOS customizations - This package installs various SteamOS-specific files'
 arch=('any')
 url='http://repo.steampowered.com'

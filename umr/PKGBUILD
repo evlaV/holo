@@ -4,7 +4,7 @@
 pkgname=umr
 _srctag=1.0.10
 pkgver=${_srctag##v}
-pkgrel=1.2
+pkgrel=1.3
 pkgdesc='userspace debugging and diagnostic tool for AMD GPUs using the AMDGPU kernel driver'
 arch=('i686' 'x86_64')
 url='https://gitlab.freedesktop.org/tomstdenis/umr'
