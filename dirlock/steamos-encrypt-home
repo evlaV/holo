@@ -38,6 +38,7 @@ fi
 check_encryption_enabled() {
     echo -en "** ${CYAN}Checking if encryption is enabled${NC}: "
     if dumpe2fs -h /dev/disk/by-label/home 2> /dev/null | grep -q '^Filesystem features:.*encrypt' && \
+            dirlock status -b /home/deck &> /dev/null && \
             test -f /etc/atomic-update.conf.d/dirlock.conf && \
             systemctl is-enabled -q dirlock-sddm.service && \
             grep -q '^auth\s.*\spam_dirlock.so' /etc/pam.d/system-auth; then
@@ -51,12 +52,12 @@ check_encryption_enabled() {
 
 check_unencrypted_home() {
     echo -en "** ${CYAN}Checking if /home/deck is unencrypted${NC}: "
-    if dirlock status -b /home/deck | grep -qwE 'locked|unlocked'; then
+    if dirlock status -b /home/deck | grep -qw 'unencrypted'; then
+        echo -e "${GREEN}OK${NC}"
+    else
         echo -e "${RED}NO${NC}"
         echo "ERROR: /home/deck is already encrypted" >&2
         return 1
-    else
-        echo -e "${GREEN}OK${NC}"
     fi
 }
 

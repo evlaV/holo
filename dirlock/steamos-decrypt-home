@@ -35,13 +35,24 @@ if [ -z "${SSH_CONNECTION:-}" ]; then
     exit 1
 fi
 
+check_encryption_enabled() {
+    echo -en "** ${CYAN}Checking if encryption is enabled${NC}: "
+    if dirlock status -b /home/deck &> /dev/null; then
+        echo -e "${GREEN}OK${NC}"
+    else
+        echo -e "${RED}NO${NC}"
+        echo "ERROR: Encryption does not seem to be enabled" >&2
+        return 1
+    fi
+}
+
 check_unencrypted_home() {
     echo -en "** ${CYAN}Checking if /home/deck is encrypted${NC}: "
     if dirlock status -b /home/deck | grep -qwE 'locked|unlocked'; then
         echo -e "${GREEN}OK${NC}"
     else
         echo -e "${RED}NO${NC}"
-        echo "ERROR: /home/deck is already unencrypted" >&2
+        echo "ERROR: /home/deck is not encrypted by dirlock" >&2
         return 1
     fi
 }
@@ -146,6 +157,7 @@ if [ "$n" != "y" ]; then
     exit 0
 fi
 
+check_encryption_enabled
 check_unencrypted_home
 check_unlocked_home
 check_free_space
