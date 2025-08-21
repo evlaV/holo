@@ -5,8 +5,8 @@
 
 pkgname=scx-scheds
 gitname=scx
-pkgver=1.0.14.linux.neptune.611
-pkgrel=2
+pkgver=1.0.15.linux.neptune.611
+pkgrel=1
 pkgdesc="sched_ext schedulers"
 arch=('x86_64')
 url="https://github.com/evlav/scx/-/tree/v$pkgver"
@@ -15,7 +15,7 @@ depends=('libelf' 'zlib' 'jq')
 makedepends=('git' 'openssh' 'python' 'meson' 'clang' 'llvm' 'llvm-libs' 'rust' 'cargo')
 backup=('etc/default/scx' 'etc/systemd/journald@sched-ext.conf')
 source=("git+https://github.com/evlav/scx.git#tag=v$pkgver")
-sha256sums=('SKIP')
+sha256sums=('f6ece09e1a6aa738e1555be60ad57a111a912ab1dbe17660796ddabd53facacc')
 options=(!lto)
 provides=("scx-scheds=$pkgver")
 conflicts=(
