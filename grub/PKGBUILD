@@ -23,7 +23,7 @@ _gnulib_commit='cfdbd92718d6d4989bfe885448063d7863aa69dc' # git rev-parse origin
 _pkgver=2.13
 _unifont_ver='15.1.05'
 pkgver=${_pkgver/-/}
-pkgrel=3.0
+pkgrel=3.2
 url='https://www.gnu.org/software/grub/'
 arch=('x86_64')
 license=('GPL-3.0-or-later')
@@ -133,14 +133,20 @@ source=("git+https://git.savannah.gnu.org/git/grub.git#tag=${_tag}?signed"
         'steamos-0008-Use-SteamOS-specific-kernel-command-line-settings-if.patch'
         'steamos-0009-Disable-EFI-1.0-UGA-Support.patch'
         'steamos-0010-Defer-theme-loading-until-we-know-we-need-it.patch'
+
+        # Holo: Fix rebuild of grub in latest SteamOS 3.8
+        # Backport of https://lists.gnu.org/archive/html/grub-devel/2025-08/msg00161.html
+        # Addresses https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1772
+        'steamos-0001-po-Update-Translations-to-Build-with-Gettext-0.26.patch'
+
         'build-tweaks-1.patch'
         'build-tweaks-2.diff' # applied via bootstrap by build-tweaks-1.patch
         'grub.default')
 
 # unifont-15.1.05.bdf.gz
 # 8ea5b5a14d71e3353d1fea373f5d88d198ad1e285cedd8294655926ee11fd91d
-sha256sums=('SKIP'
-            'SKIP'
+sha256sums=('304d5c0d506d3aaab496bdcbfc325b89fc83348aeb9e69d7b6a928f4051bedb2'
+            '1d27b67a8b1a1888b6a9c65188b5f58a655549d2eabc9944b9fd74f8d58a2919'
             '8ea5b5a14d71e3353d1fea373f5d88d198ad1e285cedd8294655926ee11fd91d'
             'SKIP'
             'f63ab8e6d340052d5248f93aaf856a3c7ae910eedef6ceaf653802408ebab573'
@@ -166,17 +172,17 @@ sha256sums=('SKIP'
             '658bd3474f84fbbfe675da93e2e05b6d156658c92a2d604b52d6a0b23223c71b'
             '6e8c873eae8988cb99fd6b3de0857c0ec4db0ed2fd90c6d0054a3f88361c013c'
             '02eb5080d99bebd6843b172367813ab7968508e48894f241c409703cf05aeff2'
-            '1ca627601a4782c219f077fbab10a3d01fa79c4bae3e0529f0b1cc754369d36f'
+            '9a3895e774535d95eebb3f32b1b7411c4618fd25f6d7f7efac6ca871c28604b6'
             '4dc26722812df2a261f9e27632bcacdb5899d49b7270a66dd67f270b6eba05e1'
             'ccd8ba6646a298f015707d6cbf5f20db418569a1878617224f2946d2dbb503fc'
             'cca890f4be9a2c58fc290b488b4ef9eeb490066726297e4fda5ec87215d9e7a9'
             'cf078325cbd14fbe01c59632e1bc41188b55748ae355a3c8d1198ebff09cab90'
             'b44f10d3f30a0bc0aff94617cce0570593d408b09e3cc5f05d7d97a4888169b0'
             'f80fd0837be9edcb77cd0e346357218cc39dda325ef932fa888eabad8570ffc7'
+            'c8e3bfcbd2b410065f3bdf642169983501cc3e2a5148ed41141bd29e361acfbc'
             '2cfb4c61f1724e496fafc7224bdf4218012f4dc612f267055ea2c140522a0505'
             '7caac232189069e46cd3dd68e615c68712625d287cdbce34fe9169b51b0070ea'
-            '7a8e55d517de423bbe0f1e16d1c43e9cf1a6600b8169764000e23e547a7b6989'
-)
+            '7a8e55d517de423bbe0f1e16d1c43e9cf1a6600b8169764000e23e547a7b6989')
 
 patch_allowed () {
     local patch_name="${1:-}"
