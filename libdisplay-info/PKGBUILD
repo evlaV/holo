@@ -1,0 +1,35 @@
+# Maintainer: Caleb Maclennan <caleb@alerque.com>
+# Contributor: Simon Ser <contact@emersion.fr>
+
+pkgname=libdisplay-info
+pkgver=0.3.0
+pkgrel=1
+pkgdesc='EDID and DisplayID library'
+url="https://gitlab.freedesktop.org/emersion/$pkgname"
+arch=(x86_64)
+license=(MIT)
+depends=(glibc)
+makedepends=(hwdata
+             meson
+             ninja
+             python)
+provides=(libdisplay-info.so)
+_archive="$pkgname-$pkgver"
+source=("$url/-/releases/$pkgver/downloads/$_archive.tar.xz"{,.sig})
+sha256sums=('6ae77cd937f9cf7d1321d35c116062c4911e8447010a6a713ac4286f7a9d5987'
+            'SKIP')
+validpgpkeys=('34FF9526CFEF0E97A340E2E40FDE7BE0E88F5E48')
+
+build() {
+	arch-meson "$_archive" build
+	ninja -C build
+}
+
+check() {
+	meson test -C build --no-rebuild --print-errorlogs
+}
+
+package() {
+	DESTDIR="$pkgdir" ninja -C build install
+	install -Dm0644 -t "$pkgdir/usr/share/licenses/$pkgname/" "$_archive/LICENSE"
+}
