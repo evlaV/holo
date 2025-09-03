@@ -9,8 +9,8 @@ pkgname=(
   libxml2
   libxml2-docs
 )
-pkgver=2.13.8
-pkgrel=1.2 # Holo: This is 2.13.8-1 from Arch with some security fixes applied, see below
+pkgver=2.14.5
+pkgrel=1.1 # Holo: add mitigation against libxslt's CVE-2025-7425
 pkgdesc="XML C parser and toolkit"
 url="https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home"
 arch=(x86_64)
@@ -31,40 +31,23 @@ makedepends=(
 source=(
   "git+https://gitlab.gnome.org/GNOME/libxml2.git#tag=v$pkgver"
   https://www.w3.org/XML/Test/xmlts20130923.tar.gz
-  0001-meson-Install-a-xml2-config-script.patch
-  0002-meson-Build-fixes.patch
 )
-b2sums=('81e02da9df8ca795ab48a26e2c3f6e728f6eb0d24431034cedd62b37704b23c5f2691984b0b6b2db0990db76703f4a312226bfcc3a73719d974f2d975b63a018'
-        '63a47bc69278ef510cd0b3779aed729e1b309e30efa0015d28ed051cc03f9dfddb447ab57b07b3393e8f47393d15473b0e199c34cb1f5f746b15ddfaa55670be'
-        '19ae53459abe55e7204ba4d196d41d31bd8a5b88a5b8c60aa9fc37b49f022d440ea15d3a5c369a043e6f539b72e05539f292d8d96eba1c7305d4875ba141dbfb'
-        '9e8107be0b021f792f95bd6739865016945e42706967d42d0ae52ae5fe7d6ebf6bce65e5f2fcb6b8868508c7d007fff39fb2bf8c221e8685bc1b4b918f6e9736')
+b2sums=('c4104e9f98671c591df9bd539c24c5dd232644750c3e8ec1664592638b01f61148150d44c50f919eacf4b63750a486ec87b4a5a65535d2872d42c7d9c9fd768a'
+        '63a47bc69278ef510cd0b3779aed729e1b309e30efa0015d28ed051cc03f9dfddb447ab57b07b3393e8f47393d15473b0e199c34cb1f5f746b15ddfaa55670be')
 
 prepare() {
   cd libxml2
 
+  git cherry-pick -n 9de92ed78d8495527c5d7a4d0cc76c1f83768195 # Holo: add mitigation against libxslt's CVE-2025-7425
+
   # Use xmlconf from conformance test suite
   ln -s ../xmlconf
-
-  # Meson fixes
-  git cherry-pick -n c2e2d76211e27df3c882616a14b4da24df7d3cb3
-  git cherry-pick -n 064a02114a0e35ac9d87dd1a0952e6c474273a68
-  git apply -3 ../0001-meson-Install-a-xml2-config-script.patch
-  git apply -3 ../0002-meson-Build-fixes.patch
-
-  # Fixes from the 2.13 branch: https://gitlab.gnome.org/GNOME/libxml2/-/commits/2.13
-  git cherry-pick -n 17d950ae33c23f87692aa179bacedb6743f3188a # Holo: Fix CVE-2025-6021
-  git cherry-pick -n 5e9ec5c107d3f5b5179c3dbc19df43df041cd55b # Holo: Fix CVE-2025-6170
-  git cherry-pick -n 62048278a4c5fdf14d287dfb400005c0a0caa69f # Holo: Fix CVE-2025-49795
-  git cherry-pick -n 81cef8c5b5aec2acdf5707e57a6db0c8d1d0abca # Holo: Fix CVE-2025-49794 and CVE-2025-49796
-  git cherry-pick -n 2491c632a44d8bbfa58ce84bc0c18a40cd1121be # Holo: Fix handling of invalid char refs in recovery mode
 }
 
 build() {
   local meson_options=(
-    -D history=true
-    -D http=true
-    -D legacy=true
-    -D python=true
+    -D icu=enabled
+    -D legacy=enabled
   )
 
   arch-meson libxml2 build "${meson_options[@]}"
@@ -80,6 +63,7 @@ package_libxml2() {
   provides=(libxml2.so)
 
   meson install -C build --destdir "$pkgdir"
+  install -Dm644 libxml2/libxml.m4 -t "$pkgdir/usr/share/aclocal"
 
   # Split docs
   mkdir -p doc/usr/share
