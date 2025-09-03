@@ -1,0 +1,193 @@
+# Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Contributor: Ionut Biru <ibiru@archlinux.org>
+
+pkgbase=udisks2
+pkgname=(
+  udisks2
+  udisks2-btrfs
+  udisks2-lvm2
+  udisks2-docs
+)
+pkgver=2.10.1
+pkgrel=6.1 # Holo: fix CVE-2025-8067 (local privilege escalation)
+pkgdesc="Daemon, tools and libraries to access and manipulate disks, storage devices and technologies"
+arch=('x86_64')
+url="https://www.freedesktop.org/wiki/Software/udisks/"
+license=(
+  GPL-2.0-or-later
+  LGPL-2.0-or-later
+)
+makedepends=(
+  'acl'
+  'autoconf-archive'
+  'gcc-libs'
+  'git'
+  'glib2'
+  'glib2-devel'
+  'glibc'
+  'gobject-introspection'
+  'gtk-doc'
+  'libatasmart'
+  'libblockdev'
+  'libblockdev-btrfs'
+  'libblockdev-crypto'
+  'libblockdev-fs'
+  'libblockdev-loop'
+  'libblockdev-lvm'
+  'libblockdev-mdraid'
+  'libblockdev-nvme'
+  'libblockdev-part'
+  'libblockdev-swap'
+  'libgudev'
+  'lvm2'
+  'polkit'
+  'systemd-libs'
+  'util-linux-libs'
+)
+source=("git+https://github.com/storaged-project/udisks#tag=udisks-$pkgver")
+b2sums=('a27d8b416dbfb24ce8ad2cfbdfc4b8fca37794167b56d88272c3c0761b3e65380f888a7fc3cabd64ca2d3911ea0e9348081f57c0390ec90982056f4da8e51c07')
+
+_pick() {
+  local p="$1" f d; shift
+  for f; do
+    d="$srcdir/$p/${f#$pkgdir/}"
+    mkdir -p "$(dirname "$d")"
+    mv "$f" "$d"
+    rmdir -p --ignore-fail-on-non-empty "$(dirname "$f")"
+  done
+}
+
+prepare() {
+  cd udisks
+  git cherry-pick -n 5e7277debea926370e587408517560afe87d28c9  # Mount private mounts with 'nodev,nosuid'
+  git cherry-pick -n 9ed2186f668c76aeb472de170d62b499d85a1915  # Holo: fix CVE-2025-8067 (local privilege escalation)
+  NOCONFIGURE=1 ./autogen.sh
+}
+
+build() {
+  local configure_options=(
+    --disable-static
+    --enable-btrfs
+    --enable-gtk-doc
+    # --enable-iscsi  # relies on heavily patched open-iscsi only packaged by Fedora: https://github.com/storaged-project/udisks/issues/388
+    --enable-lvm2
+    --libexecdir=/usr/lib
+    --localstatedir=/var
+    --prefix=/usr
+    --sbindir=/usr/bin
+    --sysconfdir=/etc
+    --with-systemdsystemunitdir=/usr/lib/systemd/system
+  )
+
+  cd udisks
+  ./configure "${configure_options[@]}"
+  # prevent libtool from overlinking everything
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  make
+}
+
+check() {
+  cd udisks
+  make check
+}
+
+package_udisks2() {
+  depends=(
+    acl libacl.so
+    dbus  # a running dbus is required for default operation
+    gcc-libs
+    glib2 libgio-2.0.so libglib-2.0.so libgmodule-2.0.so libgobject-2.0.so
+    glibc
+    libatasmart
+    libblockdev libbd_utils.so libblockdev.so
+    libblockdev-crypto  # dynamically loaded by libblockdev.so, required for default operation
+    libblockdev-fs  # dynamically loaded by libblockdev.so, required for default operation
+    libblockdev-mdraid  # dynamically loaded by libblockdev.so, required for default operation
+    libblockdev-loop  # dynamically loaded by libblockdev.so, required for default operation
+    libblockdev-nvme  # dynamically loaded by libblockdev.so, required for default operation
+    libblockdev-part  # dynamically loaded by libblockdev.so, required for default operation
+    libblockdev-swap  # dynamically loaded by libblockdev.so, required for default operation
+    libgudev libgudev-1.0.so
+    polkit libpolkit-agent-1.so libpolkit-gobject-1.so
+    systemd-libs libsystemd.so
+    util-linux-libs libblkid.so libmount.so libuuid.so
+  )
+  optdepends=(
+    'udisks2-btrfs: for BTRFS module'
+    'udisks2-lvm2: for LVM2 module'
+    'udisks2-docs: API documentation'
+    'btrfs-progs: for BTRFS support in libblockdev-fs'
+    'dosfstools: for FAT support in libblockdev-fs'
+    'exfatprogs: for exFAT support in libblockdev-fs'
+    'e2fsprogs: for Ext2/3/4 support in libblockdev-fs'
+    'f2fs-tools: for F2FS support in libblockdev-fs'
+    'nilfs-utils: for NILFS support in libblockdev-fs'
+    'udftools: for UDF support in libblockdev-fs'
+    'xfsprogs: for XFS support in libblockdev-fs'
+  )
+  provides=(libudisks2.so)
+  backup=('etc/udisks2/udisks2.conf')
+
+  cd udisks
+  make DESTDIR="$pkgdir" install
+
+  # interface declaration
+  install -vDm 644 data/org.freedesktop.UDisks2.xml -t "$pkgdir/usr/share/dbus-1/interfaces/"
+
+  cd "$pkgdir"
+  for _mod in btrfs lvm2; do
+    _pick udisks2-${_mod} usr/lib/udisks2/modules/libudisks2_${_mod}.so
+    _pick udisks2-${_mod} usr/lib/pkgconfig/udisks2-${_mod}.pc
+    _pick udisks2-${_mod} usr/share/polkit-1/actions/org.freedesktop.UDisks2.${_mod}.policy
+  done
+
+  _pick udisks2-docs usr/share/gtk-doc
+}
+
+package_udisks2-btrfs() {
+  pkgdesc+=" - BTRFS module"
+  depends=(
+    acl libacl.so
+    btrfs-progs
+    gcc-libs
+    glib2 libgio-2.0.so libglib-2.0.so libgmodule-2.0.so libgobject-2.0.so
+    glibc
+    libatasmart
+    libblockdev libbd_utils.so libblockdev.so
+    libblockdev-btrfs  # dynamically loaded by libblockdev.so
+    libgudev libgudev-1.0.so
+    polkit libpolkit-gobject-1.so
+    systemd-libs libsystemd.so
+    udisks2 libudisks2.so
+    util-linux-libs libblkid.so libmount.so libuuid.so
+  )
+
+  mv -v $pkgname/* "$pkgdir/"
+}
+
+package_udisks2-lvm2() {
+  pkgdesc+=" - LVM2 module"
+  depends=(
+    acl libacl.so
+    gcc-libs
+    glib2 libgio-2.0.so libglib-2.0.so libgmodule-2.0.so libgobject-2.0.so
+    glibc
+    libatasmart
+    libblockdev libbd_utils.so libblockdev.so
+    libblockdev-lvm  # dynamically loaded by libblockdev.so
+    libgudev libgudev-1.0.so
+    lvm2
+    polkit libpolkit-gobject-1.so
+    systemd-libs libsystemd.so
+    udisks2 libudisks2.so
+    util-linux-libs libblkid.so libmount.so libuuid.so
+  )
+
+  mv -v $pkgname/* "$pkgdir/"
+}
+
+package_udisks2-docs() {
+  pkgdesc+=" - documentation"
+
+  mv -v $pkgname/* "$pkgdir/"
+}
