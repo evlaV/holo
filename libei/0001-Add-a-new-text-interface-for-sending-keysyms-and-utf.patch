@@ -1,0 +1,2084 @@
+From 905904e9ee8028f437c263e0f782e5770a012172 Mon Sep 17 00:00:00 2001
+From: Peter Hutterer <peter.hutterer@who-t.net>
+Date: Thu, 14 Aug 2025 16:12:35 +1000
+Subject: [PATCH] Add a new text interface for sending keysyms and utf8 text
+
+The text capability allows for two types of events on that interface:
+- XKB keysym events, e.g. XK_ssharp (0x00df) with a press/release state
+- UTF8 strings
+
+Keysym events are useful for scenarious where the hardware keycode is
+unsuitable due to potentially different key mappings on the client and
+server side and/or the client just not wanting to worry about those
+mappings. For example a client may want to send Ctrl+C instead of
+what effectively is now keycodes for what may or may not be a C key.
+
+UTF8 strings take this a step further and provide a full string (with
+implementation-defined size limits to avoid OOM). Unlike e.g. the
+wayland text input protocols the assumption is here that the
+interaction required to generate that string has already been
+performed before the final string is sent over the wire.
+
+Closes #73
+---
+ proto/protocol.xml      | 105 +++++++++++++++++++++++++
+ src/libei-device.c      | 166 +++++++++++++++++++++++++++++++++++++++-
+ src/libei-device.h      |   3 +
+ src/libei-event.c       |  32 ++++++++
+ src/libei-event.h       |   5 ++
+ src/libei-handshake.c   |   2 +
+ src/libei-private.h     |  11 +++
+ src/libei-seat.c        |   4 +
+ src/libei-text.c        |  87 +++++++++++++++++++++
+ src/libei-text.h        |  49 ++++++++++++
+ src/libei.c             |  29 +++++++
+ src/libei.h             | 122 +++++++++++++++++++++++++++++
+ src/libeis-client.c     |   1 +
+ src/libeis-client.h     |   1 +
+ src/libeis-device.c     | 120 +++++++++++++++++++++++++++++
+ src/libeis-device.h     |   2 +
+ src/libeis-event.c      |  35 +++++++++
+ src/libeis-event.h      |   5 ++
+ src/libeis-handshake.c  |   1 +
+ src/libeis-private.h    |  10 +++
+ src/libeis-seat.c       |  12 +++
+ src/libeis-text.c       | 107 ++++++++++++++++++++++++++
+ src/libeis-text.h       |  51 ++++++++++++
+ src/libeis.c            |  26 +++++++
+ src/libeis.h            |  73 ++++++++++++++++++
+ src/meson.build         |   2 +
+ tools/ei-debug-events.c |  36 +++++++++
+ tools/ei-demo-client.c  |  71 ++++++++++++++++-
+ tools/eis-demo-server.c |  72 ++++++++++++++++-
+ tools/eis-demo-server.h |   1 +
+ tools/meson.build       |   7 +-
+ 31 files changed, 1240 insertions(+), 8 deletions(-)
+ create mode 100644 src/libei-text.c
+ create mode 100644 src/libei-text.h
+ create mode 100644 src/libeis-text.c
+ create mode 100644 src/libeis-text.h
+
+diff --git a/proto/protocol.xml b/proto/protocol.xml
+index 4b170d8..e7c2a87 100644
+--- a/proto/protocol.xml
++++ b/proto/protocol.xml
+@@ -771,6 +771,7 @@
+         - "ei_button"
+         - "ei_keyboard"
+         - "ei_touchscreen"
++        - "ei_text"
+         The interface version is equal or less to the client-supported
+         version in ei_handshake.interface_version for the respective interface.
+ 
+@@ -1592,4 +1593,108 @@
+       <arg name="touchid" type="uint32"/>
+     </event>
+   </interface>
++
++  <interface name="ei_text" version="1">
++    <description summary="text object">
++      Interface for text-based requests and events.
++
++      This interface is only provided once per device and where a client
++      requests ei_text.release the interface does not get re-initialized. An
++      EIS implementation may adjust the behavior of the device (including removing
++      the device) if the interface is released.
++
++      Note that for a client to receive objects of this type, it must announce
++      support for this interface in ei_handshake.interface_version.
++    </description>
++
++    <!-- ei_text client requests version 1 -->
++
++    <request name="release" since="1">
++      <description summary="keyboard removal request">
++        Notification that the client is no longer interested in this text interface object.
++        The EIS implementation will release any resources related to this object and
++        send the ei_text.destroyed event once complete.
++      </description>
++    </request>
++
++    <request name="keysym" since="1" context-type="sender">
++      <description summary="Keysym state change request">
++        Generate an XKB key sym event.
++
++        It is a client bug to send more than one key request for the same keysym
++        within the same ei_device.frame and the EIS implementation
++        may ignore either or all keysym state changes and/or disconnect the client.
++
++        It is a protocol violation to send this request for a client
++        of an ei_handshake.context_type other than sender.
++
++        It is a protocol violation to send this request in the same frame
++        as a ei_keyboard.key.
++      </description>
++      <arg name="keysym" type="uint32" summary="the key sym"/>
++      <arg name="state" type="uint32" enum="ei_keyboard.key_state" summary="logical state of the keysym"/>
++    </request>
++
++    <request name="utf8" since="1" context-type="sender">
++      <description summary="UTF8 text">
++        Generate a UTF-8 compatible text string.
++
++        It is a protocol violation to send this request for a client
++        of an ei_handshake.context_type other than sender.
++
++        It is a protocol violation to request more than one utf8 in the same
++        frame.
++
++        The order of ei_keyboard.key, ei_text.keysym, and ei_text.utf8 if sent
++        within the same frame is undefined.
++      </description>
++      <arg name="text" type="string" summary="the utf-8 compatible text"/>
++    </request>
++    <!-- ei_text events version 1 -->
++
++    <event name="destroyed" type="destructor" since="1">
++      <description summary="Text interface object removal notification">
++        This text interface object has been removed and a client should release all
++        associated resources.
++
++        This ei_keyboard object will be destroyed by the EIS implementation immediately after
++        after this event is sent and as such the client must not attempt to use
++        it after that point.
++      </description>
++      <arg name="serial" type="uint32" summary="this event's serial number"/>
++    </event>
++
++    <event name="keysym" since="1" context-type="receiver">
++      <description summary="Keysym state change event">
++        See the ei_text.keysym request for details.
++
++        It is a protocol violation to send this request for a client
++        of an ei_handshake.context_type other than receiver.
++
++        It is a protocol violation to send a keysym down event in the same
++        frame as a key up event for the same keysym in the same frame.
++
++        It is a protocol violation to send this event in the same frame
++        as a ei_keyboard.key event.
++      </description>
++      <arg name="keysym" type="uint32"/>
++      <arg name="state" type="uint32" enum="ei_keyboard.key_state"/>
++    </event>
++
++    <event name="utf8" since="1" context-type="receiver">
++      <description summary="UTF8 text event">
++        See the ei_text.utf8 request for details.
++
++        It is a protocol violation to send this request for a client
++        of an ei_handshake.context_type other than receiver.
++
++        It is a protocol violation to send more than one utf8 event in the same
++        frame.
++
++        The order of ei_keyboard.key, ei_text.keysym, and ei_text.utf8 if sent
++        within the same frame is undefined.
++      </description>
++      <arg name="text" type="string" summary="the utf-8 compatible text"/>
++    </event>
++  </interface>
+ </protocol>
+diff --git a/src/libei-device.c b/src/libei-device.c
+index 49534bc..7ef57e9 100644
+--- a/src/libei-device.c
++++ b/src/libei-device.c
+@@ -89,6 +89,7 @@ ei_device_destroy(struct ei_device *device)
+ 	ei_button_unref(device->button);
+ 	ei_touchscreen_unref(device->touchscreen);
+ 	ei_keyboard_unref(device->keyboard);
++	ei_text_unref(device->text);
+ 	ei_seat_unref(seat);
+ 	free(device->name);
+ 	free(device->pending_region_mapping_id);
+@@ -254,13 +255,16 @@ handle_msg_done(struct ei_device *device)
+ 		mask_add(device->capabilities, EI_DEVICE_CAP_KEYBOARD);
+ 	if (device->touchscreen)
+ 		mask_add(device->capabilities, EI_DEVICE_CAP_TOUCH);
++	if (device->text)
++		mask_add(device->capabilities, EI_DEVICE_CAP_TEXT);
+ 
+ 	if (!ei_device_has_capability(device, EI_DEVICE_CAP_POINTER) &&
+ 	    !ei_device_has_capability(device, EI_DEVICE_CAP_POINTER_ABSOLUTE) &&
+ 	    !ei_device_has_capability(device, EI_DEVICE_CAP_KEYBOARD) &&
+ 	    !ei_device_has_capability(device, EI_DEVICE_CAP_TOUCH) &&
+ 	    !ei_device_has_capability(device, EI_DEVICE_CAP_BUTTON) &&
+-	    !ei_device_has_capability(device, EI_DEVICE_CAP_SCROLL)) {
++	    !ei_device_has_capability(device, EI_DEVICE_CAP_SCROLL) &&
++	    !ei_device_has_capability(device, EI_DEVICE_CAP_TEXT)) {
+ 		log_debug(ei, "Rejecting device %#" PRIx64 " '%s' with no known capabilities",
+ 			  ei_device_get_id(device), ei_device_get_name(device));
+ 		ei_device_close(device);
+@@ -272,7 +276,7 @@ handle_msg_done(struct ei_device *device)
+ 	ei_queue_device_added_event(device);
+ 	ei_device_done(device);
+ 	log_debug(ei,
+-		  "Added device %#" PRIx64 " '%s' caps: %s%s%s%s%s%s seat: %s",
++		  "Added device %#" PRIx64 " '%s' caps: %s%s%s%s%s%s%s seat: %s",
+ 		  ei_device_get_id(device), ei_device_get_name(device),
+ 		  ei_device_has_capability(device, EI_DEVICE_CAP_POINTER) ? "p" : "",
+ 		  ei_device_has_capability(device, EI_DEVICE_CAP_POINTER_ABSOLUTE) ? "a" : "",
+@@ -280,6 +284,7 @@ handle_msg_done(struct ei_device *device)
+ 		  ei_device_has_capability(device, EI_DEVICE_CAP_TOUCH) ? "t" : "",
+ 		  ei_device_has_capability(device, EI_DEVICE_CAP_BUTTON) ? "b" : "",
+ 		  ei_device_has_capability(device, EI_DEVICE_CAP_SCROLL) ? "s" : "",
++		  ei_device_has_capability(device, EI_DEVICE_CAP_TEXT) ? "x" : "",
+ 		  ei_seat_get_name(ei_device_get_seat(device)));
+ 	return NULL;
+ }
+@@ -463,6 +468,12 @@ handle_msg_interface(struct ei_device *device, object_id_t id, const char *name,
+ 					       "Duplicate ei_touchscreen interface object on device");
+ 
+ 		device->touchscreen = ei_touchscreen_new(device, id, version);
++	} else if (streq(name, EI_TEXT_INTERFACE_NAME)) {
++		DISCONNECT_IF_INVALID_VERSION(ei, ei_text, id, version);
++		if (device->text)
++			return brei_result_new(EI_CONNECTION_DISCONNECT_REASON_PROTOCOL,
++					       "Duplicate ei_text interface object on device");
++		device->text = ei_text_new(device, id, version);
+ 	} else {
+ 		return brei_result_new(EI_CONNECTION_DISCONNECT_REASON_PROTOCOL,
+ 				       "Unsupported interface '%s' on device", name);
+@@ -871,7 +882,8 @@ handle_msg_touch_cancel(struct ei_touchscreen *touchscreen, uint32_t touchid)
+ 	}
+ 
+ 	struct ei *ei = ei_device_get_context(device);
+-	if (ei->interface_versions.ei_touchscreen < EI_TOUCHSCREEN_EVENT_CANCEL_SINCE_VERSION) {
++	if (ei->interface_versions.ei_touchscreen <
++	    EI_TOUCHSCREEN_EVENT_CANCEL_SINCE_VERSION) {
+ 		return brei_result_new(EI_CONNECTION_DISCONNECT_REASON_PROTOCOL,
+ 				       "Touch cancel event for touchscreen version v1");
+ 	}
+@@ -909,6 +921,70 @@ ei_device_get_touchscreen_interface(struct ei_device *device)
+ 	return &touchscreen_interface;
+ }
+ 
++static struct brei_result *
++handle_msg_text_destroy(struct ei_text *text, uint32_t serial)
++{
++	struct ei *ei = ei_text_get_context(text);
++	ei_update_serial(ei, serial);
++
++	struct ei_device *device = ei_text_get_device(text);
++	ei_text_unref(steal(&device->text));
++
++	return NULL;
++}
++
++static struct brei_result *
++handle_msg_text_keysym(struct ei_text *text, uint32_t keysym, uint32_t state)
++{
++	struct ei_device *device = ei_text_get_device(text);
++
++	DISCONNECT_IF_SENDER_CONTEXT(device);
++
++	if (!ei_device_has_capability(device, EI_DEVICE_CAP_TEXT)) {
++		return brei_result_new(EI_CONNECTION_DISCONNECT_REASON_PROTOCOL,
++				       "keysym event for non-text device");
++	}
++
++	if (device->state == EI_DEVICE_STATE_EMULATING) {
++		ei_queue_text_keysym_event(device, keysym, !!state);
++		return NULL;
++	}
++
++	return maybe_error_on_device_state(device, "text keysym");
++}
++
++static struct brei_result *
++handle_msg_text_utf8(struct ei_text *text, const char *utf8)
++{
++	struct ei_device *device = ei_text_get_device(text);
++
++	DISCONNECT_IF_SENDER_CONTEXT(device);
++
++	if (!ei_device_has_capability(device, EI_DEVICE_CAP_TEXT)) {
++		return brei_result_new(EI_CONNECTION_DISCONNECT_REASON_PROTOCOL,
++				       "utf8 event for non-text device");
++	}
++
++	if (device->state == EI_DEVICE_STATE_EMULATING) {
++		ei_queue_text_utf8_event(device, utf8);
++		return NULL;
++	}
++
++	return maybe_error_on_device_state(device, "text utf8");
++}
++
++static const struct ei_text_interface text_interface = {
++	.destroyed = handle_msg_text_destroy,
++	.keysym = handle_msg_text_keysym,
++	.utf8 = handle_msg_text_utf8,
++};
++
++const struct ei_text_interface *
++ei_device_get_text_interface(struct ei_device *device)
++{
++	return &text_interface;
++}
++
+ struct ei_device *
+ ei_device_new(struct ei_seat *seat, object_id_t deviceid, uint32_t version)
+ {
+@@ -1190,6 +1266,7 @@ ei_device_has_capability(struct ei_device *device,
+ 	case EI_DEVICE_CAP_TOUCH:
+ 	case EI_DEVICE_CAP_BUTTON:
+ 	case EI_DEVICE_CAP_SCROLL:
++	case EI_DEVICE_CAP_TEXT:
+ 		return mask_all(device->capabilities, cap);
+ 	}
+ 	return false;
+@@ -1808,6 +1885,89 @@ ei_touch_cancel(struct ei_touch *touch)
+ 		ei_send_touch_up(touch->device, touch->tracking_id);
+ }
+ 
++static int
++ei_send_text_keysym(struct ei_device *device, uint32_t keysym, bool is_press)
++{
++	struct ei *ei = ei_device_get_context(device);
++
++	if (ei->state == EI_STATE_NEW || ei->state == EI_STATE_DISCONNECTED)
++		return 0;
++
++	device->send_frame_event = true;
++
++	int rc = ei_text_request_keysym(device->text, keysym, is_press);
++	if (rc)
++		ei_disconnect(ei);
++	return rc;
++}
++
++static int
++ei_send_text_utf8(struct ei_device *device, const char *utf8)
++{
++	struct ei *ei = ei_device_get_context(device);
++
++	if (ei->state == EI_STATE_NEW || ei->state == EI_STATE_DISCONNECTED)
++		return 0;
++
++	device->send_frame_event = true;
++
++	int rc = ei_text_request_utf8(device->text, utf8);
++	if (rc)
++		ei_disconnect(ei);
++	return rc;
++}
++
++_public_ void
++ei_device_text_keysym(struct ei_device *device,
++			uint32_t keysym, bool is_press)
++{
++	if (!ei_device_has_capability(device, EI_DEVICE_CAP_TEXT)) {
++		log_bug_client(ei_device_get_context(device),
++			       "%s: device is not a text device", __func__);
++		return;
++	}
++
++	if (device->state != EI_DEVICE_STATE_EMULATING) {
++		log_bug_client(ei_device_get_context(device),
++			       "%s: device is not emulating", __func__);
++		return;
++	}
++
++	ei_send_text_keysym(device, keysym, is_press);
++}
++
++_public_ void
++ei_device_text_utf8(struct ei_device *device, const char *utf8)
++{
++	ei_device_text_utf8_with_length(device, utf8, strlen(utf8));
++}
++
++_public_ void
++ei_device_text_utf8_with_length(struct ei_device *device, const char *utf8, size_t length)
++{
++	if (!ei_device_has_capability(device, EI_DEVICE_CAP_TEXT)) {
++		log_bug_client(ei_device_get_context(device),
++			       "%s: device is not a text device", __func__);
++		return;
++	}
++
++	if (device->state != EI_DEVICE_STATE_EMULATING) {
++		log_bug_client(ei_device_get_context(device),
++			       "%s: device is not emulating", __func__);
++		return;
++	}
++
++	if (length == 0) {
++		log_bug_client(ei_device_get_context(device),
++			       "%s: empty utf8 string", __func__);
++		return;
++	}
++
++	char buf[min(4096, length + 1)];
++	xsnprintf(buf, sizeof(buf), "%s", utf8);
++	ei_send_text_utf8(device, buf);
++}
++
+ _public_ void
+ ei_device_frame(struct ei_device *device, uint64_t time)
+ {
+diff --git a/src/libei-device.h b/src/libei-device.h
+index 0679a12..2a91b4d 100644
+--- a/src/libei-device.h
++++ b/src/libei-device.h
+@@ -31,6 +31,7 @@
+ #include "brei-shared.h"
+ #include "libei-pointer.h"
+ #include "libei-keyboard.h"
++#include "libei-text.h"
+ #include "libei-touchscreen.h"
+ 
+ enum ei_device_state {
+@@ -65,6 +66,7 @@ struct ei_device {
+ 	struct ei_button *button;
+ 	struct ei_keyboard *keyboard;
+ 	struct ei_touchscreen *touchscreen;
++	struct ei_text *text;
+ 
+ 	struct list link;
+ 	enum ei_device_state state;
+@@ -123,6 +125,7 @@ OBJECT_DECLARE_GETTER(ei_device, scroll_interface, const struct ei_scroll_interf
+ OBJECT_DECLARE_GETTER(ei_device, button_interface, const struct ei_button_interface *);
+ OBJECT_DECLARE_GETTER(ei_device, keyboard_interface, const struct ei_keyboard_interface *);
+ OBJECT_DECLARE_GETTER(ei_device, touchscreen_interface, const struct ei_touchscreen_interface *);
++OBJECT_DECLARE_GETTER(ei_device, text_interface, const struct ei_text_interface *);
+ OBJECT_DECLARE_SETTER(ei_device, type, enum ei_device_type);
+ OBJECT_DECLARE_SETTER(ei_device, name, const char*);
+ OBJECT_DECLARE_SETTER(ei_device, seat, const char*);
+diff --git a/src/libei-event.c b/src/libei-event.c
+index 9de45de..e288492 100644
+--- a/src/libei-event.c
++++ b/src/libei-event.c
+@@ -65,6 +65,8 @@ ei_event_type_to_string(enum ei_event_type type)
+ 	CASE_RETURN_STRING(EI_EVENT_TOUCH_DOWN);
+ 	CASE_RETURN_STRING(EI_EVENT_TOUCH_UP);
+ 	CASE_RETURN_STRING(EI_EVENT_TOUCH_MOTION);
++	CASE_RETURN_STRING(EI_EVENT_TEXT_KEYSYM);
++	CASE_RETURN_STRING(EI_EVENT_TEXT_UTF8);
+ 	}
+ 
+ 	return NULL;
+@@ -97,6 +99,10 @@ ei_event_destroy(struct ei_event *event)
+ 	case EI_EVENT_TOUCH_DOWN:
+ 	case EI_EVENT_TOUCH_UP:
+ 	case EI_EVENT_TOUCH_MOTION:
++	case EI_EVENT_TEXT_KEYSYM:
++		break;
++	case EI_EVENT_TEXT_UTF8:
++		free(steal(&event->text.utf8));
+ 		break;
+ 	case EI_EVENT_PONG:
+ 		ei_ping_unref(event->pong.ping);
+@@ -371,6 +377,30 @@ ei_event_touch_get_is_cancel(struct ei_event *event)
+ 	return event->touch.is_cancel;
+ }
+ 
++_public_ uint32_t
++ei_event_text_get_keysym(struct ei_event *event)
++{
++	require_event_type(event, 0, EI_EVENT_TEXT_KEYSYM);
++
++	return event->text.keysym;
++}
++
++_public_ bool
++ei_event_text_get_keysym_is_press(struct ei_event *event)
++{
++	require_event_type(event, false, EI_EVENT_TEXT_KEYSYM);
++
++	return event->text.is_press;
++}
++
++_public_ const char *
++ei_event_text_get_utf8(struct ei_event *event)
++{
++	require_event_type(event, NULL, EI_EVENT_TEXT_UTF8);
++
++	return event->text.utf8;
++}
++
+ _public_ uint64_t
+ ei_event_get_time(struct ei_event *event)
+ {
+@@ -386,6 +416,8 @@ ei_event_get_time(struct ei_event *event)
+ 			   EI_EVENT_TOUCH_DOWN,
+ 			   EI_EVENT_TOUCH_UP,
+ 			   EI_EVENT_TOUCH_MOTION,
++			   EI_EVENT_TEXT_KEYSYM,
++			   EI_EVENT_TEXT_UTF8,
+ 			   EI_EVENT_FRAME);
+ 
+ 	return event->timestamp;
+diff --git a/src/libei-event.h b/src/libei-event.h
+index bd6f8f4..bd06de1 100644
+--- a/src/libei-event.h
++++ b/src/libei-event.h
+@@ -66,6 +66,11 @@ struct ei_event {
+ 			double x, y;
+ 			bool is_cancel;
+ 		} touch;
++		struct {
++			uint32_t keysym;
++			bool is_press;
++			char *utf8;
++		} text;
+ 		struct {
+ 			uint32_t sequence;
+ 		} start_emulating;
+diff --git a/src/libei-handshake.c b/src/libei-handshake.c
+index f157690..4fd5598 100644
+--- a/src/libei-handshake.c
++++ b/src/libei-handshake.c
+@@ -98,6 +98,7 @@ ei_handshake_initialize(struct ei_handshake *setup, uint32_t version)
+ 		ei_handshake_request_interface_version(setup, EI_BUTTON_INTERFACE_NAME, v->ei_button);
+ 		ei_handshake_request_interface_version(setup, EI_KEYBOARD_INTERFACE_NAME, v->ei_keyboard);
+ 		ei_handshake_request_interface_version(setup, EI_TOUCHSCREEN_INTERFACE_NAME, v->ei_touchscreen);
++		ei_handshake_request_interface_version(setup, EI_TEXT_INTERFACE_NAME, v->ei_text);
+ 	}
+ 
+ 	ei_handshake_request_finish(setup);
+@@ -144,6 +145,7 @@ handle_msg_interface_version(struct ei_handshake *setup, const char *name, uint3
+ 	else VERSION_UPDATE(ei_button)
+ 	else VERSION_UPDATE(ei_keyboard)
+ 	else VERSION_UPDATE(ei_touchscreen)
++	else VERSION_UPDATE(ei_text)
+ 
+ #undef VERSION_UPDATE
+ 
+diff --git a/src/libei-private.h b/src/libei-private.h
+index af83a93..39f6860 100644
+--- a/src/libei-private.h
++++ b/src/libei-private.h
+@@ -49,6 +49,7 @@
+ #include "libei-region.h"
+ #include "libei-scroll.h"
+ #include "libei-seat.h"
++#include "libei-text.h"
+ #include "libei-touchscreen.h"
+ 
+ struct ei_backend_interface {
+@@ -77,6 +78,7 @@ struct ei_interface_versions {
+ 	uint32_t ei_button;
+ 	uint32_t ei_keyboard;
+ 	uint32_t ei_touchscreen;
++	uint32_t ei_text;
+ };
+ 
+ struct ei_unsent {
+@@ -243,6 +245,15 @@ ei_queue_touch_up_event(struct ei_device *device, uint32_t touchid);
+ void
+ ei_queue_touch_cancel_event(struct ei_device *device, uint32_t touchid);
+ 
++void
++ei_queue_text_keysym_event(struct ei_device *device, uint32_t keysym,
++			   bool is_press);
++
++void
++ei_queue_text_utf8_event(struct ei_device *device, const char *utf8);
++
++void
++ei_sync_event_send_done(struct ei_event *e);
+ 
+ _printf_(6, 7) void
+ ei_log_msg(struct ei *ei,
+diff --git a/src/libei-seat.c b/src/libei-seat.c
+index 9d2e49b..dae49dc 100644
+--- a/src/libei-seat.c
++++ b/src/libei-seat.c
+@@ -247,6 +247,8 @@ ei_seat_has_capability(struct ei_seat *seat,
+ 		return seat->capabilities.map[EI_SCROLL_INTERFACE_INDEX] != 0;
+ 	case EI_DEVICE_CAP_BUTTON:
+ 		return seat->capabilities.map[EI_BUTTON_INTERFACE_INDEX] != 0;
++	case EI_DEVICE_CAP_TEXT:
++		return seat->capabilities.map[EI_TEXT_INTERFACE_INDEX] != 0;
+ 	}
+ 	return false;
+ }
+@@ -281,6 +283,8 @@ ei_seat_cap_mask(struct ei_seat *seat, enum ei_device_capability cap)
+ 		return seat->capabilities.map[EI_BUTTON_INTERFACE_INDEX];
+ 	case EI_DEVICE_CAP_SCROLL:
+ 		return seat->capabilities.map[EI_SCROLL_INTERFACE_INDEX];
++	case EI_DEVICE_CAP_TEXT:
++		return seat->capabilities.map[EI_TEXT_INTERFACE_INDEX];
+ 	}
+ 
+ 	return 0;
+diff --git a/src/libei-text.c b/src/libei-text.c
+new file mode 100644
+index 0000000..ddc5b6e
+--- /dev/null
++++ b/src/libei-text.c
+@@ -0,0 +1,87 @@
++/* SPDX-License-Identifier: MIT */
++/*
++ * Copyright © 2023 Red Hat, Inc.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice (including the next
++ * paragraph) shall be included in all copies or substantial portions of the
++ * Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
++ * DEALINGS IN THE SOFTWARE.
++ */
++
++#include "config.h"
++
++#include <errno.h>
++#include <stdbool.h>
++
++#include "util-bits.h"
++#include "util-macros.h"
++#include "util-mem.h"
++#include "util-io.h"
++#include "util-strings.h"
++#include "util-version.h"
++
++#include "libei-private.h"
++#include "ei-proto.h"
++
++static void
++ei_text_destroy(struct ei_text *text)
++{
++	struct ei *ei = ei_text_get_context(text);
++	ei_unregister_object(ei, &text->proto_object);
++}
++
++OBJECT_IMPLEMENT_REF(ei_text);
++OBJECT_IMPLEMENT_UNREF_CLEANUP(ei_text);
++
++static
++OBJECT_IMPLEMENT_CREATE(ei_text);
++static
++OBJECT_IMPLEMENT_PARENT(ei_text, ei_device);
++OBJECT_IMPLEMENT_GETTER_AS_REF(ei_text, proto_object, const struct brei_object*);
++
++struct ei_device *
++ei_text_get_device(struct ei_text *text)
++{
++	return ei_text_parent(text);
++}
++
++struct ei*
++ei_text_get_context(struct ei_text *text)
++{
++	return ei_device_get_context(ei_text_get_device(text));
++}
++
++const struct ei_text_interface *
++ei_text_get_interface(struct ei_text *text) {
++	struct ei_device *device = ei_text_get_device(text);
++	return ei_device_get_text_interface(device);
++}
++
++struct ei_text *
++ei_text_new(struct ei_device *device, object_id_t id, uint32_t version)
++{
++	struct ei_text *text = ei_text_create(&device->object);
++	struct ei *ei = ei_device_get_context(device);
++
++	text->proto_object.id = id;
++	text->proto_object.implementation = text;
++	text->proto_object.interface = &ei_text_proto_interface;
++	text->proto_object.version = version;
++	ei_register_object(ei, &text->proto_object);
++
++	return text; /* ref owned by caller */
++}
+diff --git a/src/libei-text.h b/src/libei-text.h
+new file mode 100644
+index 0000000..de7159c
+--- /dev/null
++++ b/src/libei-text.h
+@@ -0,0 +1,49 @@
++/* SPDX-License-Identifier: MIT */
++/*
++ * Copyright © 2023 Red Hat, Inc.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice (including the next
++ * paragraph) shall be included in all copies or substantial portions of the
++ * Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
++ * DEALINGS IN THE SOFTWARE.
++ */
++
++#pragma once
++
++#include "util-object.h"
++#include "util-list.h"
++#include "brei-shared.h"
++
++struct ei;
++struct ei_device;
++struct ei_text;
++
++/* This is a protocol-only object, not exposed in the API */
++struct ei_text {
++	struct object object;
++	struct brei_object proto_object;
++};
++
++OBJECT_DECLARE_GETTER(ei_text, context, struct ei*);
++OBJECT_DECLARE_GETTER(ei_text, device, struct ei_device*);
++OBJECT_DECLARE_GETTER(ei_text, proto_object, const struct brei_object*);
++OBJECT_DECLARE_GETTER(ei_text, interface, const struct ei_text_interface *);
++OBJECT_DECLARE_REF(ei_text);
++OBJECT_DECLARE_UNREF(ei_text);
++
++struct ei_text *
++ei_text_new(struct ei_device *device, object_id_t id, uint32_t version);
+diff --git a/src/libei.c b/src/libei.c
+index 00ce208..677af4c 100644
+--- a/src/libei.c
++++ b/src/libei.c
+@@ -133,6 +133,7 @@ ei_create_context(bool is_sender, void *user_data)
+ 		.ei_scroll = VERSION_V(1),
+ 		.ei_button = VERSION_V(1),
+ 		.ei_keyboard = VERSION_V(1),
++		.ei_text = VERSION_V(1),
+ 		.ei_touchscreen = VERSION_V(2),
+ 	};
+ 	/* This must be v1 until the server tells us otherwise */
+@@ -245,6 +246,8 @@ update_event_timestamp(struct ei_event *event, uint64_t time)
+ 	case EI_EVENT_TOUCH_DOWN:
+ 	case EI_EVENT_TOUCH_UP:
+ 	case EI_EVENT_TOUCH_MOTION:
++	case EI_EVENT_TEXT_KEYSYM:
++	case EI_EVENT_TEXT_UTF8:
+ 		if (event->timestamp != 0) {
+ 			log_bug(ei_event_get_context(event),
+ 				"Unexpected timestamp for event of type: %s",
+@@ -280,6 +283,8 @@ queue_event(struct ei *ei, struct ei_event *event)
+ 	case EI_EVENT_TOUCH_DOWN:
+ 	case EI_EVENT_TOUCH_UP:
+ 	case EI_EVENT_TOUCH_MOTION:
++	case EI_EVENT_TEXT_KEYSYM:
++	case EI_EVENT_TEXT_UTF8:
+ 		prefix = "pending ";
+ 		queue = &device->pending_event_queue;
+ 		break;
+@@ -613,6 +618,30 @@ ei_queue_touch_cancel_event(struct ei_device *device, uint32_t touchid)
+ 	queue_event(ei_device_get_context(device), e);
+ }
+ 
++void
++ei_queue_text_keysym_event(struct ei_device *device, uint32_t keysym,
++			   bool is_press)
++{
++	struct ei_event *e = ei_event_new_for_device(device);
++
++	e->type = EI_EVENT_TEXT_KEYSYM;
++	e->text.keysym = keysym;
++	e->text.is_press = is_press;
++
++	queue_event(ei_device_get_context(device), e);
++}
++
++void
++ei_queue_text_utf8_event(struct ei_device *device, const char *utf8)
++{
++	struct ei_event *e = ei_event_new_for_device(device);
++
++	e->type = EI_EVENT_TEXT_UTF8;
++	e->text.utf8 = xstrdup(utf8);
++
++	queue_event(ei_device_get_context(device), e);
++}
++
+ _public_ void
+ ei_disconnect(struct ei *ei)
+ {
+diff --git a/src/libei.h b/src/libei.h
+index 1ac96a8..e22e04a 100644
+--- a/src/libei.h
++++ b/src/libei.h
+@@ -300,6 +300,10 @@ enum ei_device_capability {
+ 	 * The device can send button events
+ 	 */
+ 	EI_DEVICE_CAP_BUTTON = (1 << 5),
++	/**
++	 * The device can send text-like data
++	 */
++	EI_DEVICE_CAP_TEXT = (1 << 6),
+ };
+ 
+ /**
+@@ -591,6 +595,24 @@ enum ei_event_type {
+ 	 * See ei_device_touch_new() and ei_touch_motion() for the sender context API.
+ 	 */
+ 	EI_EVENT_TOUCH_MOTION,
++
++	/**
++	 * Event for a single keysym logically pressed/released on this device.
++	 * The keysym is an XKB-compatible keysym (not key code!) and may not be
++	 * present on any keymap currently active on any device.
++	 *
++	 * @note This event is only generated on a receiver ei context.
++	 * See ei_device_text_keysym() for the sender context API.
++	 */
++	EI_EVENT_TEXT_KEYSYM = 900,
++
++	/**
++	 * Event for a UTF-8 compatible text sequence sent by this device.
++	 *
++	 * @note This event is only generated on a receiver ei context.
++	 * See ei_device_text_utf8() for the sender context API.
++	 */
++	EI_EVENT_TEXT_UTF8,
+ };
+ 
+ /**
+@@ -1837,6 +1859,68 @@ ei_device_scroll_cancel(struct ei_device *device, bool cancel_x, bool cancel_y);
+ void
+ ei_device_keyboard_key(struct ei_device *device, uint32_t keycode, bool is_press);
+ 
++/**
++ * @ingroup libei-sender
++ *
++ * Generate a key event on a device with
++ * the @ref EI_DEVICE_CAP_TEXT capability.
++ *
++ * Keysyms use the XKB-compatible keysyms, see e.g.
++ * [/usr/include/xkbcommon/xkbcommon-keysyms.h](https://xkbcommon.org/doc/current/xkbcommon-keysyms_8h.html)
++ * for a list of key syms
++ *
++ * Note that this is keysym is independent of any keymap and the keysym
++ * may not exist on any active keymap on any device. For example, a device
++ * with both @ref EI_DEVICE_CAP_TEXT and @ref EI_DEVICE_CAP_KEYBOARD is not
++ * limited to sending keysyms only present on the keymap.
++ *
++ * This method is only available on an ei sender context.
++ *
++ * @param device The EI device
++ * @param keysym The keysym
++ * @param is_press true for key down, false for key up
++ */
++void
++ei_device_text_keysym(struct ei_device *device, uint32_t keysym, bool is_press);
++
++/**
++ * @ingroup libei-sender
++ *
++ * Generate a UTF-8 text event on a device with
++ * the @ref EI_DEVICE_CAP_TEXT capability.
++ *
++ * This method is only available on an ei sender context.
++ * This method is identical to ei_device_text_utf8_with_length()
++ * but calculates the length of the string.
++ *
++ * @param device The EI device
++ * @param text The zero-terminated UTF-8 compatible text
++ *
++ * @see ei_device_text_utf8_with_length
++ */
++void
++ei_device_text_utf8(struct ei_device *device, const char *text);
++
++/**
++ * @ingroup libei-sender
++ *
++ * Generate a UTF-8 text event on a device with
++ * the @ref EI_DEVICE_CAP_TEXT capability.
++ *
++ * This method is only available on an ei sender context.
++ *
++ * This method is identical to ei_device_text_utf8()
++ * but takes an additional length argument.
++ *
++ * @param device The EI device
++ * @param text The zero-terminated UTF-8 compatible text
++ * @param length The length of text in bytes, excluding the zero bytes
++ *
++ * @see ei_device_text_utf8
++ */
++void
++ei_device_text_utf8_with_length(struct ei_device *device, const char *text, size_t length);
++
+ /**
+  * @ingroup libei-sender
+  *
+@@ -2213,6 +2297,44 @@ ei_event_touch_get_y(struct ei_event *event);
+ bool
+ ei_event_touch_get_is_cancel(struct ei_event *event);
+ 
++/**
++ * @ingroup libei-receiver
++ *
++ * For an event of type @ref EI_EVENT_TEXT_KEYSYM
++ * return the XKB-compatible keysym.
++ */
++uint32_t
++ei_event_text_get_keysym(struct ei_event *event);
++
++/**
++ * @ingroup libei-receiver
++ *
++ * For an event of type @ref EI_EVENT_TEXT_KEYSYM
++ * return true if the event is a logical key down for the
++ * keysym.
++ */
++bool
++ei_event_text_get_keysym_is_press(struct ei_event *event);
++
++/**
++ * @ingroup libei-receiver
++ *
++ * For an event of type @ref EI_EVENT_TEXT_UTF8
++ * return the zero-terminated UTF8 string.
++ */
++const char *
++ei_event_text_get_utf8(struct ei_event *event);
++
++/**
++ * @ingroup libei-receiver
++ *
++ * For an event of type @ref EI_EVENT_TEXT_UTF8
++ * return the length in bytes of the UTF8 string for this event,
++ * excluding the terminating NULL byte.
++ */
++size_t
++ei_event_text_get_utf8_length(struct ei_event *event);
++
+ /**
+  * @}
+  */
+diff --git a/src/libeis-client.c b/src/libeis-client.c
+index 84dce6a..30c8be4 100644
+--- a/src/libeis-client.c
++++ b/src/libeis-client.c
+@@ -449,6 +449,7 @@ eis_client_new(struct eis *eis, int fd)
+ 		.ei_scroll = VERSION_V(1),
+ 		.ei_button = VERSION_V(1),
+ 		.ei_keyboard = VERSION_V(1),
++		.ei_text = VERSION_V(1),
+ 		.ei_touchscreen = VERSION_V(2),
+ 	};
+ 	struct source *s = source_new(fd, client_dispatch, client);
+diff --git a/src/libeis-client.h b/src/libeis-client.h
+index ec92da3..36a35e8 100644
+--- a/src/libeis-client.h
++++ b/src/libeis-client.h
+@@ -52,6 +52,7 @@ struct eis_client_interface_versions {
+ 	uint32_t ei_button;
+ 	uint32_t ei_keyboard;
+ 	uint32_t ei_touchscreen;
++	uint32_t ei_text;
+ };
+ 
+ struct eis_client {
+diff --git a/src/libeis-device.c b/src/libeis-device.c
+index 2c3b97a..0857271 100644
+--- a/src/libeis-device.c
++++ b/src/libeis-device.c
+@@ -149,6 +149,7 @@ eis_device_destroy(struct eis_device *device)
+ 	eis_pointer_unref(device->pointer);
+ 	eis_touchscreen_unref(device->touchscreen);
+ 	eis_keyboard_unref(device->keyboard);
++	eis_text_unref(device->text);
+ 
+ 	free(device->name);
+ }
+@@ -723,6 +724,68 @@ eis_device_get_touchscreen_interface(struct eis_device *device)
+ 	return &touchscreen_interface;
+ }
+ 
++static struct brei_result *
++client_msg_text_release(struct eis_text *text)
++{
++	struct eis_device *device = eis_text_get_device(text);
++	eis_text_event_destroyed(device->text,
++				 eis_client_get_next_serial(eis_device_get_client(device)));
++	eis_text_unref(steal(&device->text));
++	return NULL;
++}
++
++static struct brei_result *
++client_msg_text_keysym(struct eis_text *text, uint32_t keysym, uint32_t state)
++{
++	struct eis_device *device = eis_text_get_device(text);
++
++	DISCONNECT_IF_RECEIVER_CONTEXT(device);
++
++	if (!eis_device_has_capability(device, EIS_DEVICE_CAP_TEXT)) {
++		return brei_result_new(EIS_CONNECTION_DISCONNECT_REASON_PROTOCOL,
++				       "keysym event for non-text device");
++	}
++
++	if (device->state == EIS_DEVICE_STATE_EMULATING) {
++		eis_queue_text_keysym_event(device, keysym, !!state);
++		return NULL;
++	}
++
++	return maybe_error_on_device_state(device, "text keysym");
++}
++
++static struct brei_result *
++client_msg_text_utf8(struct eis_text *text, const char *utf8)
++{
++	struct eis_device *device = eis_text_get_device(text);
++
++	DISCONNECT_IF_RECEIVER_CONTEXT(device);
++
++	if (!eis_device_has_capability(device, EIS_DEVICE_CAP_TEXT)) {
++		return brei_result_new(EIS_CONNECTION_DISCONNECT_REASON_PROTOCOL,
++				       "utf8 event for non-text device");
++	}
++
++	if (device->state == EIS_DEVICE_STATE_EMULATING) {
++		eis_queue_text_utf8_event(device, utf8);
++		return NULL;
++	}
++
++	return maybe_error_on_device_state(device, "text utf8");
++}
++
++static const struct eis_text_interface text_interface = {
++	.release = client_msg_text_release,
++	.keysym = client_msg_text_keysym,
++	.utf8 = client_msg_text_utf8,
++};
++
++const struct eis_text_interface *
++eis_device_get_text_interface(struct eis_device *device)
++{
++	return &text_interface;
++}
++
+ _public_ struct eis_device *
+ eis_seat_new_device(struct eis_seat *seat)
+ {
+@@ -793,6 +856,7 @@ eis_device_configure_capability(struct eis_device *device, enum eis_device_capab
+ 	case EIS_DEVICE_CAP_TOUCH:
+ 	case EIS_DEVICE_CAP_BUTTON:
+ 	case EIS_DEVICE_CAP_SCROLL:
++	case EIS_DEVICE_CAP_TEXT:
+ 		mask_add(device->capabilities, cap);
+ 		break;
+ 	}
+@@ -919,6 +983,14 @@ eis_device_add(struct eis_device *device)
+ 		if (rc < 0)
+ 			goto out;
+ 	}
++	if (eis_device_has_capability(device, EIS_DEVICE_CAP_TEXT)) {
++		device->text = eis_text_new(device);
++		rc = eis_device_event_interface(device, eis_text_get_id(device->text),
++						EIS_TEXT_INTERFACE_NAME,
++						eis_text_get_version(device->text));
++		if (rc < 0)
++			goto out;
++	}
+ 
+ 	rc = eis_device_event_done(device);
+ out:
+@@ -965,6 +1037,10 @@ eis_device_remove(struct eis_device *device)
+ 		eis_keyboard_event_destroyed(device->keyboard, eis_client_get_next_serial(client));
+ 		eis_keyboard_unref(steal(&device->keyboard));
+ 	}
++	if (device->text) {
++		eis_text_event_destroyed(device->text, eis_client_get_next_serial(client));
++		eis_text_unref(steal(&device->text));
++	}
+ 
+ 	if (device->state != EIS_DEVICE_STATE_NEW)
+ 		eis_device_event_destroyed(device, eis_client_get_next_serial(client));
+@@ -992,6 +1068,7 @@ eis_device_has_capability(struct eis_device *device,
+ 	case EIS_DEVICE_CAP_TOUCH:
+ 	case EIS_DEVICE_CAP_BUTTON:
+ 	case EIS_DEVICE_CAP_SCROLL:
++	case EIS_DEVICE_CAP_TEXT:
+ 		return mask_all(device->capabilities, cap);
+ 	}
+ 	return false;
+@@ -1365,6 +1442,49 @@ eis_touch_cancel(struct eis_touch *touch)
+ 		eis_touchscreen_event_up(device->touchscreen, touch->tracking_id);
+ }
+ 
++_public_ void
++eis_device_text_keysym(struct eis_device *device,
++		       uint32_t keysym, bool is_press)
++{
++	if (!eis_device_has_capability(device, EIS_DEVICE_CAP_TEXT)) {
++		log_bug_client(eis_device_get_context(device),
++			       "%s: device is not a text device", __func__);
++		return;
++	}
++
++	if (device->state != EIS_DEVICE_STATE_EMULATING)
++		return;
++
++	device->send_frame_event = true;
++
++	eis_text_event_keysym(device->text, keysym, is_press);
++}
++
++_public_ void
++eis_device_text_utf8(struct eis_device *device, const char *text)
++{
++	return eis_device_text_utf8_with_length(device, text, strlen(text));
++}
++
++_public_ void
++eis_device_text_utf8_with_length(struct eis_device *device, const char *text, size_t length)
++{
++	if (!eis_device_has_capability(device, EIS_DEVICE_CAP_TEXT)) {
++		log_bug_client(eis_device_get_context(device),
++			       "%s: device is not a text device", __func__);
++		return;
++	}
++
++	if (device->state != EIS_DEVICE_STATE_EMULATING)
++		return;
++
++	device->send_frame_event = true;
++
++	char buf[min(4096, length + 1)];
++	xsnprintf(buf, sizeof(buf), "%s", text);
++	eis_text_event_utf8(device->text, buf);
++}
++
+ _public_ void
+ eis_device_frame(struct eis_device *device, uint64_t time)
+ {
+diff --git a/src/libeis-device.h b/src/libeis-device.h
+index 3584222..8be5524 100644
+--- a/src/libeis-device.h
++++ b/src/libeis-device.h
+@@ -51,6 +51,7 @@ struct eis_device {
+ 	struct eis_button *button;
+ 	struct eis_keyboard *keyboard;
+ 	struct eis_touchscreen *touchscreen;
++	struct eis_text *text;
+ 
+ 	char *name;
+ 	enum eis_device_state state;
+@@ -116,6 +117,7 @@ OBJECT_DECLARE_GETTER(eis_device, scroll_interface, const struct eis_scroll_inte
+ OBJECT_DECLARE_GETTER(eis_device, button_interface, const struct eis_button_interface *);
+ OBJECT_DECLARE_GETTER(eis_device, keyboard_interface, const struct eis_keyboard_interface *);
+ OBJECT_DECLARE_GETTER(eis_device, touchscreen_interface, const struct eis_touchscreen_interface *);
++OBJECT_DECLARE_GETTER(eis_device, text_interface, const struct eis_text_interface *);
+ 
+ void
+ eis_device_set_client_keymap(struct eis_device *device,
+diff --git a/src/libeis-event.c b/src/libeis-event.c
+index c002a5e..bd7b0ca 100644
+--- a/src/libeis-event.c
++++ b/src/libeis-event.c
+@@ -56,6 +56,11 @@ eis_event_destroy(struct eis_event *event)
+ 	case EIS_EVENT_TOUCH_MOTION:
+ 	case EIS_EVENT_TOUCH_UP:
+ 	case EIS_EVENT_FRAME:
++	case EIS_EVENT_TEXT_UTF8:
++		handled = true;
++		break;
++	case EIS_EVENT_TEXT_KEYSYM:
++		free(steal(&event->text.utf8));
+ 		handled = true;
+ 		break;
+ 	case EIS_EVENT_PONG:
+@@ -191,6 +196,8 @@ eis_event_get_time(struct eis_event *event)
+ 			   EIS_EVENT_TOUCH_DOWN,
+ 			   EIS_EVENT_TOUCH_UP,
+ 			   EIS_EVENT_TOUCH_MOTION,
++			   EIS_EVENT_TEXT_KEYSYM,
++			   EIS_EVENT_TEXT_UTF8,
+ 			   EIS_EVENT_FRAME);
+ 
+ 	return event->timestamp;
+@@ -216,6 +223,7 @@ eis_event_seat_has_capability(struct eis_event *event, enum eis_device_capabilit
+ 	case EIS_DEVICE_CAP_TOUCH:
+ 	case EIS_DEVICE_CAP_BUTTON:
+ 	case EIS_DEVICE_CAP_SCROLL:
++	case EIS_DEVICE_CAP_TEXT:
+ 		return mask_all(event->bind.capabilities, cap);
+ 	}
+ 	return false;
+@@ -429,3 +437,30 @@ eis_event_touch_get_is_cancel(struct eis_event *event)
+ 
+ 	return event->touch.is_cancel;
+ }
++
++_public_ uint32_t
++eis_event_text_get_keysym(struct eis_event *event)
++{
++	require_event_type(event, 0,
++			   EIS_EVENT_TEXT_KEYSYM);
++
++	return event->text.keysym;
++}
++
++_public_ bool
++eis_event_text_get_keysym_is_press(struct eis_event *event)
++{
++	require_event_type(event, false,
++			   EIS_EVENT_TEXT_KEYSYM);
++
++	return event->text.is_press;
++}
++
++_public_ const char *
++eis_event_text_get_utf8(struct eis_event *event)
++{
++	require_event_type(event, NULL,
++			   EIS_EVENT_TEXT_UTF8);
++
++	return event->text.utf8;
++}
+diff --git a/src/libeis-event.h b/src/libeis-event.h
+index b01aeed..d377f05 100644
+--- a/src/libeis-event.h
++++ b/src/libeis-event.h
+@@ -60,6 +60,11 @@ struct eis_event {
+ 			double x, y;
+ 			bool is_cancel;
+ 		} touch;
++		struct {
++			uint32_t keysym;
++			bool is_press;
++			char *utf8;
++		} text;
+ 		struct {
+ 			uint32_t sequence;
+ 	        } start_emulating;
+diff --git a/src/libeis-handshake.c b/src/libeis-handshake.c
+index dab5f42..4b7b477 100644
+--- a/src/libeis-handshake.c
++++ b/src/libeis-handshake.c
+@@ -235,6 +235,7 @@ client_msg_interface_version(struct eis_handshake *setup, const char *name, uint
+ 		VERSION_ENTRY(ei_scroll),
+ 		VERSION_ENTRY(ei_keyboard),
+ 		VERSION_ENTRY(ei_touchscreen),
++		VERSION_ENTRY(ei_text),
+ #undef VERSION_ENTRY
+ 	};
+ 
+diff --git a/src/libeis-private.h b/src/libeis-private.h
+index caff3ed..0922a95 100644
+--- a/src/libeis-private.h
++++ b/src/libeis-private.h
+@@ -51,6 +51,7 @@
+ #include "libeis-region.h"
+ #include "libeis-scroll.h"
+ #include "libeis-seat.h"
++#include "libeis-text.h"
+ #include "libeis-touchscreen.h"
+ 
+ struct eis_backend_interface {
+@@ -155,6 +156,15 @@ eis_queue_touch_up_event(struct eis_device *device, uint32_t touchid);
+ void
+ eis_queue_touch_cancel_event(struct eis_device *device, uint32_t touchid);
+ 
++void
++eis_queue_text_keysym_event(struct eis_device *device, uint32_t keysym, bool is_press);
++
++void
++eis_queue_text_utf8_event(struct eis_device *device, const char *utf8);
++
++void
++eis_sync_event_send_done(struct eis_event *e);
++
+ _printf_(6, 7) void
+ eis_log_msg(struct eis *eis,
+ 	    enum eis_log_priority priority,
+diff --git a/src/libeis-seat.c b/src/libeis-seat.c
+index a88d447..3711a37 100644
+--- a/src/libeis-seat.c
++++ b/src/libeis-seat.c
+@@ -108,6 +108,8 @@ client_msg_bind(struct eis_seat *seat, uint64_t caps)
+ 		capabilities |= EIS_DEVICE_CAP_BUTTON;
+ 	if (caps & bit(EIS_SCROLL_INTERFACE_INDEX))
+ 		capabilities |= EIS_DEVICE_CAP_SCROLL;
++	if (caps & bit(EIS_TEXT_INTERFACE_INDEX))
++		capabilities |= EIS_DEVICE_CAP_TEXT;
+ 
+ 	eis_seat_bind(seat, capabilities);
+ 
+@@ -219,6 +221,14 @@ eis_seat_add(struct eis_seat *seat)
+ 		mask_add(seat->capabilities.proto_mask, mask);
+ 	}
+ 
++	if (seat->capabilities.c_mask & EIS_DEVICE_CAP_TEXT &&
++	    client->interface_versions.ei_text > 0) {
++		uint64_t mask = bit(EIS_TEXT_INTERFACE_INDEX);
++		eis_seat_event_capability(seat, mask,
++					  EIS_TEXT_INTERFACE_NAME);
++		mask_add(seat->capabilities.proto_mask, mask);
++	}
++
+ 	eis_seat_event_done(seat);
+ }
+ 
+@@ -311,6 +321,7 @@ eis_seat_configure_capability(struct eis_seat *seat,
+ 	case EIS_DEVICE_CAP_TOUCH:
+ 	case EIS_DEVICE_CAP_BUTTON:
+ 	case EIS_DEVICE_CAP_SCROLL:
++	case EIS_DEVICE_CAP_TEXT:
+ 		mask_add(seat->capabilities.c_mask, cap);
+ 		break;
+ 	}
+@@ -327,6 +338,7 @@ eis_seat_has_capability(struct eis_seat *seat,
+ 	case EIS_DEVICE_CAP_TOUCH:
+ 	case EIS_DEVICE_CAP_BUTTON:
+ 	case EIS_DEVICE_CAP_SCROLL:
++	case EIS_DEVICE_CAP_TEXT:
+ 		return mask_all(seat->capabilities.c_mask, cap);
+ 	}
+ 	return false;
+diff --git a/src/libeis-text.c b/src/libeis-text.c
+new file mode 100644
+index 0000000..314ba62
+--- /dev/null
++++ b/src/libeis-text.c
+@@ -0,0 +1,107 @@
++/* SPDX-License-Identifier: MIT */
++/*
++ * Copyright © 2023 Red Hat, Inc.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice (including the next
++ * paragraph) shall be included in all copies or substantial portions of the
++ * Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
++ * DEALINGS IN THE SOFTWARE.
++ */
++
++#include "config.h"
++
++#include <errno.h>
++#include <stdbool.h>
++
++#include "util-bits.h"
++#include "util-macros.h"
++#include "util-mem.h"
++#include "util-io.h"
++#include "util-strings.h"
++#include "util-version.h"
++
++#include "libeis-private.h"
++#include "eis-proto.h"
++
++static void
++eis_text_destroy(struct eis_text *text)
++{
++	struct eis_client * client = eis_text_get_client(text);
++	eis_client_unregister_object(client, &text->proto_object);
++}
++
++OBJECT_IMPLEMENT_REF(eis_text);
++OBJECT_IMPLEMENT_UNREF_CLEANUP(eis_text);
++OBJECT_IMPLEMENT_GETTER_AS_REF(eis_text, proto_object, const struct brei_object *);
++
++static
++OBJECT_IMPLEMENT_CREATE(eis_text);
++static
++OBJECT_IMPLEMENT_PARENT(eis_text, eis_device);
++
++uint32_t
++eis_text_get_version(struct eis_text *text)
++{
++	return text->proto_object.version;
++}
++
++object_id_t
++eis_text_get_id(struct eis_text *text)
++{
++	return text->proto_object.id;
++}
++
++struct eis_device *
++eis_text_get_device(struct eis_text *text)
++{
++	return eis_text_parent(text);
++}
++
++struct eis_client*
++eis_text_get_client(struct eis_text *text)
++{
++	return eis_device_get_client(eis_text_get_device(text));
++}
++
++struct eis*
++eis_text_get_context(struct eis_text *text)
++{
++	struct eis_client *client = eis_text_get_client(text);
++	return eis_client_get_context(client);
++}
++
++const struct eis_text_interface *
++eis_text_get_interface(struct eis_text *text) {
++	return eis_device_get_text_interface(eis_text_get_device(text));
++}
++
++struct eis_text *
++eis_text_new(struct eis_device *device)
++{
++	struct eis_text *text = eis_text_create(&device->object);
++	struct eis_client *client = eis_device_get_client(device);
++
++	text->proto_object.id = eis_client_get_new_id(client);
++	text->proto_object.implementation = text;
++	text->proto_object.interface = &eis_text_proto_interface;
++	text->proto_object.version = client->interface_versions.ei_text;
++	list_init(&text->proto_object.link);
++
++	eis_client_register_object(client, &text->proto_object);
++
++	return text; /* ref owned by caller */
++}
+diff --git a/src/libeis-text.h b/src/libeis-text.h
+new file mode 100644
+index 0000000..14eef7a
+--- /dev/null
++++ b/src/libeis-text.h
+@@ -0,0 +1,51 @@
++/* SPDX-License-Identifier: MIT */
++/*
++ * Copyright © 2025 Red Hat, Inc.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice (including the next
++ * paragraph) shall be included in all copies or substantial portions of the
++ * Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
++ * DEALINGS IN THE SOFTWARE.
++ */
++
++#pragma once
++
++#include "util-object.h"
++#include "brei-shared.h"
++#include "libeis-client.h"
++
++struct eis;
++struct eis_client;
++
++/* This is a protocol-only object, not exposed in the API */
++struct eis_text {
++	struct object object;
++	struct brei_object proto_object;
++};
++
++OBJECT_DECLARE_GETTER(eis_text, context, struct eis *);
++OBJECT_DECLARE_GETTER(eis_text, device, struct eis_device *);
++OBJECT_DECLARE_GETTER(eis_text, client, struct eis_client *);
++OBJECT_DECLARE_GETTER(eis_text, id, object_id_t);
++OBJECT_DECLARE_GETTER(eis_text, version, uint32_t);
++OBJECT_DECLARE_GETTER(eis_text, proto_object, const struct brei_object *);
++OBJECT_DECLARE_GETTER(eis_text, interface, const struct eis_text_interface *);
++OBJECT_DECLARE_REF(eis_text);
++OBJECT_DECLARE_UNREF(eis_text);
++
++struct eis_text *
++eis_text_new(struct eis_device *device);
+diff --git a/src/libeis.c b/src/libeis.c
+index 6da2110..f7b9620 100644
+--- a/src/libeis.c
++++ b/src/libeis.c
+@@ -137,6 +137,8 @@ eis_event_type_to_string(enum eis_event_type type)
+ 	CASE_RETURN_STRING(EIS_EVENT_TOUCH_UP);
+ 	CASE_RETURN_STRING(EIS_EVENT_TOUCH_MOTION);
+ 	CASE_RETURN_STRING(EIS_EVENT_FRAME);
++	CASE_RETURN_STRING(EIS_EVENT_TEXT_KEYSYM);
++	CASE_RETURN_STRING(EIS_EVENT_TEXT_UTF8);
+ 	}
+ 
+ 	return NULL;
+@@ -157,6 +159,8 @@ update_event_timestamp(struct eis_event *event, uint64_t time)
+ 	case EIS_EVENT_TOUCH_DOWN:
+ 	case EIS_EVENT_TOUCH_UP:
+ 	case EIS_EVENT_TOUCH_MOTION:
++	case EIS_EVENT_TEXT_KEYSYM:
++	case EIS_EVENT_TEXT_UTF8:
+ 		if (event->timestamp != 0) {
+ 			log_bug(eis_event_get_context(event),
+ 				"Unexpected timestamp for event of type: %s",
+@@ -193,6 +197,8 @@ eis_queue_event(struct eis_event *event)
+ 	case EIS_EVENT_TOUCH_DOWN:
+ 	case EIS_EVENT_TOUCH_UP:
+ 	case EIS_EVENT_TOUCH_MOTION:
++	case EIS_EVENT_TEXT_KEYSYM:
++	case EIS_EVENT_TEXT_UTF8:
+ 		prefix = "pending ";
+ 		queue = &device->pending_event_queue;
+ 		break;
+@@ -430,6 +436,26 @@ eis_queue_touch_cancel_event(struct eis_device *device, uint32_t touchid)
+ 	eis_queue_event(e);
+ }
+ 
++void
++eis_queue_text_keysym_event(struct eis_device *device, uint32_t keysym,
++			    bool is_press)
++{
++	struct eis_event *e = eis_event_new_for_device(device);
++	e->type = EIS_EVENT_TEXT_KEYSYM;
++	e->text.keysym = keysym;
++	e->text.is_press = is_press;
++	eis_queue_event(e);
++}
++
++void
++eis_queue_text_utf8_event(struct eis_device *device, const char *text)
++{
++	struct eis_event *e = eis_event_new_for_device(device);
++	e->type = EIS_EVENT_TEXT_UTF8;
++	e->text.utf8 = xstrdup(text);
++	eis_queue_event(e);
++}
++
+ _public_ struct eis_event*
+ eis_get_event(struct eis *eis)
+ {
+diff --git a/src/libeis.h b/src/libeis.h
+index 4654db4..313ec9b 100644
+--- a/src/libeis.h
++++ b/src/libeis.h
+@@ -225,6 +225,7 @@ enum eis_device_capability {
+ 	EIS_DEVICE_CAP_TOUCH = (1 << 3),
+ 	EIS_DEVICE_CAP_SCROLL = (1 << 4),
+ 	EIS_DEVICE_CAP_BUTTON = (1 << 5),
++	EIS_DEVICE_CAP_TEXT = (1 << 6),
+ };
+ 
+ /**
+@@ -381,6 +382,16 @@ enum eis_event_type {
+ 	 * properties).
+ 	 */
+ 	EIS_EVENT_TOUCH_MOTION,
++
++	/**
++	 * A key sym logical press or release event
++	 */
++	EIS_EVENT_TEXT_KEYSYM = 900,
++
++	/**
++	 * A text event event
++	 */
++	EIS_EVENT_TEXT_UTF8,
+ };
+ 
+ /**
+@@ -1423,6 +1434,30 @@ eis_device_keyboard_send_xkb_modifiers(struct eis_device *device,
+ 				       uint32_t locked,
+ 				       uint32_t group);
+ 
++/**
++ * @ingroup libeis-receiver
++ *
++ * see @ref ei_device_text_keysym
++ */
++void
++eis_device_text_keysym(struct eis_device *device, uint32_t keysym, bool is_press);
++
++/**
++ * @ingroup libeis-receiver
++ *
++ * see @ref ei_device_text_utf8
++ */
++void
++eis_device_text_utf8(struct eis_device *device, const char *text);
++
++/**
++ * @ingroup libeis-receiver
++ *
++ * see @ref ei_device_text_utf8_with_length
++ */
++void
++eis_device_text_utf8_with_length(struct eis_device *device, const char *text, size_t length);
++
+ /**
+  * @ingroup libeis-receiver
+  *
+@@ -1784,6 +1819,44 @@ eis_event_touch_get_y(struct eis_event *event);
+ bool
+ eis_event_touch_get_is_cancel(struct eis_event *event);
+ 
++/**
++ * @ingroup libeis-sender
++ *
++ * For an event of type @ref EIS_EVENT_TEXT_KEYSYM
++ * return the XKB-compatible keysym.
++ */
++uint32_t
++eis_event_text_get_keysym(struct eis_event *event);
++
++/**
++ * @ingroup libeis-sender
++ *
++ * For an event of type @ref EIS_EVENT_TEXT_KEYSYM
++ * return true if the event is a logical key down for the
++ * keysym.
++ */
++bool
++eis_event_text_get_keysym_is_press(struct eis_event *event);
++
++/**
++ * @ingroup libeis-sender
++ *
++ * For an event of type @ref EIS_EVENT_TEXT_UTF8
++ * return the zero-terminated UTF8 string.
++ */
++const char *
++eis_event_text_get_utf8(struct eis_event *event);
++
++/**
++ * @ingroup libeis-sender
++ *
++ * For an event of type @ref EIS_EVENT_TEXT_UTF8
++ * return the length in bytes of the UTF8 string for this event,
++ * excluding the terminating NULL byte.
++ */
++size_t
++eis_event_text_get_utf8_length(struct eis_event *event);
++
+ /**
+  * @returns a timestamp for the current time to pass into
+  * eis_device_frame().
+diff --git a/src/meson.build b/src/meson.build
+index 583a2fb..fc553c8 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -58,6 +58,7 @@ if build_libei
+         'libei-scroll.c',
+         'libei-seat.c',
+         'libei-socket.c',
++        'libei-text.c',
+         'libei-touchscreen.c',
+     ) + [brei_proto_headers, ei_proto_headers, ei_proto_sources]
+ 
+@@ -121,6 +122,7 @@ if build_libeis
+         'libeis-scroll.c',
+         'libeis-seat.c',
+         'libeis-socket.c',
++        'libeis-text.c',
+         'libeis-touchscreen.c',
+         'libeis.c',
+     ) + [brei_proto_headers, eis_proto_headers, eis_proto_sources]
+diff --git a/tools/ei-debug-events.c b/tools/ei-debug-events.c
+index 02bfeb8..2a364d8 100644
+--- a/tools/ei-debug-events.c
++++ b/tools/ei-debug-events.c
+@@ -51,6 +51,10 @@
+ #define libevdev_event_code_get_name(...) ""
+ #endif
+ 
++#if HAVE_LIBXKBCOMMON
++#include <xkbcommon/xkbcommon.h>
++#endif
++
+ #include "libei.h"
+ 
+ #include "src/util-macros.h"
+@@ -227,6 +231,32 @@ print_key_event(struct ei_event *event)
+ 	printf("  press: %s\n", press ? "true" : "false");
+ }
+ 
++static void
++print_keysym_event(struct ei_event *event)
++{
++	print_device(event);
++
++	uint32_t keysym = ei_event_text_get_keysym(event);
++	bool press = ei_event_text_get_keysym_is_press(event);
++
++	char buf[128] = {0};
++#if HAVE_LIBXKBCOMMON
++	xkb_keysym_get_name(keysym, buf, sizeof(buf));
++#else
++	snprintf(buf, sizeof(buf), "0x%04x", keysym);
++#endif
++
++	printf("  keysym: 0x%08x # %s\n", keysym, buf);
++	printf("  press: %s\n", press ? "true" : "false");
++}
++
++static void
++print_utf8_event(struct ei_event *event)
++{
++	const char *text = ei_event_text_get_utf8(event);
++	printf("  utf8: '%s'\n", text);
++}
++
+ static void
+ print_touch_event(struct ei_event *event)
+ {
+@@ -434,6 +464,12 @@ int main(int argc, char **argv)
+ 			case EI_EVENT_KEYBOARD_KEY:
+ 				print_key_event(e);
+ 				break;
++			case EI_EVENT_TEXT_KEYSYM:
++				print_keysym_event(e);
++				break;
++			case EI_EVENT_TEXT_UTF8:
++				print_utf8_event(e);
++				break;
+ 			case EI_EVENT_TOUCH_DOWN:
+ 			case EI_EVENT_TOUCH_MOTION:
+ 			case EI_EVENT_TOUCH_UP:
+diff --git a/tools/ei-demo-client.c b/tools/ei-demo-client.c
+index 95dd606..0e50dc9 100644
+--- a/tools/ei-demo-client.c
++++ b/tools/ei-demo-client.c
+@@ -126,7 +126,7 @@ setup_xkb_keymap(struct ei_keymap *keymap)
+ 	for (unsigned int evcode = KEY_Q; evcode <= KEY_Y; evcode++) {
+ 		char utf8[7];
+ 		xkb_keysym_t keysym = xkb_state_key_get_one_sym(xkbstate, evcode + 8);
+-		xkb_keysym_to_utf8(keysym, utf8, sizeof(utf8));
++		xkb_keysym_get_name(keysym, utf8, sizeof(utf8));
+ 		strcat(layout, utf8);
+ 	}
+ 
+@@ -300,12 +300,14 @@ int main(int argc, char **argv)
+ 	_unref_(ei_device) *kbd = NULL;
+ 	_unref_(ei_device) *abs = NULL;
+ 	_unref_(ei_device) *touch = NULL;
++	_unref_(ei_device) *text = NULL;
+ 
+ 	bool stop = false;
+ 	bool have_ptr = false;
+ 	bool have_kbd = false;
+ 	bool have_abs = false;
+ 	bool have_touch = false;
++	bool have_text = false;
+ 	struct ei_seat *default_seat = NULL;
+ 
+ 	uint32_t sequence = 0;
+@@ -343,7 +345,9 @@ int main(int argc, char **argv)
+ 							  EI_DEVICE_CAP_POINTER_ABSOLUTE,
+ 							  EI_DEVICE_CAP_TOUCH,
+ 							  EI_DEVICE_CAP_BUTTON,
+-							  EI_DEVICE_CAP_SCROLL, NULL);
++							  EI_DEVICE_CAP_SCROLL,
++							  EI_DEVICE_CAP_TEXT,
++							  NULL);
+ 				break;
+ 				}
+ 			case EI_EVENT_SEAT_REMOVED:
+@@ -375,6 +379,10 @@ int main(int argc, char **argv)
+ 					touch = ei_device_ref(device);
+ 					handle_regions(device);
+ 				}
++				if (ei_device_has_capability(device, EI_DEVICE_CAP_TEXT)) {
++					colorprint("New text device: %s\n", ei_device_get_name(device));
++					text = ei_device_ref(device);
++				}
+ 				}
+ 				break;
+ 			case EI_EVENT_DEVICE_RESUMED:
+@@ -402,6 +410,12 @@ int main(int argc, char **argv)
+ 					colorprint("Touch device was resumed\n");
+ 					have_touch = true;
+ 				}
++				if (ei_event_get_device(e) == text) {
++					if (!receiver)
++						ei_device_start_emulating(text, ++sequence);
++					colorprint("Text device was resumed\n");
++					have_text = true;
++				}
+ 				break;
+ 			case EI_EVENT_DEVICE_PAUSED:
+ 				if (ei_event_get_device(e) == ptr) {
+@@ -420,6 +434,10 @@ int main(int argc, char **argv)
+ 					colorprint("Touch device was paused\n");
+ 					have_touch = false;
+ 				}
++				if (ei_event_get_device(e) == text) {
++					colorprint("Text device was paused\n");
++					have_text = false;
++				}
+ 				break;
+ 			case EI_EVENT_DEVICE_REMOVED:
+ 				{
+@@ -497,6 +515,31 @@ int main(int argc, char **argv)
+ 				colorprint("touch up %u\n", ei_event_touch_get_id(e));
+ 				}
+ 				break;
++			case EI_EVENT_TEXT_KEYSYM:
++				{
++					char buf[128];
++					uint32_t keysym = ei_event_text_get_keysym(e);
++#if HAVE_LIBXKBCOMMON
++					xkb_keysym_to_utf8(keysym, buf, sizeof(buf));
++#else
++					snprintf(buf, sizeof(buf), "0x%04x", keysym);
++#endif
++				colorprint("text keysym %u [%s] (%s)\n",
++					   keysym,
++					   buf,
++					   ei_event_text_get_keysym_is_press(e) ? "press" : "release");
++				}
++				break;
++			case EI_EVENT_TEXT_UTF8:
++				{
++					colorprint("text utf8 '%s'\n", ei_event_text_get_utf8(e));
++				}
++				break;
++			case EI_EVENT_SYNC:
++				{
++				colorprint("sync\n");
++				}
++				break;
+ 			default:
+ 				abort();
+ 			}
+@@ -575,6 +618,24 @@ int main(int argc, char **argv)
+ 				}
+ 
+ 			}
++
++			if (have_text) {
++				static int key = 0;
++				colorprint("sending text event\n");
++				// #define XK_dead_a                        0xfe80
++				ei_device_text_keysym(text, 0xfe80 + key, true); /* KEY_Q */
++				ei_device_frame(text, now);
++				now += interval;
++				ei_device_text_keysym(text, 0xfe80 + key, false); /* KEY_Q */
++				ei_device_frame(text, now);
++				now += interval;
++				key = (key + 1) % 6;
++
++				colorprint("sending text utf8 event\n");
++				ei_device_text_utf8(text, "👋 World!");
++				ei_device_frame(text, now);
++				now += interval;
++			}
+ 		}
+ 	}
+ 
+@@ -587,13 +648,17 @@ int main(int argc, char **argv)
+ 		ei_device_close(abs);
+ 	if (touch)
+ 		ei_device_close(touch);
++	if (text)
++		ei_device_close(text);
+ 	if (default_seat) {
+ 		ei_seat_bind_capabilities(default_seat, EI_DEVICE_CAP_POINTER,
+ 							EI_DEVICE_CAP_KEYBOARD,
+ 							EI_DEVICE_CAP_POINTER_ABSOLUTE,
+ 							EI_DEVICE_CAP_TOUCH,
+ 							EI_DEVICE_CAP_BUTTON,
+-							EI_DEVICE_CAP_SCROLL, NULL);
++							EI_DEVICE_CAP_SCROLL,
++							EI_DEVICE_CAP_TEXT,
++							NULL);
+ 		ei_seat_unref(default_seat);
+ 	}
+ 
+diff --git a/tools/eis-demo-server.c b/tools/eis-demo-server.c
+index ee1586f..938fdd1 100644
+--- a/tools/eis-demo-server.c
++++ b/tools/eis-demo-server.c
+@@ -124,6 +124,7 @@ eis_demo_client_destroy(struct eis_demo_client *democlient)
+ 	eis_device_unref(democlient->abs);
+ 	eis_device_unref(democlient->kbd);
+ 	eis_device_unref(democlient->touchscreen);
++	eis_device_unref(democlient->text);
+ }
+ 
+ static
+@@ -333,6 +334,20 @@ add_device(struct eis_demo_server *server, struct eis_client *client,
+ 	case EIS_DEVICE_CAP_SCROLL:
+ 		/* Mixed in with pointer/abs - good enough for a demo server */
+ 		break;
++	case EIS_DEVICE_CAP_TEXT:
++		{
++		struct eis_device *text = eis_seat_new_device(seat);
++		eis_device_configure_name(text, "test text device");
++		eis_device_configure_capability(text, EIS_DEVICE_CAP_TEXT);
++		colorprint("Creating text device %s for %s\n", eis_device_get_name(text),
++			   eis_client_get_name(client));
++		eis_device_add(text);
++		eis_device_resume(text);
++		if (!eis_client_is_sender(client))
++			eis_device_start_emulating(text, ++sequence);
++		device = steal(&text);
++		break;
++		}
+ 	}
+ 
+ 	return device;
+@@ -372,6 +387,7 @@ eis_demo_server_printf_handle_event(struct eis_demo_server *server,
+ 		eis_seat_configure_capability(seat, EIS_DEVICE_CAP_TOUCH);
+ 		eis_seat_configure_capability(seat, EIS_DEVICE_CAP_BUTTON);
+ 		eis_seat_configure_capability(seat, EIS_DEVICE_CAP_SCROLL);
++		eis_seat_configure_capability(seat, EIS_DEVICE_CAP_TEXT);
+ 		eis_seat_add(seat);
+ 		/* Note: we don't have a ref to this seat ourselves anywhere */
+ 		break;
+@@ -437,12 +453,23 @@ eis_demo_server_printf_handle_event(struct eis_demo_server *server,
+ 			}
+ 		}
+ 
++		if (eis_event_seat_has_capability(e, EIS_DEVICE_CAP_TEXT)) {
++			if (!democlient->text)
++				democlient->text = add_device(server, client, seat, EIS_DEVICE_CAP_TEXT);
++		} else {
++			if (democlient->text) {
++				eis_device_remove(democlient->text);
++				democlient->text = eis_device_unref(democlient->text);
++			}
++		}
++
+ 		/* Special "Feature", if all caps are unbound remove the seat.
+ 		 * This is a demo server after all, so let's demo this. */
+ 		if (!eis_event_seat_has_capability(e, EIS_DEVICE_CAP_POINTER) &&
+ 		    !eis_event_seat_has_capability(e, EIS_DEVICE_CAP_POINTER_ABSOLUTE) &&
+ 		    !eis_event_seat_has_capability(e, EIS_DEVICE_CAP_KEYBOARD) &&
+-		    !eis_event_seat_has_capability(e, EIS_DEVICE_CAP_TOUCH))
++		    !eis_event_seat_has_capability(e, EIS_DEVICE_CAP_TOUCH) &&
++		    !eis_event_seat_has_capability(e, EIS_DEVICE_CAP_TEXT))
+ 			eis_seat_remove(seat);
+ 
+ 		break;
+@@ -468,6 +495,9 @@ eis_demo_server_printf_handle_event(struct eis_demo_server *server,
+ 			if (democlient->touchscreen == device)
+ 				democlient->touchscreen = NULL;
+ 
++			if (democlient->text == device)
++				democlient->text = NULL;
++
+ 			eis_device_unref(device);
+ 		}
+ 		break;
+@@ -540,6 +570,27 @@ eis_demo_server_printf_handle_event(struct eis_demo_server *server,
+ 		colorprint("touch up %u\n", eis_event_touch_get_id(e));
+ 		}
+ 		break;
++	case EIS_EVENT_TEXT_KEYSYM:
++		{
++		char buf[128] = {0};
++		uint32_t keysym = eis_event_text_get_keysym(e);
++#if HAVE_LIBXKBCOMMON
++		xkb_keysym_get_name(keysym, buf, sizeof(buf));
++#else
++		snprintf(buf, sizeof(buf), "0x%04x", keysym);
++#endif
++		colorprint("text keysym %u [%s] (%s)\n",
++			   keysym,
++			   buf,
++			   eis_event_text_get_keysym_is_press(e) ? "press" : "release");
++		}
++		break;
++	case EIS_EVENT_TEXT_UTF8:
++		{
++			const char *text = eis_event_text_get_utf8(e);
++			colorprint("text utf8 '%s'\n", text);
++		}
++		break;
+ 	case EIS_EVENT_FRAME:
+ 		{
+ 		colorprint("frame timestamp: %" PRIu64 "\n",
+@@ -728,6 +779,7 @@ int main(int argc, char **argv)
+ 			struct eis_device *kbd = democlient->kbd;
+ 			struct eis_device *abs = democlient->abs;
+ 			struct eis_device *touchscreen = democlient->touchscreen;
++			struct eis_device *text = democlient->text;
+ 			if (ptr) {
+ 				colorprint("sending motion event\n");
+ 				eis_device_pointer_motion(ptr, -1, 1);
+@@ -800,6 +852,24 @@ int main(int argc, char **argv)
+ 				}
+ 
+ 			}
++
++			if (text) {
++				static int key = 0;
++				colorprint("sending text event\n");
++
++				// #define XK_ssharp 0x00df  /* U+00DF LATIN SMALL LETTER SHARP S */
++				eis_device_text_keysym(text, 0x00df + key, true); /* KEY_Q */
++				eis_device_frame(text, now);
++				now += interval;
++				eis_device_text_keysym(text, 0x00df + key, false); /* KEY_Q */
++				eis_device_frame(text, now);
++				now += interval;
++				key = (key + 1) % 6;
++
++				eis_device_text_utf8(text, "👋🏽 World");
++				eis_device_frame(text, now);
++				now += interval;
++			}
+ 		}
+ 	}
+ 
+diff --git a/tools/eis-demo-server.h b/tools/eis-demo-server.h
+index 18a1bac..a17bd81 100644
+--- a/tools/eis-demo-server.h
++++ b/tools/eis-demo-server.h
+@@ -40,6 +40,7 @@ struct eis_demo_client {
+ 	struct eis_device *abs;
+ 	struct eis_device *touchscreen;
+ 	struct eis_touch *touch;
++	struct eis_device *text;
+ };
+ 
+ struct eis_demo_server {
+diff --git a/tools/meson.build b/tools/meson.build
+index e859713..7724e4f 100644
+--- a/tools/meson.build
++++ b/tools/meson.build
+@@ -29,7 +29,12 @@ if build_libei
+ 
+     executable('ei-debug-events',
+                'ei-debug-events.c',
+-               dependencies: [dep_libutil, dep_libei, dep_libevdev],
++               dependencies: [
++                   dep_libutil,
++                   dep_libei,
++                   dep_libevdev,
++                   dep_libxkbcommon
++               ],
+                include_directories: [inc_builddir],
+                install: true
+     )
+-- 
+2.50.1
+
