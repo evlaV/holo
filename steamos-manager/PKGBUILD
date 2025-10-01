@@ -4,7 +4,7 @@
 pkgname=steamos-manager
 _srctag=v25.9.0
 pkgver=${_srctag##v}
-pkgrel=1
+pkgrel=2
 pkgdesc='SteamOS Manager daemon for running various system management tasks'
 arch=('x86_64')
 url='https://store.steampowered.com/steamos/'
@@ -466,6 +466,9 @@ package () {
 
 	install -d -m0755 "$pkgdir/usr/lib/systemd/user/gamescope-session.service.wants/"
 	ln -s ../steamos-manager.service "$pkgdir/usr/lib/systemd/user/gamescope-session.service.wants/"
+
+	install -d -m0755 "$pkgdir/usr/lib/systemd/user/graphical-session-pre.target.wants/"
+	ln -s ../steamos-manager-session-cleanup.service "$pkgdir/usr/lib/systemd/user/graphical-session-pre.target.wants/"
 }
 
 check() {
