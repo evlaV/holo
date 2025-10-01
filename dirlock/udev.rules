@@ -1,0 +1,2 @@
+# Give the user access to the TPM
+KERNEL=="tpm[0-9]*", TAG+="uaccess"

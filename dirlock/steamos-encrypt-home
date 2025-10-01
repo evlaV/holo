@@ -38,7 +38,7 @@ fi
 check_encryption_enabled() {
     echo -en "** ${CYAN}Checking if encryption is enabled${NC}: "
     if dumpe2fs -h /dev/disk/by-label/home 2> /dev/null | grep -q '^Filesystem features:.*encrypt' && \
-            dirlock status -b /home/deck &> /dev/null && \
+            dirlock status -e /home/deck &> /dev/null && \
             test -f /etc/atomic-update.conf.d/dirlock.conf && \
             systemctl is-enabled -q dirlock-sddm.service && \
             grep -q '^auth\s.*\spam_dirlock.so' /etc/pam.d/system-auth; then
@@ -127,7 +127,7 @@ encrypt_home() {
     echo -e "** ${CYAN}Initializing encryption for /home/deck${NC}"
     rm -rf "$tempdir"
     mkdir -p "$tempdir/enc"
-    dirlock encrypt --protector-type "$protector" --protector-name "Protector for /home/deck" "$tempdir/enc"
+    dirlock encrypt --user deck --protector-type "$protector" --protector-name "Protector for /home/deck" "$tempdir/enc"
     echo -e "** ${CYAN}Encrypting /home/deck (this can take a while)${NC}"
     rsync -aAXH --open-noatime --info=progress2 /home/deck/ "$tempdir/enc/deck/"
     mv "$tempdir/enc/deck" "$tempdir/deck"
