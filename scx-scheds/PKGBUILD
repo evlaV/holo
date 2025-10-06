@@ -5,7 +5,7 @@
 
 pkgname=scx-scheds
 gitname=scx
-pkgver=1.0.15.linux.neptune.611
+pkgver=1.0.16.linux.neptune
 pkgrel=1
 pkgdesc="sched_ext schedulers"
 arch=('x86_64')
@@ -15,7 +15,7 @@ depends=('libelf' 'zlib' 'jq')
 makedepends=('git' 'openssh' 'python' 'meson' 'clang' 'llvm' 'llvm-libs' 'rust' 'cargo')
 backup=('etc/default/scx' 'etc/systemd/journald@sched-ext.conf')
 source=("git+https://github.com/evlav/scx.git#tag=v$pkgver")
-sha256sums=('f6ece09e1a6aa738e1555be60ad57a111a912ab1dbe17660796ddabd53facacc')
+sha256sums=('fc3dce4c7f4d34fa93e837f598774c56d50462b3c16761f376d324b99c39d8b3')
 options=(!lto)
 provides=("scx-scheds=$pkgver")
 conflicts=(
@@ -64,8 +64,5 @@ package() {
   cd $gitname
   install -Dm644 "services/scx" "${pkgdir}/etc/default/scx"
   install -Dm644 "services/systemd/scx.service" "${pkgdir}/usr/lib/systemd/system/scx.service"
-  install -Dm644 "libalpm/systemd/90-scx-scheds-upgrade.hook" "${pkgdir}/usr/share/libalpm/hooks/90-scx-scheds-upgrade.hook"
-  install -Dm755 "libalpm/systemd/scx-systemd-restart" "${pkgdir}/usr/share/libalpm/scripts/scx-systemd-restart"
   install -Dm755 "build/release/scx_lavd" "${pkgdir}/usr/bin/scx_lavd"
-  install -Dm644 "LICENSE" "${pkgdir}/usr/share/licenses/$pkgname/LICENSE"
 }
