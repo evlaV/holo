@@ -5,9 +5,9 @@
 # Maintainer: Olivier Tilloy <otilloy@igalia.com>
 
 pkgname=xdg-desktop-portal-gamescope
-_commit=20ac8204acbb0a9735e9b5de8fa814e95beabfe3
-pkgver=0.1.21.20ac820
-pkgrel=2
+_commit=bf83640498a30b80af310ef36d232ae66d31213e
+pkgver=0.1.22.bf83640
+pkgrel=1
 pkgdesc='A backend implementation for xdg-desktop-portal talking to gamescope'
 url='https://github.com/evlav/xdg-desktop-portal-gamescope'
 arch=('x86_64')
@@ -16,7 +16,7 @@ source=("git+https://github.com/evlav/$pkgname.git#commit=$_commit"
         'adler2-2.0.0.tar.gz::https://crates.io/api/v1/crates/adler2/2.0.0/download'
         'android-tzdata-0.1.1.tar.gz::https://crates.io/api/v1/crates/android-tzdata/0.1.1/download'
         'android_system_properties-0.1.5.tar.gz::https://crates.io/api/v1/crates/android_system_properties/0.1.5/download'
-        'ashpd-0.11.0.tar.gz::https://github.com/bilelmoussaoui/ashpd/archive/51cc0b1109c1160f609563eb303979059738aaef.tar.gz'
+        'ashpd-0.12.0.tar.gz::https://crates.io/api/v1/crates/ashpd/0.12.0/download'
         'async-broadcast-0.7.2.tar.gz::https://crates.io/api/v1/crates/async-broadcast/0.7.2/download'
         'async-recursion-1.1.1.tar.gz::https://crates.io/api/v1/crates/async-recursion/1.1.1/download'
         'async-trait-0.1.88.tar.gz::https://crates.io/api/v1/crates/async-trait/0.1.88/download'
@@ -216,7 +216,7 @@ sha256sums=('SKIP'
             '512761e0bb2578dd7380c6baaa0f4ce03e84f95e960231d1dec8bf4d7d6e2627'
             'e999941b234f3131b00bc13c22d06e8c5ff726d1b6318ac7eb276997bbb4fef0'
             '819e7219dbd41043ac279b19830f2efc897156490d7fd6ea916720117ee66311'
-            'c5ffa84c4cb282914ef968baa7d8416c43b60e0ebfb601088823a2e5753caffd'
+            'da0986d5b4f0802160191ad75f8d33ada000558757db3defb70299ca95d9fcbd'
             '435a87a52755b8f27fcf321ac4f04b2802e337c8c4872923137471ec39c37532'
             '3b43422f69d8ff38f95f1b2bb76517c91589a924d1559a0e935d7c8ce0274c11'
             'e539d3fca749fcee5236ab05e93a52867dd549cc157c8cb7f99595f3cedffdb5'
@@ -425,11 +425,6 @@ prepare() {
     [source."crates-io"]
     replace-with = "vendored-sources"
 
-    [source."git+https://github.com/bilelmoussaoui/ashpd?rev=51cc0b1109c1160f609563eb303979059738aaef"]
-    git = "https://github.com/bilelmoussaoui/ashpd"
-    rev = "51cc0b1109c1160f609563eb303979059738aaef"
-    replace-with = "vendored-sources"
-
     [source.vendored-sources]
     directory = "${srcdir}/vendored"
 EOF
@@ -439,7 +434,7 @@ build () {
   cd "$srcdir/$pkgname"
 
   arch-meson _build .
-  meson compile -C _build
+  env CARGO_NET_OFFLINE=true meson compile -C _build
 }
 
 package() {
