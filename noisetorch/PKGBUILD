@@ -28,13 +28,13 @@ pkgver() {
 }
 
 
-pkgrel=1
+pkgrel=2
 arch=(x86_64 aarch64)
 pkgdesc="RNNoise LADSPA noise suppression filter for pipewire & pulseaudio"
 license=(GPL3)
 makedepends=(git gcc make)
 sha512sums=('SKIP'
-            'b029caceb00e0d4a0c12c6bbfd1af3b413b1678d2cfcf37713b00526dabbe2d7faeaa0a08c388baf2bc9ffb16ce2f4a5c46006102a3d6603e9127e672393a4a0')
+            '0307006381f5603d1e1db3e327b475f9bd9599cf7f1b41f747abc1e49b509502a4790ac1686826c5e1902273d72312f414275046fbd9b2032603bd16543cb118')
 
 prepare ()
 {
