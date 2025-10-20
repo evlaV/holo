@@ -125,7 +125,25 @@ run 'getent ahostsv4 test.steampowered.com'
 run 'getent ahostsv6 test.steampowered.com'
 
 # Audio info
+run 'ls -lt /dev/snd/*'
+run 'aplay -l'
+run 'arecord -l'
+run "find /proc/asound/card* -name 'eld*' -print -exec cat '{}' \;"
+run "find ~/.config/{pipewire,wireplumber} -type f -print -exec echo '{}' \;"
+run "find ~/.local/share/wireplumber -type f -print -exec echo '{}' \;"
+run 'pw-dump Client | jq -c'
+run 'pw-dump Device | jq -c'
+run 'pw-dump Node | jq -c'
+run 'pw-dump Port | jq -c'
+run 'pw-dump Link | jq -c'
 run 'wpctl status'
+run 'wpctl settings'
+run 'pactl list clients'
+run 'pactl list cards'
+run 'pactl list sinks'
+run 'pactl list sources'
+run 'pactl list sink-inputs'
+run 'pactl list source-outputs'
 
 # Battery / power info
 run 'upower -d'
