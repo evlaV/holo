@@ -4,7 +4,7 @@
 pkgname=discover
 pkgver=6.2.5
 _dirver=$(echo $pkgver | cut -d. -f1-3)
-pkgrel=1.1 # Holo change to enable steamos backend.
+pkgrel=1.2 # Holo change to handle EOL Flatpak runtimes
 pkgdesc='KDE and Plasma resources management GUI'
 arch=(x86_64)
 url='https://kde.org/plasma-desktop/'
@@ -48,13 +48,21 @@ optdepends=('flatpak: Flatpak packages support'
             'fwupd: firmware update support'
             'packagekit-qt6: to manage packages from Arch Linux repositories (not recommended, use at your own risk)')
 groups=(plasma)
-source=(https://download.kde.org/stable/plasma/$_dirver/$pkgname-$pkgver.tar.xz{,.sig})
+source=(https://download.kde.org/stable/plasma/$_dirver/$pkgname-$pkgver.tar.xz{,.sig}
+        0001-flatpak-do-not-mark-eol-runtimes-for-uninstall.patch # Not needed in Discover >= 6.3
+        )
 sha256sums=('8ccbb881392a4bad540ab0bb465637a0e206ef6b53e7bf02e71bc8fb6453a4a4'
-            'SKIP')
+            'SKIP'
+            '5eddb727328fd846bdc806d4a076d52a1ca43a617a0ce68250771d7efaced181')
 validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>
               '0AAC775BB6437A8D9AF7A3ACFE0784117FBCE11D'  # Bhushan Shah <bshah@kde.org>
               'D07BD8662C56CB291B316EB2F5675605C74E02CF'  # David Edmundson <davidedmundson@kde.org>
               '1FA881591C26B276D7A5518EEAAF29B42A678C20') # Marco Martin <notmart@gmail.com>
+
+prepare() {
+  cd $pkgname-$pkgver
+  patch -Np1 < ../0001-flatpak-do-not-mark-eol-runtimes-for-uninstall.patch
+}
 
 build() {
   cmake -B build -S $pkgname-$pkgver \

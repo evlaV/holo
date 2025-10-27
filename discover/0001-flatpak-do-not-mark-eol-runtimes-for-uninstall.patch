@@ -1,0 +1,38 @@
+From 80678730a8aa1a731498f6738180c0c0ce4f61e9 Mon Sep 17 00:00:00 2001
+From: Harald Sitter <sitter@kde.org>
+Date: Tue, 4 Mar 2025 18:57:04 +0100
+Subject: [PATCH] flatpak: do not mark eol runtimes for uninstall
+
+this breaks transactions with EOL runtimes that are still used.
+specifically we'll add an uninstall operation to the transaction but
+that operation will fail when the runtime is still used by apps (which
+too may be EOL, mind).
+
+instead we just discard the EOL callback and keep the runtime installed.
+the runtime will eventually get removed when the last user gets removed
+by the user.
+---
+ .../backends/FlatpakBackend/FlatpakTransactionThread.cpp   | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/libdiscover/backends/FlatpakBackend/FlatpakTransactionThread.cpp b/libdiscover/backends/FlatpakBackend/FlatpakTransactionThread.cpp
+index d6f0ad6ae..9e8fc3d13 100644
+--- a/libdiscover/backends/FlatpakBackend/FlatpakTransactionThread.cpp
++++ b/libdiscover/backends/FlatpakBackend/FlatpakTransactionThread.cpp
+@@ -430,6 +430,13 @@ bool FlatpakTransactionThread::end_of_lifed_with_rebase(const char *remote,
+     if (QString::fromUtf8(ref).startsWith("runtime/"_L1) || QString::fromUtf8(rebased_to_ref).startsWith("runtime/"_L1)) {
+         qCDebug(LIBDISCOVER_BACKEND_FLATPAK_LOG) << "Automatically transitioning runtime";
+         m_proceed = true;
++
++        switch (target) {
++        case Execute::Rebase:
++            break;
++        case Execute::Uninstall:
++            return false; // do not attempt to automatically remove runtimes, they may still be used and we may fail the transaction
++        }
+     } else {
+         m_proceed = false;
+ 
+-- 
+2.51.0
+
