@@ -1,9 +1,9 @@
 # Maintainer: Holo Team
 
 pkgname=steamos-efi
-_srctag=jupiter-20250718.1
+_srctag=jupiter-20251023.1
 pkgver=${_srctag#jupiter-}
-pkgrel=2
+pkgrel=1
 arch=('x86_64')
 url='https://github.com/evlav/steamos-efi'
 pkgdesc='Stage 1 bootloader for SteamOS 3+'
@@ -11,7 +11,7 @@ license=('GPL2')
 depends=('efibootmgr' 'util-linux' 'coreutils')
 makedepends=('git' 'openssh' 'gnu-efi-libs' 'grub' 'fontconfig' 'noto-fonts')
 source=("git+https://github.com/evlav/${pkgname}.git#tag=$_srctag")
-sha512sums=('SKIP')
+sha512sums=('2b1c69ac6ffe5aa6ac115b72cf8705199f4c57eee6cc35a3e7f616a380ec4f982e6b4521709b110a8012afc8ea3941cc00b1b0230f63ae0bf06000749ca08535')
 
 build() {
 	cd "${pkgname}"
