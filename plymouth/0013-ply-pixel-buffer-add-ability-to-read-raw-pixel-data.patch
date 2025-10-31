@@ -1,0 +1,315 @@
+From 92f6f14620c8fca0d00a1bf30ed035c0fdf0afb8 Mon Sep 17 00:00:00 2001
+From: Robert Beckett <bob.beckett@collabora.com>
+Date: Fri, 11 Apr 2025 18:34:27 +0100
+Subject: [PATCH 33/36] ply-pixel-buffer: add ability to read raw pixel data
+
+add ability to read pixel data from raw byte arrays while
+considering pitches, rotations and pixel format conversions.
+
+Signed-off-by: Robert Beckett <bob.beckett@collabora.com>
+---
+ src/libply-splash-core/ply-pixel-buffer.c | 196 +++++++++++++++++-----
+ src/libply-splash-core/ply-pixel-buffer.h |   8 +
+ 2 files changed, 165 insertions(+), 39 deletions(-)
+
+diff --git a/src/libply-splash-core/ply-pixel-buffer.c b/src/libply-splash-core/ply-pixel-buffer.c
+index cc55a6ff..e0d7c7d1 100644
+--- a/src/libply-splash-core/ply-pixel-buffer.c
++++ b/src/libply-splash-core/ply-pixel-buffer.c
+@@ -180,25 +180,54 @@ static inline void ply_pixel_buffer_set_pixel (ply_pixel_buffer_t *buffer,
+         }
+ }
+ 
++static inline uint32_t ply_pixel_buffer_get_data_pixel (uint32_t *data,
++                                                        int       x,
++                                                        int       y,
++                                                        uint32_t  maxx,
++                                                        uint32_t  maxy,
++                                                        uint32_t pitch,
++                                                        uint32_t height,
++                                                        ply_pixel_buffer_rotation_t data_rotation)
++{
++        switch (data_rotation) {
++        case PLY_PIXEL_BUFFER_ROTATE_UPRIGHT:
++                return data[y * pitch + x];
++        case PLY_PIXEL_BUFFER_ROTATE_UPSIDE_DOWN:
++                x = maxx - x;
++                y = maxy - y;
++                return data[y * pitch + x];
++        case PLY_PIXEL_BUFFER_ROTATE_CLOCKWISE:
++                y = maxy - y;
++                return data[x * pitch + y];
++        case PLY_PIXEL_BUFFER_ROTATE_COUNTER_CLOCKWISE:
++                x = maxx - x;
++                return data[x * pitch + y];
++        }
++        return 0;
++}
++
+ static inline uint32_t ply_pixel_buffer_get_pixel (ply_pixel_buffer_t *buffer,
+                                                    int                 x,
+                                                    int                 y)
+ {
+-        switch (buffer->device_rotation) {
+-        case PLY_PIXEL_BUFFER_ROTATE_UPRIGHT:
+-                return buffer->bytes[y * buffer->area.width + x];
+-        case PLY_PIXEL_BUFFER_ROTATE_UPSIDE_DOWN:
+-                x = (buffer->area.width - 1) - x;
+-                y = (buffer->area.height - 1) - y;
+-                return buffer->bytes[y * buffer->area.width + x];
+-        case PLY_PIXEL_BUFFER_ROTATE_CLOCKWISE:
+-                y = (buffer->area.height - 1) - y;
+-                return buffer->bytes[x * buffer->area.height + y];
+-        case PLY_PIXEL_BUFFER_ROTATE_COUNTER_CLOCKWISE:
+-                x = (buffer->area.width - 1) - x;
+-                return buffer->bytes[x * buffer->area.height + y];
++        uint32_t pitch, height;
++        ply_pixel_buffer_rotation_t rotation = buffer->device_rotation;
++
++        if (rotation == PLY_PIXEL_BUFFER_ROTATE_CLOCKWISE ||
++            rotation == PLY_PIXEL_BUFFER_ROTATE_COUNTER_CLOCKWISE) {
++                pitch = buffer->area.height;
++                height = buffer->area.width;
++        } else {
++                pitch = buffer->area.width;
++                height = buffer->area.height;
+         }
+-        return 0;
++
++        return ply_pixel_buffer_get_data_pixel(buffer->bytes, x, y,
++                                              buffer->area.width - 1,
++                                              buffer->area.height - 1,
++                                              pitch,
++                                              height,
++                                              rotation);
+ }
+ 
+ static inline void
+@@ -649,10 +678,14 @@ ply_pixel_buffer_fill_with_hex_color (ply_pixel_buffer_t *buffer,
+ 
+ static inline uint32_t
+ ply_pixels_interpolate (uint32_t *bytes,
+-                        int       width,
+-                        int       height,
+                         double    x,
+-                        double    y)
++                        double    y,
++                        uint32_t  maxx,
++                        uint32_t  maxy,
++                        uint32_t  data_pitch,
++                        uint32_t  data_height,
++                        ply_pixel_buffer_rotation_t data_rotation,
++                        uint32_t (*swizzle_func)(uint32_t))
+ {
+         int ix;
+         int iy;
+@@ -661,22 +694,31 @@ ply_pixels_interpolate (uint32_t *bytes,
+         int offset_y;
+         uint32_t pixels[2][2];
+         uint32_t reply = 0;
++        uint32_t val;
++
+ 
+         for (offset_y = 0; offset_y < 2; offset_y++) {
+                 for (offset_x = 0; offset_x < 2; offset_x++) {
+                         ix = x + offset_x;
+                         iy = y + offset_y;
+ 
+-                        if (ix >= width)
+-                                ix = width - 1;
++                        if (ix > (int)maxx)
++                                ix = maxx;
+ 
+-                        if (iy >= height)
+-                                iy = height - 1;
++                        if (iy > (int)maxy)
++                                iy = maxy;
+ 
+                         if (ix < 0 || iy < 0)
+-                                pixels[offset_y][offset_x] = 0x00000000;
++                                val = 0x00000000;
+                         else
+-                                pixels[offset_y][offset_x] = bytes[ix + iy * width];
++                                val = ply_pixel_buffer_get_data_pixel (bytes, ix, iy,
++                                                                       maxx, maxy,
++                                                                       data_pitch,
++                                                                       data_height,
++                                                                       data_rotation);
++                        if (swizzle_func)
++                                val = swizzle_func (val);
++                        pixels[offset_y][offset_x] = val;
+                 }
+         }
+         if (!pixels[0][0] && !pixels[0][1] && !pixels[1][0] && !pixels[1][1]) return 0;
+@@ -697,13 +739,18 @@ ply_pixels_interpolate (uint32_t *bytes,
+         return reply;
+ }
+ 
+-void
+-ply_pixel_buffer_fill_with_argb32_data_at_opacity_with_clip_and_scale (ply_pixel_buffer_t *buffer,
+-                                                                       ply_rectangle_t    *fill_area,
+-                                                                       ply_rectangle_t    *clip_area,
+-                                                                       uint32_t           *data,
+-                                                                       double              opacity,
+-                                                                       int                 scale)
++static void
++ply_pixel_buffer_fill_with_32bit_data (ply_pixel_buffer_t *buffer,
++                                       ply_rectangle_t    *fill_area,
++                                       ply_rectangle_t    *clip_area,
++                                       uint32_t           *data,
++                                       double              opacity,
++                                       int                 scale,
++                                       bool                ignore_src_alpha,
++                                       uint32_t            data_pitch,
++                                       uint32_t            data_height,
++                                       ply_pixel_buffer_rotation_t data_rotation,
++                                       uint32_t          (*swizzle_func)(uint32_t))
+ {
+         unsigned long row, column;
+         uint8_t opacity_as_byte;
+@@ -752,16 +799,30 @@ ply_pixel_buffer_fill_with_argb32_data_at_opacity_with_clip_and_scale (ply_pixel
+                 for (column = x; column < x + cropped_area.width; column++) {
+                         uint32_t pixel_value;
+ 
+-                        if (buffer->device_scale == scale)
+-                                pixel_value = data[fill_area->width * (row - fill_area->y) +
+-                                                   column - fill_area->x];
+-                        else
++                        if (buffer->device_scale == scale) {
++                                pixel_value = ply_pixel_buffer_get_data_pixel (data,
++                                                                               column - fill_area->x,
++                                                                               row - fill_area->y,
++                                                                               fill_area->width - 1,
++                                                                               fill_area->height - 1,
++                                                                               data_pitch,
++                                                                               data_height,
++                                                                               data_rotation);
++                                if (swizzle_func)
++                                        pixel_value = swizzle_func(pixel_value);
++                        } else {
+                                 pixel_value = ply_pixels_interpolate (data,
+-                                                                      fill_area->width,
+-                                                                      fill_area->height,
+                                                                       scale_factor * column - fill_area->x,
+-                                                                      scale_factor * row - fill_area->y);
+-                        if ((pixel_value >> 24) == 0x00)
++                                                                      scale_factor * row - fill_area->y,
++                                                                      fill_area->width - 1,
++                                                                      fill_area->height - 1,
++                                                                      data_pitch,
++                                                                      data_height,
++                                                                      data_rotation,
++                                                                      swizzle_func);
++
++                        }
++                        if (!ignore_src_alpha && (pixel_value >> 24) == 0x00)
+                                 continue;
+ 
+                         pixel_value = make_pixel_value_translucent (pixel_value, opacity_as_byte);
+@@ -774,6 +835,27 @@ ply_pixel_buffer_fill_with_argb32_data_at_opacity_with_clip_and_scale (ply_pixel
+         ply_pixel_buffer_add_updated_area (buffer, &cropped_area);
+ }
+ 
++void
++ply_pixel_buffer_fill_with_argb32_data_at_opacity_with_clip_and_scale (ply_pixel_buffer_t *buffer,
++                                                                       ply_rectangle_t    *fill_area,
++                                                                       ply_rectangle_t    *clip_area,
++                                                                       uint32_t           *data,
++                                                                       double              opacity,
++                                                                       int                 scale)
++{
++        ply_pixel_buffer_fill_with_32bit_data (buffer,
++                                               fill_area,
++                                               clip_area,
++                                               data,
++                                               opacity,
++                                               scale,
++                                               false,
++                                               fill_area->width,
++                                               fill_area->height,
++                                               PLY_PIXEL_BUFFER_ROTATE_UPRIGHT,
++                                               NULL);
++}
++
+ void
+ ply_pixel_buffer_fill_with_argb32_data_at_opacity_with_clip (ply_pixel_buffer_t *buffer,
+                                                              ply_rectangle_t    *fill_area,
+@@ -812,6 +894,29 @@ ply_pixel_buffer_fill_with_argb32_data (ply_pixel_buffer_t *buffer,
+                                                                                data, 1.0, 1);
+ }
+ 
++void
++ply_pixel_buffer_fill_with_data (ply_pixel_buffer_t *buffer,
++                                       ply_rectangle_t    *fill_area,
++                                       uint32_t           *data,
++                                       bool                ignore_alpha,
++                                       uint32_t            data_pitch,
++                                       uint32_t            data_height,
++                                       ply_pixel_buffer_rotation_t data_rotation,
++                                       uint32_t          (*swizzle_func)(uint32_t))
++{
++        ply_pixel_buffer_fill_with_32bit_data (buffer,
++                                               fill_area,
++                                               NULL,
++                                               data,
++                                               1.0,
++                                               1,
++                                               ignore_alpha,
++                                               data_pitch,
++                                               data_height,
++                                               data_rotation,
++                                               swizzle_func);
++}
++
+ void
+ ply_pixel_buffer_fill_with_argb32_data_with_clip (ply_pixel_buffer_t *buffer,
+                                                   ply_rectangle_t    *fill_area,
+@@ -953,12 +1058,25 @@ ply_pixel_buffer_interpolate (ply_pixel_buffer_t *buffer,
+         int width;
+         int height;
+         uint32_t *bytes;
++        uint32_t data_pitch, data_height;
++        ply_pixel_buffer_rotation_t rotation;
+ 
+         width = buffer->area.width;
+         height = buffer->area.height;
+         bytes = ply_pixel_buffer_get_argb32_data (buffer);
++        rotation = buffer->device_rotation;
+ 
+-        return ply_pixels_interpolate (bytes, width, height, x, y);
++        if (rotation == PLY_PIXEL_BUFFER_ROTATE_CLOCKWISE ||
++            rotation == PLY_PIXEL_BUFFER_ROTATE_COUNTER_CLOCKWISE) {
++                data_pitch = buffer->area.height;
++                data_height = buffer->area.width;
++        } else {
++                data_pitch = buffer->area.width;
++                data_height = buffer->area.height;
++        }
++        return ply_pixels_interpolate (bytes, x, y, width - 1, height - 1,
++                                       data_pitch, data_height,
++                                       rotation, NULL);
+ }
+ 
+ ply_pixel_buffer_t *
+diff --git a/src/libply-splash-core/ply-pixel-buffer.h b/src/libply-splash-core/ply-pixel-buffer.h
+index 7b5da364..a0ed14b5 100644
+--- a/src/libply-splash-core/ply-pixel-buffer.h
++++ b/src/libply-splash-core/ply-pixel-buffer.h
+@@ -97,6 +97,14 @@ void ply_pixel_buffer_fill_with_gradient (ply_pixel_buffer_t *buffer,
+ void ply_pixel_buffer_fill_with_argb32_data (ply_pixel_buffer_t *buffer,
+                                              ply_rectangle_t    *fill_area,
+                                              uint32_t           *data);
++void ply_pixel_buffer_fill_with_data (ply_pixel_buffer_t *buffer,
++                                      ply_rectangle_t    *fill_area,
++                                      uint32_t           *data,
++                                      bool                ignore_alpha,
++                                      uint32_t            data_pitch,
++                                      uint32_t            data_height,
++                                      ply_pixel_buffer_rotation_t data_rotation,
++                                      uint32_t          (*swizzle_func)(uint32_t));
+ void ply_pixel_buffer_fill_with_argb32_data_at_opacity (ply_pixel_buffer_t *buffer,
+                                                         ply_rectangle_t    *fill_area,
+                                                         uint32_t           *data,
+-- 
+2.47.1
+

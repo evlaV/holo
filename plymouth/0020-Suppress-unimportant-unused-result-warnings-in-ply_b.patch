@@ -1,0 +1,669 @@
+From 431fdfe36f48cdb2ecc3c9cb6944df4fa4ca07b3 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Vivek=20Das=C2=A0Mohapatra?= <vivek@collabora.com>
+Date: Thu, 27 Mar 2025 19:39:55 +0000
+Subject: [PATCH] Suppress unimportant unused-value and unused-return warnings
+
+---
+ src/client/ply-boot-client.c                  |  3 ++
+ src/client/plymouth.c                         | 12 ++++++++
+ src/libply-splash-core/ply-boot-splash.c      |  3 ++
+ src/libply-splash-core/ply-device-manager.c   |  3 ++
+ src/libply-splash-core/ply-keyboard.c         |  3 ++
+ src/libply-splash-core/ply-kmsg-reader.c      |  6 ++++
+ src/libply-splash-core/ply-terminal.c         |  6 ++++
+ src/libply-splash-core/ply-text-display.c     |  8 ++++-
+ .../ply-text-progress-bar.c                   |  9 ++++++
+ src/libply-splash-graphics/ply-animation.c    |  3 ++
+ .../ply-capslock-icon.c                       |  3 ++
+ src/libply-splash-graphics/ply-entry.c        |  6 ++++
+ src/libply-splash-graphics/ply-keymap-icon.c  |  6 ++++
+ .../ply-progress-animation.c                  |  3 ++
+ src/libply-splash-graphics/ply-throbber.c     |  3 ++
+ src/libply/ply-key-file.c                     |  6 ++++
+ src/libply/ply-logger.c                       |  3 ++
+ src/libply/ply-utils.c                        |  6 ++++
+ src/main.c                                    | 30 +++++++++++++++++++
+ src/plugins/controls/label-freetype/plugin.c  |  6 ++++
+ src/plugins/splash/fade-throbber/plugin.c     |  6 ++++
+ src/plugins/splash/script/script-execute.c    |  6 ++++
+ src/plugins/splash/script/script-lib-image.c  |  3 ++
+ src/plugins/splash/script/script-object.c     |  9 ++++++
+ src/plugins/splash/space-flares/plugin.c      | 15 ++++++++++
+ src/plugins/splash/two-step/plugin.c          | 27 +++++++++++++++++
+ 26 files changed, 193 insertions(+), 1 deletion(-)
+
+diff --git a/src/client/ply-boot-client.c b/src/client/ply-boot-client.c
+index c9d5e81e..34c5c58c 100644
+--- a/src/client/ply-boot-client.c
++++ b/src/client/ply-boot-client.c
+@@ -381,8 +381,11 @@ ply_boot_client_get_request_string (ply_boot_client_t         *client,
+         assert (strlen (request->argument) <= UCHAR_MAX);
+ 
+         request_string = NULL;
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&request_string, "%s\002%c%s", request->command,
+                   (char) (strlen (request->argument) + 1), request->argument);
++#pragma GCC diagnostic pop
+         *request_size = strlen (request_string) + 1;
+ 
+         return request_string;
+diff --git a/src/client/plymouth.c b/src/client/plymouth.c
+index 82f7d920..db593a6a 100644
+--- a/src/client/plymouth.c
++++ b/src/client/plymouth.c
+@@ -272,7 +272,10 @@ on_password_answer (password_answer_state_t *answer_state,
+                                 }
+                         }
+                 } else {
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                         write (STDOUT_FILENO, answer, strlen (answer));
++#pragma GCC diagnostic pop
+                         exit_status = 0;
+                 }
+         } else if (answer == NULL) {
+@@ -310,7 +313,10 @@ on_question_answer (question_answer_state_t *answer_state,
+                 if (answer_state->command != NULL)
+                         answer_via_command (answer_state->command, answer, NULL);
+                 else
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                         write (STDOUT_FILENO, answer, strlen (answer));
++#pragma GCC diagnostic pop
+                 if (answer_state->pause) {
+                         ply_boot_client_tell_daemon_to_progress_unpause (client,
+                                                                          (ply_boot_client_response_handler_t)
+@@ -355,8 +361,11 @@ on_key_answer (key_answer_state_t *answer_state,
+         if (answer_state->command != NULL)
+                 answer_via_command (answer_state->command, answer, NULL);
+         else
+         if (answer != NULL)
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                 write (STDOUT_FILENO, answer, strlen (answer));
++#pragma GCC diagnostic pop
+ 
+         ply_event_loop_exit (answer_state->state->loop, 0);
+ }
+@@ -867,7 +876,10 @@ on_system_update_request (state_t    *state,
+         if (progress >= 0 && progress <= 100) {
+                 char *progress_string = NULL;
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                 asprintf (&progress_string, "%d", progress);
++#pragma GCC diagnostic pop
+ 
+                 ply_boot_client_system_update (state->client,
+                                                progress_string,
+diff --git a/src/libply-splash-core/ply-boot-splash.c b/src/libply-splash-core/ply-boot-splash.c
+index 217f455e..701d0e4e 100644
+--- a/src/libply-splash-core/ply-boot-splash.c
++++ b/src/libply-splash-core/ply-boot-splash.c
+@@ -230,8 +230,11 @@ ply_boot_splash_load (ply_boot_splash_t *splash)
+ 
+         module_name = ply_key_file_get_value (key_file, "Plymouth Theme", "ModuleName");
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&module_path, "%s%s.so",
+                   splash->plugin_dir, module_name);
++#pragma GCC diagnostic pop
+         free (module_name);
+ 
+         splash->module_handle = ply_open_module (module_path);
+diff --git a/src/libply-splash-core/ply-device-manager.c b/src/libply-splash-core/ply-device-manager.c
+index 59e579dd..4c426a41 100644
+--- a/src/libply-splash-core/ply-device-manager.c
++++ b/src/libply-splash-core/ply-device-manager.c
+@@ -758,7 +758,10 @@ get_terminal (ply_device_manager_t *manager,
+         if (strncmp (device_name, "/dev/", strlen ("/dev/")) == 0)
+                 full_name = strdup (device_name);
+         else
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                 asprintf (&full_name, "/dev/%s", device_name);
++#pragma GCC diagnostic pop
+ 
+         if (strcmp (full_name, "/dev/tty0") == 0 ||
+             strcmp (full_name, "/dev/tty") == 0 ||
+diff --git a/src/libply-splash-core/ply-terminal.c b/src/libply-splash-core/ply-terminal.c
+index 1a9ec353..a5168f47 100644
+--- a/src/libply-splash-core/ply-terminal.c
++++ b/src/libply-splash-core/ply-terminal.c
+@@ -134,7 +134,10 @@ ply_terminal_new (const char *device_name,
+         if (strncmp (device_name, "/dev/", strlen ("/dev/")) == 0)
+                 terminal->name = strdup (device_name);
+         else
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                 asprintf (&terminal->name, "/dev/%s", device_name);
++#pragma GCC diagnostic pop
+ 
+         terminal->fd = -1;
+         terminal->vt_number = -1;
+@@ -364,7 +367,10 @@ ply_terminal_write (ply_terminal_t *terminal,
+         size = vasprintf (&string, format, args);
+         va_end (args);
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         write (terminal->fd, string, size);
++#pragma GCC diagnostic pop
+         free (string);
+ }
+ 
+diff --git a/src/libply-splash-core/ply-text-display.c b/src/libply-splash-core/ply-text-display.c
+index d4373afa..7e950bd2 100644
+--- a/src/libply-splash-core/ply-text-display.c
++++ b/src/libply-splash-core/ply-text-display.c
+@@ -243,11 +243,17 @@ ply_text_display_write (ply_text_display_t *display,
+ 
+         string = NULL;
+         va_start (args, format);
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         vasprintf (&string, format, args);
++#pragma GCC diagnostic pop
+         va_end (args);
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         write (fd, string, strlen (string));
+-        free (string);
++#pragma GCC diagnostic pop
++       free (string);
+ }
+ 
+ void
+diff --git a/src/libply-splash-core/ply-text-progress-bar.c b/src/libply-splash-core/ply-text-progress-bar.c
+index 5e30eae7..9e99fa4d 100644
+--- a/src/libply-splash-core/ply-text-progress-bar.c
++++ b/src/libply-splash-core/ply-text-progress-bar.c
+@@ -113,7 +113,10 @@ get_os_string (void)
+         }
+ 
+         buf = calloc (sbuf.st_size + 1, sizeof(char));
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         read (fd, buf, sbuf.st_size);
++#pragma GCC diagnostic pop
+         close (fd);
+ 
+         if (strcmp (RELEASE_FILE, "/etc/os-release") == 0) {
+@@ -142,7 +145,10 @@ get_os_string (void)
+ 
+                                 *pos2 = '\0';
+                         }
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                         asprintf (&os_string, " %s", pos);
++#pragma GCC diagnostic pop
+                 }
+                 goto out;
+         }
+@@ -161,7 +167,10 @@ get_os_string (void)
+         pos += strlen (" release ");
+ 
+         *pos2 = '\0';
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&os_string, " %s %s", buf, pos);
++#pragma GCC diagnostic pop
+ 
+ out:
+         free (buf);
+diff --git a/src/libply-splash-graphics/ply-animation.c b/src/libply-splash-graphics/ply-animation.c
+index 45967c1e..caa15032 100644
+--- a/src/libply-splash-graphics/ply-animation.c
++++ b/src/libply-splash-graphics/ply-animation.c
+@@ -246,7 +246,10 @@ ply_animation_add_frames (ply_animation_t *animation)
+                         char *filename;
+ 
+                         filename = NULL;
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                         asprintf (&filename, "%s/%s", animation->image_dir, entries[i]->d_name);
++#pragma GCC diagnostic pop
+ 
+                         if (!ply_animation_add_frame (animation, filename))
+                                 goto out;
+diff --git a/src/libply-splash-graphics/ply-capslock-icon.c b/src/libply-splash-graphics/ply-capslock-icon.c
+index c3a5afa9..82863edd 100644
+--- a/src/libply-splash-graphics/ply-capslock-icon.c
++++ b/src/libply-splash-graphics/ply-capslock-icon.c
+@@ -62,7 +62,10 @@ ply_capslock_icon_new (const char *image_dir)
+ 
+         capslock_icon = calloc (1, sizeof(ply_capslock_icon_t));
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&capslock_icon->image_name, "%s/capslock.png", image_dir);
++#pragma GCC diagnostic pop
+         capslock_icon->is_hidden = true;
+ 
+         return capslock_icon;
+diff --git a/src/libply-splash-graphics/ply-entry.c b/src/libply-splash-graphics/ply-entry.c
+index 3170ed52..9016d4fc 100644
+--- a/src/libply-splash-graphics/ply-entry.c
++++ b/src/libply-splash-graphics/ply-entry.c
+@@ -84,12 +84,18 @@ ply_entry_new (const char *image_dir)
+         entry = calloc (1, sizeof(ply_entry_t));
+ 
+         image_path = NULL;
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/entry.png", image_dir);
++#pragma GCC diagnostic pop
+         entry->text_field_image = ply_image_new (image_path);
+         free (image_path);
+ 
+         image_path = NULL;
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/bullet.png", image_dir);
++#pragma GCC diagnostic pop
+         entry->bullet_image = ply_image_new (image_path);
+         free (image_path);
+         entry->label = ply_label_new ();
+diff --git a/src/libply-splash-graphics/ply-keymap-icon.c b/src/libply-splash-graphics/ply-keymap-icon.c
+index b3dfabfb..6345d4ab 100644
+--- a/src/libply-splash-graphics/ply-keymap-icon.c
++++ b/src/libply-splash-graphics/ply-keymap-icon.c
+@@ -164,14 +164,20 @@ ply_keymap_icon_load (ply_keymap_icon_t *keymap_icon)
+         if (keymap_icon->icon_buffer)
+                 return true;
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&filename, "%s/keyboard.png", keymap_icon->image_dir);
++#pragma GCC diagnostic pop
+         icon_image = ply_image_new (filename);
+         success = ply_image_load (icon_image);
+         ply_trace("loading '%s': %s", filename, success ? "success" : "failed");
+         free (filename);
+ 
+         if (success) {
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                 asprintf (&filename, "%s/keymap-render.png", keymap_icon->image_dir);
++#pragma GCC diagnostic pop
+                 keymap_image = ply_image_new (filename);
+                 success = ply_image_load (keymap_image);
+                 ply_trace ("loading '%s': %s", filename, success ? "success" : "failed");
+diff --git a/src/libply-splash-graphics/ply-progress-animation.c b/src/libply-splash-graphics/ply-progress-animation.c
+index 62a333f1..fdb550a6 100644
+--- a/src/libply-splash-graphics/ply-progress-animation.c
++++ b/src/libply-splash-graphics/ply-progress-animation.c
+@@ -355,7 +355,10 @@ ply_progress_animation_add_frames (ply_progress_animation_t *progress_animation)
+                         bool r;
+ 
+                         filename = NULL;
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                         asprintf (&filename, "%s/%s", progress_animation->image_dir, entries[i]->d_name);
++#pragma GCC diagnostic pop
+ 
+                         r = ply_progress_animation_add_frame (progress_animation, filename);
+                         free (filename);
+diff --git a/src/libply-splash-graphics/ply-throbber.c b/src/libply-splash-graphics/ply-throbber.c
+index b0217be1..144af8f8 100644
+--- a/src/libply-splash-graphics/ply-throbber.c
++++ b/src/libply-splash-graphics/ply-throbber.c
+@@ -257,7 +257,10 @@ ply_throbber_add_frames (ply_throbber_t *throbber)
+                         char *filename;
+ 
+                         filename = NULL;
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                         asprintf (&filename, "%s/%s", throbber->image_dir, entries[i]->d_name);
++#pragma GCC diagnostic pop
+ 
+                         if (!ply_throbber_add_frame (throbber, filename))
+                                 goto out;
+diff --git a/src/libply/ply-key-file.c b/src/libply/ply-key-file.c
+index 28a4885c..c269979b 100644
+--- a/src/libply/ply-key-file.c
++++ b/src/libply/ply-key-file.c
+@@ -193,8 +193,11 @@ ply_key_file_load_group (ply_key_file_t *key_file,
+                         line_to_toss = NULL;
+                         number_of_bytes = 0;
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                         getline (&line_to_toss, &number_of_bytes,
+                                  key_file->fp);
++#pragma GCC diagnostic pop
+                         free (line_to_toss);
+                         items_matched = 0;
+                         continue;
+@@ -245,8 +248,11 @@ ply_key_file_load_groups (ply_key_file_t *key_file)
+                         line_to_toss = NULL;
+                         number_of_bytes = 0;
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                         getline (&line_to_toss, &number_of_bytes,
+                                  key_file->fp);
++#pragma GCC diagnostic pop
+                         free (line_to_toss);
+                         has_comments = true;
+                         items_matched = 0;
+diff --git a/src/libply/ply-logger.c b/src/libply/ply-logger.c
+index 173c06de..1206f462 100644
+--- a/src/libply/ply-logger.c
++++ b/src/libply/ply-logger.c
+@@ -110,9 +110,12 @@ ply_logger_write_exception (ply_logger_t *logger,
+                 return;
+ 
+         message = NULL;
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&message,
+                   "[couldn't write a log entry: %s]\n%n",
+                   string, &number_of_bytes);
++#pragma GCC diagnostic pop
+ 
+         assert (message != NULL);
+ 
+diff --git a/src/libply/ply-utils.c b/src/libply/ply-utils.c
+index 463f61c9..32a2a420 100644
+--- a/src/libply/ply-utils.c
++++ b/src/libply/ply-utils.c
+@@ -924,7 +924,10 @@ ply_get_process_command_line (pid_t pid)
+         path = NULL;
+         command_line = NULL;
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&path, "/proc/%ld/cmdline", (long) pid);
++#pragma GCC diagnostic pop
+ 
+         fd = open (path, O_RDONLY);
+ 
+@@ -964,7 +967,10 @@ ply_get_process_parent_pid (pid_t pid)
+         FILE *fp;
+         int ppid;
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&path, "/proc/%ld/stat", (long) pid);
++#pragma GCC diagnostic pop
+ 
+         ppid = 0;
+         fp = fopen (path, "re");
+diff --git a/src/main.c b/src/main.c
+index 33fe51e0..b8bfb68d 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -285,9 +285,12 @@ get_theme_path (const char *splash_string,
+                 if (paths[i] == NULL)
+                         continue;
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                 asprintf (theme_path,
+                           "%s/%s/%s.plymouth",
+                           paths[i], splash_string, splash_string);
++#pragma GCC diagnostic pop
+                 if (ply_file_exists (*theme_path)) {
+                         ply_trace ("Theme is %s", *theme_path);
+                         return true;
+@@ -672,9 +675,12 @@ on_newroot (state_t    *state,
+                 dump_debug_buffer_to_file ();
+         }
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         chdir (root_dir);
+         chroot (".");
+         chdir ("/");
++#pragma GCC diagnostic pop
+         /* Update local now that we have /usr/share/locale available */
+         setlocale (LC_ALL, "");
+         ply_progress_load_cache (state->progress, get_cache_file_for_mode (state->mode));
+@@ -1991,7 +2000,10 @@ check_verbosity (state_t *state)
+                         if (strncmp (device, "/dev/", strlen ("/dev/")) == 0)
+                                 file = strdup (device);
+                         else
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                                 asprintf (&file, "/dev/%s", device);
++#pragma GCC diagnostic pop
+ 
+                         fd = open (file, O_RDWR | O_APPEND);
+ 
+@@ -2051,7 +2051,10 @@ on_crash (int signum)
+ 
+         ioctl (fd, KDSETMODE, KD_TEXT);
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         write (fd, show_cursor_sequence, sizeof (show_cursor_sequence) - 1);
++#pragma GCC diagnostic pop
+ 
+         tcgetattr (fd, &term_attributes);
+ 
+@@ -2438,7 +2465,10 @@ main (int    argc,
+ 
+         state.no_boot_log = no_boot_log;
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         chdir ("/");
++#pragma GCC diagnostic pop
+         signal (SIGPIPE, SIG_IGN);
+ 
+         if (!no_daemon) {
+diff --git a/src/plugins/splash/fade-throbber/plugin.c b/src/plugins/splash/fade-throbber/plugin.c
+index 5e594d63..d89fab35 100644
+--- a/src/plugins/splash/fade-throbber/plugin.c
++++ b/src/plugins/splash/fade-throbber/plugin.c
+@@ -236,11 +236,17 @@ create_plugin (ply_key_file_t *key_file)
+         plugin->logo_image = ply_image_new (PLYMOUTH_LOGO_FILE);
+         image_dir = ply_key_file_get_value (key_file, "fade-throbber", "ImageDir");
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/star.png", image_dir);
++#pragma GCC diagnostic pop
+         plugin->star_image = ply_image_new (image_path);
+         free (image_path);
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/lock.png", image_dir);
++#pragma GCC diagnostic pop
+         plugin->lock_image = ply_image_new (image_path);
+         free (image_path);
+ 
+diff --git a/src/plugins/splash/script/script-execute.c b/src/plugins/splash/script/script-execute.c
+index 591a1bb2..73b36f9c 100644
+--- a/src/plugins/splash/script/script-execute.c
++++ b/src/plugins/splash/script/script-execute.c
+@@ -144,7 +144,10 @@ static script_obj_t *script_evaluate_set (script_state_t *state,
+                 script_exp_t *data_exp = ply_list_node_get_data (node_data);
+                 script_obj_t *data_obj = script_evaluate (state, data_exp);
+                 char *name;
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                 asprintf (&name, "%d", index);
++#pragma GCC diagnostic pop
+                 index++;
+                 script_obj_hash_add_element (obj, data_obj, name);
+                 script_obj_unref (data_obj);
+@@ -586,7 +589,10 @@ static script_return_t script_execute_function_with_parlist (script_state_t    *
+         while (node_data) {
+                 script_obj_t *data_obj = ply_list_node_get_data (node_data);
+                 char *name;
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                 asprintf (&name, "%d", index);
++#pragma GCC diagnostic pop
+                 index++;
+                 script_obj_hash_add_element (arg_obj, data_obj, name);
+                 free (name);
+diff --git a/src/plugins/splash/script/script-lib-image.c b/src/plugins/splash/script/script-lib-image.c
+index f83ab5eb..469024f4 100644
+--- a/src/plugins/splash/script/script-lib-image.c
++++ b/src/plugins/splash/script/script-lib-image.c
+@@ -66,7 +66,10 @@ static script_return_t image_new (script_state_t *state,
+                 else
+                         path_filename = strdup ("");
+         } else {
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                 asprintf (&path_filename, "%s/%s", data->image_dir, filename);
++#pragma GCC diagnostic pop
+         }
+         ply_image_t *file_image = ply_image_new (path_filename);
+ 
+diff --git a/src/plugins/splash/script/script-object.c b/src/plugins/splash/script/script-object.c
+index aa005a01..2969011e 100644
+--- a/src/plugins/splash/script/script-object.c
++++ b/src/plugins/splash/script/script-object.c
+@@ -311,12 +311,18 @@ char *script_obj_as_string (script_obj_t *obj)              /* reply is strduppe
+         if (string_obj) return strdup (string_obj->data.string);
+         string_obj = script_obj_as_obj_type (obj, SCRIPT_OBJ_TYPE_NUMBER);
+         if (string_obj) {
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                 asprintf (&reply, "%g", string_obj->data.number);
++#pragma GCC diagnostic pop
+                 return reply;
+         }
+         if (script_obj_is_null (obj))
+                 return strdup ("#NULL");
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&reply, "#(0x%p)", obj);
++#pragma GCC diagnostic pop
+         return reply;
+ }
+ 
+@@ -528,7 +534,10 @@ script_obj_t *script_obj_plus (script_obj_t *script_obj_a,
+                 char *string_b = script_obj_as_string (script_obj_b);
+                 if (string_a && string_b) {
+                         char *newstring;
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                         asprintf (&newstring, "%s%s", string_a, string_b);
++#pragma GCC diagnostic pop
+                         obj = script_obj_new_string (newstring);
+                         free (newstring);
+                 } else {
+diff --git a/src/plugins/splash/space-flares/plugin.c b/src/plugins/splash/space-flares/plugin.c
+index 0f55dda0..15af0ef7 100644
+--- a/src/plugins/splash/space-flares/plugin.c
++++ b/src/plugins/splash/space-flares/plugin.c
+@@ -581,15 +581,24 @@ create_plugin (ply_key_file_t *key_file)
+ 
+         image_dir = ply_key_file_get_value (key_file, "space-flares", "ImageDir");
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/lock.png", image_dir);
++#pragma GCC diagnostic pop
+         plugin->lock_image = ply_image_new (image_path);
+         free (image_path);
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/box.png", image_dir);
++#pragma GCC diagnostic pop
+         plugin->box_image = ply_image_new (image_path);
+         free (image_path);
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/star.png", image_dir);
++#pragma GCC diagnostic pop
+         plugin->star_image = ply_image_new (image_path);
+         free (image_path);
+ 
+@@ -611,14 +620,20 @@ create_plugin (ply_key_file_t *key_file)
+         plugin->planet_image[3] = ply_image_new (image_path);
+         free (image_path);
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/plant5.png", image_dir);
++#pragma GCC diagnostic pop
+         plugin->planet_image[4] = ply_image_new (image_path);
+         free (image_path);
+ 
+ #endif
+ #ifdef  SHOW_PROGRESS_BAR
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/progress_bar.png", image_dir);
++#pragma GCC diagnostic pop
+         plugin->progress_barimage = ply_image_new (image_path);
+         free (image_path);
+ #endif
+diff --git a/src/plugins/splash/two-step/plugin.c b/src/plugins/splash/two-step/plugin.c
+index 802400a4..64f102ff 100644
+--- a/src/plugins/splash/two-step/plugin.c
++++ b/src/plugins/splash/two-step/plugin.c
+@@ -1058,27 +1058,45 @@ create_plugin (ply_key_file_t *key_file)
+ 
+         ply_trace ("Using '%s' as working directory", image_dir);
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/lock.png", image_dir);
++#pragma GCC diagnostic pop
+         plugin->lock_image = ply_image_new (image_path);
+         free (image_path);
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/box.png", image_dir);
++#pragma GCC diagnostic pop
+         plugin->box_image = ply_image_new (image_path);
+         free (image_path);
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/corner-image.png", image_dir);
++#pragma GCC diagnostic pop
+         plugin->corner_image = ply_image_new (image_path);
+         free (image_path);
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/header-image.png", image_dir);
++#pragma GCC diagnostic pop
+         plugin->header_image = ply_image_new (image_path);
+         free (image_path);
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/background-tile.png", image_dir);
++#pragma GCC diagnostic pop
+         plugin->background_tile_image = ply_image_new (image_path);
+         free (image_path);
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+         asprintf (&image_path, "%s/watermark.png", image_dir);
++#pragma GCC diagnostic pop
+         plugin->watermark_image = ply_image_new (image_path);
+         free (image_path);
+ 
+@@ -1330,7 +1354,10 @@ create_plugin (ply_key_file_t *key_file)
+         if (plugin->use_firmware_background) {
+                 plugin->background_bgrt_image = ply_image_new ("/sys/firmware/acpi/bgrt/image");
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-result"
+                 asprintf (&image_path, "%s/bgrt-fallback.png", image_dir);
++#pragma GCC diagnostic pop
+                 plugin->background_bgrt_fallback_image = ply_image_new (image_path);
+                 free (image_path);
+         }
+-- 
+2.47.1
+

@@ -1,0 +1,143 @@
+From 0af9e17e031184e55e8f1dba9eadd78e7df35ab0 Mon Sep 17 00:00:00 2001
+From: Robert Beckett <bob.beckett@collabora.com>
+Date: Fri, 11 Apr 2025 18:45:29 +0100
+Subject: [PATCH 36/36] script: add scrape_display special image
+
+Add special uri "special://scrape_display" to return an image
+populated with the pixel data scraped from the first head
+
+Signed-off-by: Robert Beckett <bob.beckett@collabora.com>
+---
+ src/plugins/splash/script/plugin.c           |  3 +-
+ src/plugins/splash/script/script-lib-image.c | 54 ++++++++++++++++----
+ src/plugins/splash/script/script-lib-image.h |  4 +-
+ 3 files changed, 48 insertions(+), 13 deletions(-)
+
+diff --git a/src/plugins/splash/script/plugin.c b/src/plugins/splash/script/plugin.c
+index 492f4937..4edfe7f4 100644
+--- a/src/plugins/splash/script/plugin.c
++++ b/src/plugins/splash/script/plugin.c
+@@ -268,7 +268,8 @@ start_script_animation (ply_boot_splash_plugin_t *plugin)
+         }
+ 
+         plugin->script_image_lib = script_lib_image_setup (plugin->script_state,
+-                                                           plugin->image_dir);
++                                                           plugin->image_dir,
++                                                           plugin->displays);
+         plugin->script_sprite_lib = script_lib_sprite_setup (plugin->script_state,
+                                                              plugin->displays);
+         plugin->script_plymouth_lib = script_lib_plymouth_setup (plugin->script_state,
+diff --git a/src/plugins/splash/script/script-lib-image.c b/src/plugins/splash/script/script-lib-image.c
+index b4198464..80950691 100644
+--- a/src/plugins/splash/script/script-lib-image.c
++++ b/src/plugins/splash/script/script-lib-image.c
+@@ -52,7 +52,8 @@ static script_return_t image_new (script_state_t *state,
+ {
+         script_lib_image_data_t *data = user_data;
+         script_obj_t *reply;
+-        char *path_filename;
++        char *path_filename = NULL;
++        bool scrape = false;
+         char *filename = script_obj_hash_get_string (state->local, "filename");
+         char *test_string = filename;
+         const char *prefix_string = "special://";
+@@ -64,23 +65,51 @@ static script_return_t image_new (script_state_t *state,
+         if (!*prefix_string) {
+                 if (strcmp (test_string, "logo") == 0)
+                         path_filename = strdup (PLYMOUTH_LOGO_FILE);
+-                else if (strcmp(test_string, "bgrt") == 0)
++                else if (strcmp (test_string, "bgrt") == 0)
+                         path_filename = strdup("/sys/firmware/acpi/bgrt/image");
++                else if (strcmp (test_string, "scrape_display") == 0)
++                        scrape = true;
+                 else
+                         path_filename = strdup ("");
+         } else {
+                 asprintf (&path_filename, "%s/%s", data->image_dir, filename);
+         }
+-        ply_image_t *file_image = ply_image_new (path_filename);
+-        if (ply_image_load (file_image)) {
+-                ply_pixel_buffer_t *buffer = ply_image_convert_to_pixel_buffer (file_image);
+-                reply = script_obj_new_native (buffer, data->class);
++
++        if (path_filename) {
++                ply_image_t *file_image = ply_image_new(path_filename);
++                if (ply_image_load(file_image))
++                {
++                        ply_pixel_buffer_t *buffer = ply_image_convert_to_pixel_buffer(file_image);
++                        reply = script_obj_new_native(buffer, data->class);
++                }
++                else
++                {
++                        ply_image_free(file_image);
++                        reply = script_obj_new_null();
++                }
++                free(path_filename);
++        } else if (scrape) {
++                ply_list_node_t *node;
++
++                node = ply_list_get_first_node (data->displays);
++                if (node) {
++                        ply_pixel_buffer_t *buffer;
++                        ply_pixel_display_t *display;
++                        ply_renderer_t *renderer;
++                        ply_renderer_head_t *head;
++
++                        display = ply_list_node_get_data (node);
++                        renderer = ply_pixel_display_get_renderer (display);
++                        head = ply_pixel_display_get_renderer_head (display);
++                        buffer = ply_renderer_scrape_head (renderer, head);
++                        reply = script_obj_new_native(buffer, data->class);
++                } else {
++                        reply = script_obj_new_null();
++                }
+         } else {
+-                ply_image_free (file_image);
+-                reply = script_obj_new_null ();
++                reply = script_obj_new_null();
+         }
+         free (filename);
+-        free (path_filename);
+         return script_return_obj (reply);
+ }
+ 
+@@ -262,13 +291,16 @@ static script_return_t image_text (script_state_t *state,
+         return script_return_obj (script_obj_new_native (image, data->class));
+ }
+ 
+-script_lib_image_data_t *script_lib_image_setup (script_state_t *state,
+-                                                 char           *image_dir)
++script_lib_image_data_t *script_lib_image_setup(script_state_t *state,
++                                                char *image_dir,
++                                                ply_list_t *displays)
++
+ {
+         script_lib_image_data_t *data = malloc (sizeof(script_lib_image_data_t));
+ 
+         data->class = script_obj_native_class_new (image_free, "image", data);
+         data->image_dir = strdup (image_dir);
++        data->displays = displays;
+ 
+         script_obj_t *image_hash = script_obj_hash_get_element (state->global, "Image");
+ 
+diff --git a/src/plugins/splash/script/script-lib-image.h b/src/plugins/splash/script/script-lib-image.h
+index 7a1371ae..01b35250 100644
+--- a/src/plugins/splash/script/script-lib-image.h
++++ b/src/plugins/splash/script/script-lib-image.h
+@@ -29,10 +29,12 @@ typedef struct
+         script_obj_native_class_t *class;
+         script_op_t               *script_main_op;
+         char                      *image_dir;
++        ply_list_t                *displays;
+ } script_lib_image_data_t;
+ 
+ script_lib_image_data_t *script_lib_image_setup (script_state_t *state,
+-                                                 char           *image_dir);
++                                                 char           *image_dir,
++                                                 ply_list_t     *displays);
+ void script_lib_image_destroy (script_lib_image_data_t *data);
+ 
+ #endif /* SCRIPT_LIB_IMAGE_H */
+-- 
+2.47.1
+

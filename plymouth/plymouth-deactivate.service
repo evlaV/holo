@@ -3,8 +3,10 @@ Description=Deactivate Plymouth Boot Screen
 After=rc-local.service plymouth-start.service systemd-user-sessions.service
 Before=getty@tty1.service
 
+# SteamOS: retain-splash is used to help with flicker-free
+# handover from plymouth to gamescope/steam
 [Service]
-ExecStart=-/usr/bin/plymouth deactivate
+ExecStart=-/usr/bin/plymouth deactivate --retain-splash
 Type=oneshot
 TimeoutSec=20
 RemainAfterExit=yes

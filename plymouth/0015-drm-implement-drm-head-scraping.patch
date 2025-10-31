@@ -1,0 +1,213 @@
+From b353364c78afc93b258236d8331ead2180cdb548 Mon Sep 17 00:00:00 2001
+From: Robert Beckett <bob.beckett@collabora.com>
+Date: Fri, 11 Apr 2025 18:42:45 +0100
+Subject: [PATCH 35/36] drm: implement drm head scraping
+
+Reads the drm fb and populates a pixel buffer from it's contents
+
+Signed-off-by: Robert Beckett <bob.beckett@collabora.com>
+---
+ src/plugins/renderers/drm/plugin.c | 166 +++++++++++++++++++++++++++++
+ 1 file changed, 166 insertions(+)
+
+diff --git a/src/plugins/renderers/drm/plugin.c b/src/plugins/renderers/drm/plugin.c
+index 628e6763..c87f7521 100644
+--- a/src/plugins/renderers/drm/plugin.c
++++ b/src/plugins/renderers/drm/plugin.c
+@@ -47,6 +47,7 @@
+ #include <drm_mode.h>
+ #include <xf86drm.h>
+ #include <xf86drmMode.h>
++#include <drm_fourcc.h>
+ 
+ #include "ply-array.h"
+ #include "ply-buffer.h"
+@@ -58,6 +59,7 @@
+ #include "ply-region.h"
+ #include "ply-utils.h"
+ #include "ply-terminal.h"
++#include "ply-pixel-buffer.h"
+ 
+ #include "ply-renderer.h"
+ #include "ply-renderer-plugin.h"
+@@ -1648,6 +1650,169 @@ retain (ply_renderer_backend_t *backend)
+         }
+ }
+ 
++static inline uint32_t argb (uint32_t a, uint32_t r, uint32_t g, uint32_t b)
++{
++        return (a << 24) | (r << 16) | (g << 8) | (b << 0);
++}
++
++static inline uint32_t byte (uint32_t val, unsigned int n)
++{
++        return (val >> (n*8)) & 0xff;
++}
++
++static uint32_t
++from_XBGR8888 (uint32_t val)
++{
++        return argb (0xff, byte(val, 0), byte(val, 1), byte(val, 2));
++}
++
++static uint32_t
++from_RGBX8888 (uint32_t val)
++{
++        return argb (0xff, byte(val, 3), byte(val, 2), byte(val, 1));
++}
++
++static uint32_t
++from_BGRX8888 (uint32_t val)
++{
++        return argb (0xff, byte(val, 1), byte(val, 2), byte(val, 3));
++}
++
++static uint32_t
++from_ABGR8888 (uint32_t val)
++{
++        return argb (byte(val, 3), byte(val, 0), byte(val, 1), byte(val, 2));
++}
++
++static uint32_t
++from_RGBA8888 (uint32_t val)
++{
++        return argb (byte(val, 0), byte(val, 3), byte(val, 2), byte(val, 1));
++}
++
++static uint32_t
++from_BGRA8888 (uint32_t val)
++{
++        return argb (byte(val, 0), byte(val, 1), byte(val, 2), byte(val, 3));
++}
++
++static uint32_t (*to_XRGB888_func(uint32_t fmt))(uint32_t)
++{
++        switch (fmt) {
++        case DRM_FORMAT_XBGR8888:
++                return &from_XBGR8888;
++                break;
++        case DRM_FORMAT_RGBX8888:
++                return &from_RGBX8888;
++                break;
++        case DRM_FORMAT_BGRX8888:
++                return &from_BGRX8888;
++                break;
++        case DRM_FORMAT_ABGR8888:
++                return &from_ABGR8888;
++                break;
++        case DRM_FORMAT_RGBA8888:
++                return &from_RGBA8888;
++                break;
++        case DRM_FORMAT_BGRA8888:
++                return &from_BGRA8888;
++                break;
++        }
++        return NULL;
++}
++
++static bool
++pixel_format_is_32bit(uint32_t fmt)
++{
++        switch (fmt) {
++        case DRM_FORMAT_XRGB8888:
++        case DRM_FORMAT_XBGR8888:
++        case DRM_FORMAT_RGBX8888:
++        case DRM_FORMAT_BGRX8888:
++        case DRM_FORMAT_ABGR8888:
++        case DRM_FORMAT_RGBA8888:
++        case DRM_FORMAT_BGRA8888:
++                return true;
++        }
++        return false;
++}
++
++static bool
++pixel_format_ignore_alpha(uint32_t fmt)
++{
++        switch (fmt) {
++        case DRM_FORMAT_XRGB8888:
++        case DRM_FORMAT_XBGR8888:
++        case DRM_FORMAT_RGBX8888:
++        case DRM_FORMAT_BGRX8888:
++                return true;
++        }
++        return false;
++}
++
++static ply_pixel_buffer_t *
++scrape_buffer_from_head(ply_renderer_backend_t *backend,
++                        ply_renderer_head_t *head)
++{
++        ply_pixel_buffer_t *buf;
++        drmModeCrtc *crtc;
++        drmModeFB2 *fb;
++        uint32_t fb_id;
++        void *fb_data;
++        int dmabuf_fd, ret;
++        ply_rectangle_t area;
++        ply_pixel_buffer_rotation_t rotation;
++
++        crtc = drmModeGetCrtc (backend->device_fd, head->controller_id);
++        if (!crtc)
++                return NULL;
++
++        fb_id = crtc->buffer_id;
++        drmModeFreeCrtc(crtc);
++        fb = drmModeGetFB2 (backend->device_fd, fb_id);
++        if (!fb || fb->offsets[0] || !pixel_format_is_32bit(fb->pixel_format))
++                return NULL;
++
++        ret = drmPrimeHandleToFD(backend->device_fd, fb->handles[0], DRM_RDWR, &dmabuf_fd);
++        if (ret) {
++                drmModeFreeFB2(fb);
++                return NULL;
++        }
++
++        fb_data = mmap (NULL, fb->height * fb->pitches[0], PROT_READ, MAP_SHARED, dmabuf_fd, 0);
++        if (fb_data == MAP_FAILED) {
++                drmModeFreeFB2 (fb);
++                close (dmabuf_fd);
++                return NULL;
++        }
++
++        buf = ply_pixel_buffer_new (ply_pixel_buffer_get_width (head->pixel_buffer),
++                                    ply_pixel_buffer_get_height(head->pixel_buffer));
++        if (!buf) {
++                munmap(fb_data, fb->height * fb->pitches[0]);
++                drmModeFreeFB2 (fb);
++                close (dmabuf_fd);
++                return NULL;
++        }
++
++        area.x = 0;
++        area.y = 0;
++        area.width = ply_pixel_buffer_get_width (buf);
++        area.height = ply_pixel_buffer_get_height (buf);
++        rotation = ply_pixel_buffer_get_device_rotation(head->pixel_buffer);
++        ply_pixel_buffer_fill_with_data(buf, &area, fb_data,
++                                        pixel_format_ignore_alpha(fb->pixel_format),
++                                        fb->pitches[0] / sizeof(uint32_t),
++                                        fb->height,
++                                        rotation,
++                                        to_XRGB888_func(fb->pixel_format));
++
++        munmap (fb_data, fb->height * fb->pitches[0]);
++        close(dmabuf_fd);
++        drmModeFreeFB2 (fb);
++
++        return buf;
++}
+ 
+ static bool
+ reset_scan_out_buffer_if_needed (ply_renderer_backend_t *backend,
+@@ -1897,6 +2062,7 @@ ply_renderer_backend_get_interface (void)
+                 .get_capslock_state           = get_capslock_state,
+                 .get_keymap                   = get_keymap,
+                 .retain                       = retain,
++                .scrape_buffer_from_head      = scrape_buffer_from_head,
+         };
+ 
+         return &plugin_interface;
+-- 
+2.47.1
+

@@ -1,0 +1,28 @@
+From 41b5a01f2d01538e6963354c3a39f504d45614bd Mon Sep 17 00:00:00 2001
+From: Robert Beckett <bob.beckett@collabora.com>
+Date: Thu, 18 Apr 2024 20:57:49 +0100
+Subject: [PATCH 31/36] retain splash when quitting
+
+Keep the logo on screen after plymouth exits.
+
+Signed-off-by: Robert Beckett <bob.beckett@collabora.com>
+---
+ systemd-units/plymouth-quit.service.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/systemd-units/plymouth-quit.service.in b/systemd-units/plymouth-quit.service.in
+index ed9f9b98..147e9eef 100644
+--- a/systemd-units/plymouth-quit.service.in
++++ b/systemd-units/plymouth-quit.service.in
+@@ -3,7 +3,7 @@ Description=Terminate Plymouth Boot Screen
+ After=rc-local.service plymouth-start.service systemd-user-sessions.service
+ 
+ [Service]
+-ExecStart=-@PLYMOUTH_CLIENT_DIR@/plymouth quit
++ExecStart=-@PLYMOUTH_CLIENT_DIR@/plymouth quit --retain-splash
+ Type=oneshot
+ RemainAfterExit=yes
+ TimeoutSec=20
+-- 
+2.47.1
+

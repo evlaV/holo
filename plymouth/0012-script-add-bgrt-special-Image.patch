@@ -1,0 +1,29 @@
+From 782193d1d18fda52dff711f16ff28705fe0346d5 Mon Sep 17 00:00:00 2001
+From: Robert Beckett <bob.beckett@collabora.com>
+Date: Wed, 26 Mar 2025 11:29:05 +0000
+Subject: [PATCH 32/36] script: add bgrt special Image
+
+Allow scripts to use the "special://bgrt" uri to grab
+the boot image
+
+Signed-off-by: Robert Beckett <bob.beckett@collabora.com>
+---
+ src/plugins/splash/script/script-lib-image.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/plugins/splash/script/script-lib-image.c b/src/plugins/splash/script/script-lib-image.c
+index cc671d44..b4198464 100644
+--- a/src/plugins/splash/script/script-lib-image.c
++++ b/src/plugins/splash/script/script-lib-image.c
+@@ -64,6 +64,8 @@ static script_return_t image_new (script_state_t *state,
+         if (!*prefix_string) {
+                 if (strcmp (test_string, "logo") == 0)
+                         path_filename = strdup (PLYMOUTH_LOGO_FILE);
++                else if (strcmp(test_string, "bgrt") == 0)
++                        path_filename = strdup("/sys/firmware/acpi/bgrt/image");
+                 else
+                         path_filename = strdup ("");
+         } else {
+-- 
+2.47.1
+
