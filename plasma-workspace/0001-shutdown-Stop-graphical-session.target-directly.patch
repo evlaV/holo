@@ -1,0 +1,39 @@
+From ee8919023f43abbd246b2e773b2a4f5fa21a59fa Mon Sep 17 00:00:00 2001
+From: David Redondo <kde@david-redondo.de>
+Date: Tue, 4 Nov 2025 11:07:16 +0100
+Subject: [PATCH 130/130] shutdown: Stop graphical-session.target directly
+
+The Plasma session has a hierachy of targets that requires the lower
+target with StopWhenUnneeded=yes.
+On logout we would stop plasma-workspace.target and systemd would unravel
+the now unneeded targets. This scheme fails as soon as something explicitely
+depends on a lower target for example by having
+Requsite=graphical-session.target
+as now the target is still needed and graphical-session.target is not stopped
+and only the plasma-workspace, plasma-workspace-wayland/x11 and plasma-core
+targets are stopped breaking log out.
+
+
+(cherry picked from commit 80f3e0ad8b615d58bf2509a495d829550d079199)
+
+Co-authored-by: David Redondo <kde@david-redondo.de>
+---
+ startkde/plasma-shutdown/shutdown.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/startkde/plasma-shutdown/shutdown.cpp b/startkde/plasma-shutdown/shutdown.cpp
+index 42e1471652..1e1a8a3751 100644
+--- a/startkde/plasma-shutdown/shutdown.cpp
++++ b/startkde/plasma-shutdown/shutdown.cpp
+@@ -154,7 +154,7 @@ void Shutdown::logoutComplete()
+                                                   QStringLiteral("/org/freedesktop/systemd1"),
+                                                   QStringLiteral("org.freedesktop.systemd1.Manager"),
+                                                   QStringLiteral("StopUnit"));
+-        msg << QStringLiteral("plasma-workspace.target") << QStringLiteral("fail");
++        msg << QStringLiteral("graphical-session.target") << QStringLiteral("fail");
+         QDBusConnection::sessionBus().call(msg);
+     } else {
+         auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.ksmserver"),
+-- 
+2.43.0
+
