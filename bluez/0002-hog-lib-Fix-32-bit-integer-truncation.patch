@@ -1,0 +1,36 @@
+From 50487180813dfa7e7f106076e0cb9c5c0ad58bb3 Mon Sep 17 00:00:00 2001
+From: Andrey Smirnov <andrew.smirnov@gmail.com>
+Date: Thu, 16 Oct 2025 18:57:59 -0700
+Subject: [PATCH 2/2] hog-lib: Fix 32-bit integer truncation
+
+Id paramter stored in getrep_id and setrep_id corresponds to a 32-bit
+tag value passed to us from the kernel side of UHID. Specifying this
+parameter as uint16_t breaks the synchronization after 65536 request
+and renders the attached BLE device inoperable.
+
+Fixes: cdddd7e69e06 ("android/hog: implement get_report functionality")
+Fixes: 83ed02d06fca ("android/hog: Implement set_report functionality")
+Cc: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+---
+ profiles/input/hog-lib.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/profiles/input/hog-lib.c b/profiles/input/hog-lib.c
+index 860c6e32d..70a1bdcbf 100644
+--- a/profiles/input/hog-lib.c
++++ b/profiles/input/hog-lib.c
+@@ -87,9 +87,9 @@ struct bt_hog {
+ 	uint16_t		ctrlpt_handle;
+ 	uint8_t			flags;
+ 	unsigned int		getrep_att;
+-	uint16_t		getrep_id;
++	uint32_t		getrep_id;
+ 	unsigned int		setrep_att;
+-	uint16_t		setrep_id;
++	uint32_t		setrep_id;
+ 	unsigned int		report_map_id;
+ 	struct bt_scpp		*scpp;
+ 	struct bt_dis		*dis;
+-- 
+2.43.0
+
