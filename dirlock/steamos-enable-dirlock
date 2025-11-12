@@ -19,12 +19,12 @@ fi
 
 enable_fs_encryption() {
     echo -en "** ${CYAN}Checking if encryption support is enabled in the /home filesytem${NC}: "
-    if dumpe2fs -h /dev/disk/by-label/home 2> /dev/null | grep -q '^Filesystem features:.*encrypt'; then
+    if dumpe2fs -h /dev/disk/by-partsets/shared/home 2> /dev/null | grep -q '^Filesystem features:.*encrypt'; then
         echo -e "${GREEN}OK${NC}"
     else
         echo -e "NO"
         echo -en "** ${CYAN}Enabling encryption support in the /home filesystem${NC}: "
-        if tune2fs -O encrypt /dev/disk/by-label/home > /dev/null; then
+        if tune2fs -O encrypt /dev/disk/by-partsets/shared/home > /dev/null; then
             echo -e "${GREEN}OK${NC}"
         else
             echo -e "${RED}ERROR${NC}"

@@ -37,7 +37,7 @@ fi
 
 check_encryption_enabled() {
     echo -en "** ${CYAN}Checking if encryption is enabled${NC}: "
-    if dumpe2fs -h /dev/disk/by-label/home 2> /dev/null | grep -q '^Filesystem features:.*encrypt' && \
+    if dumpe2fs -h /dev/disk/by-partsets/shared/home 2> /dev/null | grep -q '^Filesystem features:.*encrypt' && \
             dirlock status -e /home/deck &> /dev/null && \
             test -f /etc/atomic-update.conf.d/dirlock.conf && \
             systemctl is-enabled -q dirlock-sddm.service && \
