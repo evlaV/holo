@@ -7,7 +7,7 @@
 pkgname=xdg-desktop-portal-gamescope
 _commit=bf83640498a30b80af310ef36d232ae66d31213e
 pkgver=0.1.22.bf83640
-pkgrel=1
+pkgrel=2
 pkgdesc='A backend implementation for xdg-desktop-portal talking to gamescope'
 url='https://github.com/evlav/xdg-desktop-portal-gamescope'
 arch=('x86_64')
@@ -202,10 +202,12 @@ source=("git+https://github.com/evlav/$pkgname.git#commit=$_commit"
         'zerovec-derive-0.10.3.tar.gz::https://crates.io/api/v1/crates/zerovec-derive/0.10.3/download'
         'zvariant-5.4.0.tar.gz::https://crates.io/api/v1/crates/zvariant/5.4.0/download'
         'zvariant_derive-5.4.0.tar.gz::https://crates.io/api/v1/crates/zvariant_derive/5.4.0/download'
-        'zvariant_utils-3.2.0.tar.gz::https://crates.io/api/v1/crates/zvariant_utils/3.2.0/download')
+        'zvariant_utils-3.2.0.tar.gz::https://crates.io/api/v1/crates/zvariant_utils/3.2.0/download'
+        'https://github.com/bilelmoussaoui/ashpd/commit/f35d475.patch')
 makedepends=('dbus'
              'git'
              'holo-rust-packaging-tools'
+             'jq'
              'meson>=1.3'
              'pkgconf'
              'rust>=1.86'
@@ -402,7 +404,8 @@ sha256sums=('SKIP'
             '6eafa6dfb17584ea3e2bd6e76e0cc15ad7af12b09abdd1ca55961bed9b1063c6'
             'b2df9ee044893fcffbdc25de30546edef3e32341466811ca18421e3cd6c5a3ac'
             '74170caa85b8b84cc4935f2d56a57c7a15ea6185ccdd7eadb57e6edd90f94b2f'
-            'e16edfee43e5d7b553b77872d99bc36afdda75c223ca7ad5e3fbecd82ca5fc34')
+            'e16edfee43e5d7b553b77872d99bc36afdda75c223ca7ad5e3fbecd82ca5fc34'
+            '6ca59d0dc11d183423cf89d4cf65b5d77546477f18abd3e45de07836db05b6ef')
 provides=('xdg-desktop-portal-impl')
 
 pkgver() {
@@ -415,6 +418,12 @@ prepare() {
   cd "$srcdir"
 
   holo-vendor-rust-sources -o vendored -L "$pkgname/Cargo.lock" *.tar.gz
+
+  # Cherry pick unreleased fix for https://github.com/bilelmoussaoui/ashpd/issues/314
+  patch -d vendored/ashpd-* -p1 < f35d475.patch
+  checksum_file="$(ls vendored/ashpd-*/.cargo-checksum.json)"
+  updated_checksums="$(cat "${checksum_file}" | jq -r '.files."src/backend/builder.rs" = "6f096e47c361285d4520c5e34d5ab2ba9c6d89f79a5eb2c255074b3b7d5d5300"')"
+  echo "${updated_checksums}" > "${checksum_file}"
 
   cd "$pkgname"
 
