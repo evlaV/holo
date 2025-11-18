@@ -2,7 +2,7 @@
 # Maintainer: Jeremy Whiting <jeremy.whiting@collabora.com>
 
 pkgname=steamos-manager
-_srctag=v25.9.0
+_srctag=v25.11.0
 pkgver=${_srctag##v}
 pkgrel=2
 pkgdesc='SteamOS Manager daemon for running various system management tasks'
@@ -230,7 +230,7 @@ source=("$pkgname-$pkgver::git+https://github.com/evlav/$pkgname.git#tag=${_srct
         'zvariant-5.5.3.tar.gz::https://crates.io/api/v1/crates/zvariant/5.5.3/download'
         'zvariant_derive-5.5.3.tar.gz::https://crates.io/api/v1/crates/zvariant_derive/5.5.3/download'
         'zvariant_utils-3.2.0.tar.gz::https://crates.io/api/v1/crates/zvariant_utils/3.2.0/download')
-sha256sums=('a2a7927ad72ac68ef16ead076798e852071f6437a85ac0c588d81a0d39d0c5e9'
+sha256sums=('1929b793fe97a46203e5ee95ed0eaf5e6712b2e7a1b46dca6812ffa2e93008f7'
             'dfbe277e56a376000877090da837660b4427aad530e3028d44e0bffe4f89a1c1'
             '320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa'
             '8e60d3430d3a69478ad0993f19238d2df97c507009a52b3c10addcd7f6bcb916'
