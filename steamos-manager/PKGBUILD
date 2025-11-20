@@ -4,7 +4,7 @@
 pkgname=steamos-manager
 _srctag=v25.11.0
 pkgver=${_srctag##v}
-pkgrel=2
+pkgrel=3
 pkgdesc='SteamOS Manager daemon for running various system management tasks'
 arch=('x86_64')
 url='https://store.steampowered.com/steamos/'
@@ -18,6 +18,7 @@ optdepends=('jupiter-hw-support: jupiter support'  # Needed for jupiter-get-als-
             'jupiter-dock-updater-bin: jupiter dock updater'  # Needed for jupiter-dock-updater
             'orca: Screen reader support'
             'plasma-remotecontrollers: CEC wake support'
+            'scx-scheds: LAVD scheduler support'
             'steamos-customizations-jupiter: jupiter support'  # Needed for steamos-factory-reset-config
             'steamos-log-submitter: ftrace logging'
             'wakehook: CEC wake support')
