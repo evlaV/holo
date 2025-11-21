@@ -5,7 +5,7 @@
 
 pkgname=orca
 pkgver=48.6
-pkgrel=1.2
+pkgrel=1.3
 pkgdesc="Screen reader for individuals who are blind or visually impaired"
 url="https://orca.gnome.org/"
 arch=(any)
@@ -43,10 +43,14 @@ makedepends=(
 groups=(gnome)
 source=("git+https://gitlab.gnome.org/GNOME/orca.git?signed#tag=${pkgver/[a-z]/.&}"
   0001-Use-signals-to-perform-a-couple-of-actions.patch
-  0002-Orca-Don-t-restart-speech-when-reloading-settings-vi.patch)
+  0002-Orca-Don-t-restart-speech-when-reloading-settings-vi.patch
+  0003-Add-support-for-automatic-language-switching-in-docu.patch
+)
 b2sums=('6a139a7ad0d192c75fb80d78d4addc08653a0883a916f1defd373b852fff1947be24d61b8d047be8c9c53365b4ce940e43acd721979d61b3d160cf98bd1ac733'
         'e1c15d7ec55da4d3604e5751cbaa33a9cabea134acb6260b357e5de9528964ff46796e67616a5e972d2debd83cac18830c9f333f733d32e3eb88b8c8307a37fd'
-        'cd92774d3b43589a54322e431564cc693dbbfeab1ca4fc8fb733473fe5002b07bc2b6329e515d71938919f37fe51272a37b802b9a07c7c5c07b7375f3219bc8b')
+        'cd92774d3b43589a54322e431564cc693dbbfeab1ca4fc8fb733473fe5002b07bc2b6329e515d71938919f37fe51272a37b802b9a07c7c5c07b7375f3219bc8b'
+        '2fdc9171519ad584b0059ece7d339033b3453bd8304b6941d9d22e4df34948c5749b84676f55cc82026951f410915d4042300b0c91d6820fd963a3e6ed704b8a')
+
 validpgpkeys=(
   DBDB67681333AA61BBCB97140A042BFD3DA3816C # Joanmarie Diggs <jdiggs@igalia.com>, older
   85D0D0B3FB02946101A46295E7A697B5609D4701 # Joanmarie Diggs <jdiggs@igalia.com>, newer
@@ -56,6 +60,7 @@ prepare() {
   cd orca
   patch -p1 < ../0001-Use-signals-to-perform-a-couple-of-actions.patch
   patch -p1 < ../0002-Orca-Don-t-restart-speech-when-reloading-settings-vi.patch
+  patch -p1 < ../0003-Add-support-for-automatic-language-switching-in-docu.patch
 }
 
 build() {
