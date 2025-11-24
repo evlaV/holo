@@ -5,17 +5,17 @@
 
 pkgname=scx-scheds
 gitname=scx
-pkgver=1.0.17.linux.neptune
+pkgver=1.0.18.linux.neptune
 pkgrel=1
 pkgdesc="sched_ext schedulers"
 arch=('x86_64')
 url="https://github.com/evlav/scx/-/tree/v$pkgver"
 license=('GPL-2.0-only')
 depends=('libelf' 'zlib' 'jq')
-makedepends=('git' 'openssh' 'python' 'meson' 'clang' 'llvm' 'llvm-libs' 'rust' 'cargo')
+makedepends=('git' 'openssh' 'python' 'clang' 'llvm' 'llvm-libs' 'rust' 'cargo')
 backup=('etc/default/scx' 'etc/systemd/journald@sched-ext.conf')
 source=("git+https://github.com/evlav/scx.git#tag=v$pkgver")
-sha256sums=('b25712f631ffe13e70c5fc20ef3c149d356af026c9aa1acfc15a7e7661fec9f2')
+sha256sums=('f3beb97df4faf623318631af0ebe1c523fce21770af9a4c291d6a33074b38ee4')
 options=(!lto)
 provides=("scx-scheds=$pkgver")
 conflicts=(
@@ -56,13 +56,12 @@ prepare() {
 
 build() {
   cd $gitname
-  arch-meson . build --buildtype release --auto-features auto
-  meson compile -C build scx_lavd
+  cargo build --release -p scx_lavd
 }
 
 package() {
   cd $gitname
   install -Dm644 "services/scx" "${pkgdir}/etc/default/scx"
   install -Dm644 "services/systemd/scx.service" "${pkgdir}/usr/lib/systemd/system/scx.service"
-  install -Dm755 "build/release/scx_lavd" "${pkgdir}/usr/bin/scx_lavd"
+  install -Dm755 "target/release/scx_lavd" "${pkgdir}/usr/bin/scx_lavd"
 }
