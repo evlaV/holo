@@ -6,7 +6,7 @@
 
 # Holo: Variant of fwupd disabling some less common plugins/features to save on disk space/dependencies
 pkgname=fwupd-minimal
-pkgver=2.0.13
+pkgver=2.0.18
 pkgrel=1
 pkgdesc="Simple daemon to allow session software to update firmware"
 arch=(x86_64)
@@ -59,10 +59,10 @@ source=(
   fwupd.sysusers
   fwupd.conf
 )
-sha512sums=('bdd23d62b13fff3e7383a3f33b8ce926bb1f9b60f4aceffe0957c19f1b6db2daf14329cd0d78c5d495bbd5413ca5abafa1abac5ca7d51db3cf02cc614f4e9d0d'
+sha512sums=('ebe94f648f4324d4d4582b04f2cd8687e6f8f19234db2cfa1553f23edaa3bff2190e4156d5aed7c89de0a8f6a4af4c67723791a9e4571239663b24f7eecbf59a'
             'f9a99c60786a2b98e0de439a9288af61b2c0716f8339a4c93e2df7108d2a7f9ef8128967dcaa1e12022ffa647945bf5eb3749e38cac83e00a28cbc5b015fbee9'
             '8ebedc0437788337e8433cd67c9868fce1cdc01383a37092bfb83b6deac28ff5c79e0987390c3960b3a44b2acef2216b7489325741c4210a715f34d7bd9c8da1')
-b2sums=('bb672f69c1e22450e7beecfa0fb645c6501c0a42293d591518cfce86db82baece70d68344d22c8b148bc8fb7562b14f743d126d5cee79eb94177a3f93c4a8ca0'
+b2sums=('e6790f9d934dba1382cb94fe210492c2471d5d5f96720220531e5d8de08e8db5d9eaa86a40dc25e20f03f98b5e5ad8d80039c7e3237e238b969e474ea4ea1c72'
         'c294c6dd324c0ad0d752affdc459d427d34f4bf865def099ac0e25db6b5dfbfcf645ca325e4e7732d1256e75c624ff27094d5c814726909c7e348128a9dd93f9'
         'd0154258fa07cfef0ae8c79f90cb6e79a962aa8293b5c107e5fc129f303ad72aa656d49321192c2341149b9d35f84e75144bda0c88aa33343e005c5a4bfbd1f7')
 validpgpkeys=(163EB50119225DB3DF8F49EA17ACBA8DFA970E17) # Richard Hughes <richard@hughsie.com>
