@@ -3,7 +3,7 @@
 pkgname=dirlock
 _commit=177064e06a3c473f70f9eaedcf239bd4024606aa
 pkgver=0.0.1.214.177064e
-pkgrel=1
+pkgrel=2
 pkgdesc='Tool for managing encrypted directories'
 url='https://github.com/evlav/dirlock/'
 arch=('x86_64')
@@ -664,7 +664,7 @@ package() {
   cd "$srcdir/$pkgname"
 
   # Data dir
-  install -d -m0700 "$pkgdir/var/lib/dirlock/"
+  install -d -m0711 "$pkgdir/var/lib/dirlock/"
 
   # Main binary
   install -m755 -D "target/release/dirlock" "$pkgdir/usr/bin/dirlock"

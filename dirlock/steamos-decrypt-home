@@ -12,7 +12,11 @@ GREEN="\033[0;32m"
 CYAN="\033[0;36m"
 NC="\033[0m"
 
-tempdir="/home/dirlock.tmp"
+declare -r user_id=1000
+declare -r user_name="$(id -n -u "$user_id")"
+declare -r user_home="$(eval echo ~"$user_name")"
+
+declare -r tempdir="/home/dirlock.tmp"
 
 cleanup() {
     if [ -d "$tempdir" ]; then
@@ -31,13 +35,13 @@ fi
 if [ -z "${SSH_CONNECTION:-}" ]; then
     echo -e "${RED}WARNING${NC}: You should be running this tool as root from an ssh connection."
     echo "It's important that you ssh directly as root rather than using sudo from"
-    echo "a regular 'deck' user session."
+    echo "a regular '$user_name' user session."
     exit 1
 fi
 
 check_encryption_enabled() {
     echo -en "** ${CYAN}Checking if encryption is enabled${NC}: "
-    if dirlock status -b /home/deck &> /dev/null; then
+    if dirlock status -b "$user_home" &> /dev/null; then
         echo -e "${GREEN}OK${NC}"
     else
         echo -e "${RED}NO${NC}"
@@ -47,30 +51,30 @@ check_encryption_enabled() {
 }
 
 check_unencrypted_home() {
-    echo -en "** ${CYAN}Checking if /home/deck is encrypted${NC}: "
-    if dirlock status -b /home/deck | grep -qwE 'locked|unlocked'; then
+    echo -en "** ${CYAN}Checking if $user_home is encrypted${NC}: "
+    if dirlock status -b "$user_home" | grep -qwE 'locked|unlocked'; then
         echo -e "${GREEN}OK${NC}"
     else
         echo -e "${RED}NO${NC}"
-        echo "ERROR: /home/deck is not encrypted by dirlock" >&2
+        echo "ERROR: $user_home is not encrypted by dirlock" >&2
         return 1
     fi
 }
 
 check_unlocked_home() {
-    echo -en "** ${CYAN}Checking if /home/deck is unlocked${NC}: "
-    if dirlock status -b /home/deck | grep -q unlocked; then
+    echo -en "** ${CYAN}Checking if $user_home is unlocked${NC}: "
+    if dirlock status -b "$user_home" | grep -q unlocked; then
         echo -e "${GREEN}OK${NC}"
     else
         echo -e "${RED}NO${NC}"
-        echo "ERROR: /home/deck is locked, run 'dirlock unlock /home/deck' and try again" >&2
+        echo "ERROR: $user_home is locked, run 'dirlock unlock $user_home' and try again" >&2
         return 1
     fi
 }
 
 check_free_space() {
-    home_size=$(du -s /home/deck | awk '{print $1}')
-    home_inodes=$(du -s --inodes /home/deck | awk '{print $1}')
+    home_size=$(du -s "$user_home" | awk '{print $1}')
+    home_inodes=$(du -s --inodes "$user_home" | awk '{print $1}')
     avail_size=$(df --output=avail /home | tail -n 1)
     avail_inodes=$(df --output=iavail /home | tail -n 1)
 
@@ -96,26 +100,26 @@ stop_sddm() {
 
     systemctl stop sddm
     for f in {1..15}; do
-        pgrep -U deck > /dev/null || break
+        pgrep -U "$user_name" > /dev/null || break
         sleep 1
     done
-    pkill -U deck || true
+    pkill -U "$user_name" || true
 
     echo -e "${GREEN}OK${NC}"
 }
 
 decrypt_home() {
-    echo -e "** ${CYAN}Decrypting /home/deck (this can take a while)${NC}"
+    echo -e "** ${CYAN}Decrypting $user_home (this can take a while)${NC}"
     rm -rf "$tempdir"
     mkdir -p "$tempdir"
-    rsync -aAXH --open-noatime --info=progress2 /home/deck/ "$tempdir/deck/"
+    rsync -aAXH --open-noatime --info=progress2 "$user_home/" "$tempdir/$user_name/"
     sync
-    exch /home/deck "$tempdir/deck"
+    exch "$user_home" "$tempdir/$user_name"
     sync
     rm -rf "$tempdir"
 
-    echo -e "** ${CYAN}Setting a new password for the deck user (/etc/shadow)${NC}"
-    passwd deck
+    echo -e "** ${CYAN}Setting a new password for the $user_name user (/etc/shadow)${NC}"
+    passwd "$user_name"
 }
 
 fstrim_home() {
@@ -129,7 +133,7 @@ fstrim_home() {
 }
 
 cat <<EOF
-This tool will disable encryption in /home/deck.
+This tool will disable encryption in $user_home.
 After this you will have again a plain, unencrypted directory.
 
 You should be running this tool as root from an ssh connection.
@@ -137,8 +141,8 @@ You should be running this tool as root from an ssh connection.
 The following tasks will be performed now:
 
 - The display manager will be stopped and the current session will be closed.
-- /home/deck will be decrypted
-- A new password for the 'deck' account will be set
+- $user_home will be decrypted
+- A new password for the '$user_name' account will be set
 - The system will be rebooted
 
 EOF
@@ -152,7 +156,7 @@ echo "Use it at your own risk and make a backup first if you have valuable data.
 echo
 echo -n "Do you want to proceed? [y/N] "
 read n
-if [ "$n" != "y" ]; then
+if [ "$n" != "y" ] && [ "$n" != "Y" ]; then
     echo "Aborting"
     exit 0
 fi
@@ -167,7 +171,7 @@ fstrim_home
 
 echo
 echo "====================================="
-echo -e "${CYAN}/home/deck is no longer encrypted.${NC}"
+echo -e "${CYAN}$user_home is no longer encrypted.${NC}"
 cat <<EOF
 
 You can encrypt it again with the following command:
@@ -177,7 +181,7 @@ You can encrypt it again with the following command:
 EOF
 echo -n "Do you want to reboot the system now? [Y/n] "
 read n
-if [ "$n" != "y" ] && [ "$n" != "" ]; then
+if [ "$n" != "y" ] && [ "$n" != "Y" ] && [ "$n" != "" ]; then
     echo "Aborting"
     exit 0
 fi
