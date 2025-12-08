@@ -1,15 +1,15 @@
 # Maintainer: Vicki Pfau <vi@endrift.com>
-# Maintainer: Jeremy Whiting <jeremy.whiting@collabora.com>
 
 pkgname=steamos-manager
 _srctag=v25.11.0
 pkgver=${_srctag##v}
-pkgrel=3
+pkgrel=4
 pkgdesc='SteamOS Manager daemon for running various system management tasks'
 arch=('x86_64')
 url='https://store.steampowered.com/steamos/'
 license=('MIT')
 depends=('dbus'
+         'libspeechd'
          'steamos-networking-tools'  # For steamos-wifi-set-backend
          'systemd'
          'wireless_tools' # For iwconfig
