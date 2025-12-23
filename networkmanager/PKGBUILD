@@ -16,7 +16,7 @@ pkgname=(
   networkmanager-docs
 )
 pkgver=1.52.1
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc="Network connection manager and user applications"
 url="https://networkmanager.dev/"
 arch=(x86_64)
@@ -69,11 +69,15 @@ checkdepends=(
 )
 source=(
   "git+https://gitlab.freedesktop.org/NetworkManager/NetworkManager.git?signed#tag=${pkgver/[a-z]/-&}"
+  # https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1908
+  # https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/merge_requests/2335
+  "0001-device-Apply-powersave-configuration-with-iwd.patch"
   # https://github.com/evlav/tasks/-/issues/520
   # https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/merge_requests/1264
   "0002-iwd-remove-8021X-unknown-network-restrictions.patch"
 )
 b2sums=('0af9767688f43ccdca335c1655f4a0b7b2f0568f965b7cfc268aad63a4dfa0f0d9b86746a72e5d27923f0fb8fe8cc74d429fe977c10edea3b24dd47497d021b1'
+        '297c28375da628144a28b2100b295e8b5c001b6cbfd9cb018c7aa56c9bba92742a6acf9cebcf9e48a07f0db407f52ed2ea7711e3eb058da9131bd44aece626db'
         'acb84792effee07ff8853f85136d5fe2822f11810a82a6dbb071c9dba7051d9f5ad232e49442b78cf3b29f24caf9e947ee18941adbe3e1876c11f7212e055509')
 validpgpkeys=(
   3D10AD045AB4AAFF8E8F36AF9B980AC2FB874FEB # Ana Cabral <acabral@redhat.com>
@@ -94,6 +98,7 @@ prepare() {
   git cherry-pick -n 12eff9a7fdfeabab12ce56e5f7d515a13a3d704c
 
   # Holo
+  patch -Np1 < ../0001-device-Apply-powersave-configuration-with-iwd.patch
   patch -Np1 < ../0002-iwd-remove-8021X-unknown-network-restrictions.patch
 }
 
