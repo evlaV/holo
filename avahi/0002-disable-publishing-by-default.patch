@@ -1,0 +1,46 @@
+From 591efe157d804496d6f0d29c929da6405f9b9c61 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Vivek=20Das=C2=A0Mohapatra?= <vivek@collabora.com>
+Date: Wed, 17 Dec 2025 19:27:34 +0000
+Subject: [PATCH] disable publishing by default
+
+Avahi is required for mDNS browsing (eg for CUPS) but publishing is
+handled by sd-resolved.
+
+In order to prevent clashes or mDNS storms we disable Avahi's
+publishing functions in the default configuration.
+---
+ avahi-daemon/avahi-daemon.conf | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/avahi-daemon/avahi-daemon.conf b/avahi-daemon/avahi-daemon.conf
+index f2eca083..29c17d35 100644
+--- a/avahi-daemon/avahi-daemon.conf
++++ b/avahi-daemon/avahi-daemon.conf
+@@ -42,15 +42,15 @@ ratelimit-burst=1000
+ enable-wide-area=yes
+ 
+ [publish]
+-#disable-publishing=no
+-#disable-user-service-publishing=no
++disable-publishing=yes
++disable-user-service-publishing=yes
+ #add-service-cookie=no
+-#publish-addresses=yes
++publish-addresses=no
+ publish-hinfo=no
+ publish-workstation=no
+-#publish-domain=yes
++publish-domain=no
+ #publish-dns-servers=192.168.50.1, 192.168.50.2
+-#publish-resolv-conf-dns-servers=yes
++publish-resolv-conf-dns-servers=no
+ #publish-aaaa-on-ipv4=yes
+ #publish-a-on-ipv6=no
+ 
+diff --git a/man/avahi-daemon.conf.5.xml.in b/man/avahi-daemon.conf.5.xml.in
+index 08018753..e0038968 100644
+--- a/man/avahi-daemon.conf.5.xml.in
++++ b/man/avahi-daemon.conf.5.xml.in
+-- 
+2.50.1
+
