@@ -1,0 +1,64 @@
+#!/bin/bash
+
+set -eu
+
+if [[ "${EUID}" == "0" ]]; then
+    echo "ERROR: Refusing to run as root!" >&2
+    exit 1
+fi
+
+print_help() {
+    echo "Usage:" >&2
+    echo "    # Returns 0 if user has a password set" >&2
+    echo "    $0 --has-password" >&2
+    echo >&2
+    echo "    # Sets current user's password to '<new>'" >&2
+    echo "    echo '<new>' | $0" >&2
+    echo >&2
+    echo "    # Changes current user's password from '<old>' to '<new>'" >&2
+    echo "    (echo '<old>'; echo '<new>') | $0 --current-password" >&2
+}
+
+# Return 0 if the current user has a password
+if [[ "${1:-}" == "--has-password" ]]; then
+    passwd </dev/null 2>&1 | grep -i -q "current password:"
+    exit "$?"
+fi
+
+if [[ "${1:-}" == "--help" ]] || [[ -t 0 ]]; then
+    print_help
+    exit 1
+fi
+
+# Read all lines on `stdin`
+INPUT_LINES=()
+while IFS= read -r line; do
+    INPUT_LINES+=( "$line" )
+done
+
+if [[ -z "${INPUT_LINES[*]}" ]]; then
+    echo "No secrets passed through stdin!" >&2
+    exit 1
+fi
+
+# If `--current-password` is provided, the current password is the first input line.
+PASSWD_LINES=()
+if [[ "${1:-}" == "--current-password" ]]; then
+    if [[ "${#INPUT_LINES[@]}" != 2 ]]; then
+        echo "ERROR: Expected 2 lines (current password, new password), got ${#INPUT_LINES[@]} instead!" >&2
+        exit 1
+    fi
+    PASSWD_LINES+=( "${INPUT_LINES[0]}" )
+    INPUT_LINES=( "${INPUT_LINES[@]:1}" )
+fi
+
+# Print new password out twice for `passwd`
+if [[ "${#INPUT_LINES[@]}" != 1 ]]; then
+    echo "ERROR: Expected 1 line (new password), got ${#INPUT_LINES[@]} instead!" >&2
+    exit 1
+fi
+PASSWD_LINES+=( "${INPUT_LINES[0]}" "${INPUT_LINES[0]}" )
+PASSWD_COMMAND="$(printf "%s\n" "${PASSWD_LINES[@]}" )"
+
+# Spit it out to `passwd`:
+passwd <<<"${PASSWD_COMMAND}"
