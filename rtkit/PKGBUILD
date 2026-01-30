@@ -1,0 +1,59 @@
+# Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
+# Contributor: Corrado Primier <bardo@aur.archlinux.org>
+
+# Holo: Upstream backport, unchanged
+
+pkgname=rtkit
+pkgver=0.14
+pkgrel=1
+pkgdesc="Realtime Policy and Watchdog Daemon"
+url="https://gitlab.freedesktop.org/pipewire/rtkit"
+arch=(x86_64)
+license=('GPL-3.0-or-later AND MIT')
+depends=(
+  dbus
+  glibc
+  libcap
+  polkit
+  systemd-libs
+)
+makedepends=(
+  git
+  meson
+  systemd
+  vim
+)
+source=("git+$url.git?signed#tag=v$pkgver")
+b2sums=('d9c533c223db55a80bb821dd37f58528d16c29814166f856a91841b4c1ea7fd7c2c23e6d4312a57476c15964156da39cf237281ee741ce96f0eb0c01e3ea40d1')
+validpgpkeys=(
+  8218F88849AAC522E94CF470A5E9288C4FA415FA # Jan Alexander Steffens (heftig) <jan.steffens@gmail.com>
+  F18EE40CF34EEB0E589CF23C9CF2A592D0F9DDCC # Arun Raghavan <arun@arunraghavan.net>
+)
+
+prepare() {
+  cd rtkit
+}
+
+build() {
+  local meson_options=(
+    -D installed_tests=false
+  )
+
+  arch-meson rtkit build "${meson_options[@]}"
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
+}
+
+package() {
+  meson install -C build --destdir "$pkgdir"
+
+  local licensedir="$pkgdir/usr/share/licenses/$pkgname"
+  install -Dm644 rtkit/LICENSE -t "$licensedir"
+  sed -n '4,25p' rtkit/rtkit.c |
+    install -Dm644 /dev/stdin "$licensedir/LICENSE.MIT"
+}
+
+# vim:set sw=2 sts=-1 et:

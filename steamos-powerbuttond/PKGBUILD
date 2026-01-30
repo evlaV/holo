@@ -1,7 +1,7 @@
 # Maintainer: Vicki Pfau (vi@endrift.com)
 
 pkgname=steamos-powerbuttond
-_srctag=v3.4
+_srctag=v4.0
 pkgver=${_srctag##v}
 pkgrel=1
 arch=('x86_64')
@@ -13,7 +13,7 @@ source=("steamos-powerbuttond::git+https://github.com/evlav/powerbuttond.git#tag
 replaces=('powerbuttond')
 conflicts=('powerbuttond')
 provides=('powerbuttond')
-sha512sums=('c1d3b6dd45af518d106cfae99717d6d0321e2c120494d4cfef81849fd171ff8cffd8cf26cb8eeb44704ab6d601a73c370422c573dae34befa94ea6634c98cf3f')
+sha512sums=('d435dca77621d9ec43eb5aebb36b908c7e4afdc9c446cdbfdef6dfbe16df1599e22d4de2aa8e7810ccca585cbb1b7ac07c4db44dd6fb00e8c31de3fcc39993b8')
 
 build() {
 	make -C "$srcdir/$pkgname"
