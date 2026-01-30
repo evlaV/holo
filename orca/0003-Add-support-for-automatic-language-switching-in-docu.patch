@@ -1,0 +1,325 @@
+From dfcb16543f9e3ec28761a08e4f810c46ba2deb58 Mon Sep 17 00:00:00 2001
+From: Joanmarie Diggs <jdiggs@igalia.com>
+Date: Fri, 21 Nov 2025 16:02:32 +0100
+Subject: [PATCH] Add support for automatic language switching in document
+ content
+
+This is a backport of 06a4093d (and subsequent bug fixes) which provides
+initial support for automatic language switching in document content. The
+most immediate need is to correctly speak each item in the list of
+languages for the out-of-box experience.
+
+The downstream differences include:
+* By default, enableAutoLanguageSwitching is set to False.
+* A check for /etc/steamos-oobe-image is performed. If found, auto-
+  language switching is enabled despite the setting.
+---
+ src/orca/settings.py                |   4 +-
+ src/orca/speech_generator.py        |  53 ++++++++++++---
+ src/orca/speechdispatcherfactory.py | 101 +++++++++++++++++-----------
+ src/orca/speechserver.py            |  14 ++++
+ 4 files changed, 122 insertions(+), 50 deletions(-)
+
+diff --git a/src/orca/settings.py b/src/orca/settings.py
+index fe26165a0..20b405911 100644
+--- a/src/orca/settings.py
++++ b/src/orca/settings.py
+@@ -139,7 +139,8 @@ userCustomizableSettings = [
+     "sayAllContextLandmark",
+     "sayAllContextNonLandmarkForm",
+     "sayAllContextList",
+-    "sayAllContextTable"
++    "sayAllContextTable",
++    "enableAutoLanguageSwitching"
+ ]
+ 
+ GENERAL_KEYBOARD_LAYOUT_DESKTOP = 1
+@@ -364,3 +365,4 @@ structNavInSayAll = False
+ enableSadPidginHack = False
+ presentChatRoomLast = False
+ presentLiveRegionFromInactiveTab = False
++enableAutoLanguageSwitching: bool = False
+diff --git a/src/orca/speech_generator.py b/src/orca/speech_generator.py
+index 64222321f..fd6325c05 100644
+--- a/src/orca/speech_generator.py
++++ b/src/orca/speech_generator.py
+@@ -36,6 +36,7 @@ __date__      = "$Date:$"
+ __copyright__ = "Copyright (c) 2005-2009 Sun Microsystems Inc."
+ __license__   = "LGPL"
+ 
++import os
+ import urllib.error
+ import urllib.parse
+ import urllib.request
+@@ -63,6 +64,7 @@ from .ax_table import AXTable
+ from .ax_text import AXText
+ from .ax_utilities import AXUtilities
+ from .ax_value import AXValue
++from .speechserver import VoiceFamily
+ 
+ class Pause:
+     """A dummy class to indicate we want to insert a pause into an
+@@ -190,21 +192,32 @@ class SpeechGenerator(generator.Generator):
+         voices = settings_manager.get_manager().get_setting('voices')
+         voice = acss.ACSS(voices.get(voiceType.get(DEFAULT), {}))
+ 
+-        language = args.get('language')
++        language = args.get('language', '')
+         dialect = args.get('dialect', '')
++        family = voice.get(acss.ACSS.FAMILY, {})
+         msg = (
+             f"SPEECH GENERATOR: {key} voice requested with "
+-            f"language='{language}', dialect='{dialect}'"
++            f"language='{language}', dialect='{dialect}' "
++            f"family from settings='{family}'"
+         )
+         debug.print_message(debug.LEVEL_INFO, msg, True)
+ 
+-        # This is purely for debugging. The code needed to actually switch voices
+-        # does not yet exist due to some problems which need to be debugged and
+-        # fixed.
+-        check_voices_for_language = False
+-        if language and check_voices_for_language:
+-            server = speech.get_speech_server()
+-            server.shouldChangeVoiceForLanguage(language, dialect)
++        if len(language) <= 1 or not language.isalpha():
++            language = ""
++            dialect = ""
++        elif len(dialect) <= 1 or not dialect.isalpha():
++            dialect = ""
++
++        server = speech.get_speech_server()
++        assert server, "No speech server available"
++        if not (language and dialect):
++            alt_language, alt_dialect = server.get_language_and_dialect(family)
++            if not language:
++                language = alt_language
++            if language == alt_language and not dialect:
++                dialect = alt_dialect
++            msg = f"SPEECH GENERATOR: Updated to: '{language}', '{dialect}'"
++            debug.print_message(debug.LEVEL_INFO, msg, True)
+ 
+         if key in [None, DEFAULT]:
+             string = args.get('string', '')
+@@ -213,11 +226,33 @@ class SpeechGenerator(generator.Generator):
+                 voice.update(voices.get(voiceType.get(HYPERLINK), {}))
+             elif isinstance(string, str) and string.isupper() and string.strip().isalpha():
+                 voice.update(voices.get(voiceType.get(UPPERCASE), {}))
++
++            # In the factory image, we need automatic language switching enabled so that each
++            # language name is spoken using its associated voice.
++            is_factory_image = os.path.exists("/etc/steamos-oobe-image")
++            # There's also a setting (disabled by default downstream) which makes it possible for
++            # this feature to be enabled in the desktop or game mode.
++            auto_lang_enabled = settings_manager.get_manager().get_setting(
++                "enableAutoLanguageSwitching")
++            if is_factory_image or auto_lang_enabled:
++                family[VoiceFamily.LANG] = language
++                family[VoiceFamily.DIALECT] = dialect
++                if families := server.getVoiceFamiliesForLanguage(
++                   language, dialect, family.get(VoiceFamily.VARIANT)):
++                    family[VoiceFamily.NAME] = families[0][0]
++                else:
++                    # On occasions (e.g. SD + espeak + 'zh'), we might not get any matching family.
++                    # When that occurs, setting/updating the language but leaving the original name
++                    # can cause the voice to not be updated, whereas clearing the name seems to be
++                    # enough to trigger the correct language to be used.
++                    family[VoiceFamily.NAME] = ""
++
+         else:
+             override = voices.get(voicename)
+             if override and override.get('established', True):
+                 voice.update(override)
+ 
++        voice[acss.ACSS.FAMILY] = family
+         return [voice]
+ 
+     def utterances_to_string(self, utterances):
+diff --git a/src/orca/speechdispatcherfactory.py b/src/orca/speechdispatcherfactory.py
+index dd9bbe7ac..133789523 100644
+--- a/src/orca/speechdispatcherfactory.py
++++ b/src/orca/speechdispatcherfactory.py
+@@ -108,6 +108,7 @@ class SpeechServer(speechserver.SpeechServer):
+         self._id = serverId
+         self._client = None
+         self._current_voice_properties = {}
++        self._voice_families_cache = {}
+         self._acss_manipulators = (
+             (ACSS.RATE, self._set_rate),
+             (ACSS.AVERAGE_PITCH, self._set_pitch),
+@@ -238,15 +239,8 @@ class SpeechServer(speechserver.SpeechServer):
+                 # Try to set precise dialect
+                 self._send_command(self._client.set_language, lang + '-' + dialect)
+ 
+-        try:
+-            # This command is not available with older SD versions.
+-            set_synthesis_voice = self._client.set_synthesis_voice
+-        except AttributeError:
+-            pass
+-        else:
+-            name = acss_family.get(speechserver.VoiceFamily.NAME)
+-            if name is not None and name != self._default_voice_name:
+-                self._send_command(set_synthesis_voice, name)
++        if name := acss_family.get(speechserver.VoiceFamily.NAME):
++            self._send_command(self._client.set_synthesis_voice, name)
+ 
+     def _debug_sd_values(self, prefix=""):
+         if debug.debugLevel > debug.LEVEL_INFO:
+@@ -549,15 +543,65 @@ class SpeechServer(speechserver.SpeechServer):
+ 
+         return normalized_language, normalized_dialect
+ 
+-    def getVoiceFamiliesForLanguage(self, language, dialect, maximum=None):
++    def clearVoiceFamiliesCache(self):
++        """Clear the cache for voice family lookups."""
++
++        msg = "SPEECH DISPATCHER: Clearing voice families cache"
++        debug.print_message(debug.LEVEL_INFO, msg, True)
++        self._voice_families_cache.clear()
++
++    def getVoiceFamiliesForLanguage(self, language, dialect="", variant=None, maximum=None):
+         """Returns the families for language available in the current synthesizer."""
+ 
++        if not language:
++            language, dialect = self._get_language_and_dialect(None)
++        elif not dialect:
++            locale_language, locale_dialect = self._get_language_and_dialect(None)
++            if language == locale_language:
++                dialect = locale_dialect
++
++        cache_key = (language, dialect, variant, maximum)
++        if cache_key in self._voice_families_cache:
++            msg = (
++                f"SPEECH DISPATCHER: Returning cached result for language='{language}' "
++                f"dialect='{dialect}' variant='{variant}'"
++            )
++            debug.print_message(debug.LEVEL_INFO, msg, True)
++            return self._voice_families_cache[cache_key]
+         start = time.time()
+         target_language, target_dialect = self._normalizedLanguageAndDialect(language, dialect)
+ 
+         result = []
+-        voices = self._client.list_synthesis_voices()
+ 
++        msg = (
++            f"SPEECH DISPATCHER: Searching for language='{language}' "
++            f"dialect='{dialect}' variant='{variant}'."
++        )
++        debug.print_message(debug.LEVEL_INFO, msg, True)
++
++        language_with_dialect = f"{language}-{dialect}" if dialect else language
++        try:
++            voices = self._client.list_synthesis_voices(language_with_dialect, variant)
++            msg = f"SPEECH DISPATCHER: Unfiltered voice list has {len(voices)} entries."
++            debug.print_message(debug.LEVEL_INFO, msg, True)
++        except (AttributeError, ValueError) as error:
++            msg = f"SPEECH DISPATCHER: specifying language and variant failed: {error}"
++            debug.print_message(debug.LEVEL_INFO, msg, True)
++            try:
++                voices = self._client.list_synthesis_voices()
++            except (AttributeError, ValueError, speechd.SSIPCommandError) as error2:
++                msg = f"SPEECH DISPATCHER: Error listing synthesis voices: {error2}"
++                debug.print_message(debug.LEVEL_WARNING, msg, True)
++                return []
++        except speechd.SSIPCommandError as error:
++            msg = f"SPEECH DISPATCHER: Error listing synthesis voices: {error}"
++            debug.print_message(debug.LEVEL_WARNING, msg, True)
++            return []
++
++        # While the speech-dispatcher API used above lets us specify language and variant, it works
++        # in some cases (e.g. espeak variants), but fails in others (e.g. Voxin). So we need to do
++        # a second pass. In addition, the language and dialect formats are not consistent across
++        # synthesizers.
+         for voice in voices:
+             normalized_language, normalized_dialect = self._normalizedLanguageAndDialect(voice[1])
+             if normalized_language != target_language:
+@@ -566,44 +610,19 @@ class SpeechServer(speechserver.SpeechServer):
+                 result.append(voice)
+             elif not normalized_dialect and target_dialect == normalized_language:
+                 result.append(voice)
++            elif not target_dialect and normalized_dialect == target_language:
++                result.append(voice)
+             if maximum is not None and len(result) >= maximum:
+                 break
+ 
+         msg = (
+             f"SPEECH DISPATCHER: Found {len(result)} match(es) for language='{language}' "
+-            f"dialect='{dialect}' in {time.time() - start:.4f}s."
++            f"dialect='{dialect}' variant='{variant}' in {time.time() - start:.4f}s."
+         )
+         debug.print_message(debug.LEVEL_INFO, msg, True)
++        self._voice_families_cache[cache_key] = result
+         return result
+ 
+-    def shouldChangeVoiceForLanguage(self, language, dialect=""):
+-        """Returns True if we should change the voice for the specified language."""
+-
+-        current_language, current_dialect = self._normalizedLanguageAndDialect(self.getLanguage())
+-        other_language, other_dialect = self._normalizedLanguageAndDialect(language, dialect)
+-
+-        msg = (
+-            f"SPEECH DISPATCHER: Should change voice for language? "
+-            f"Current: '{current_language}' '{current_dialect}' "
+-            f"New: '{other_language}' '{other_dialect}'"
+-        )
+-        debug.print_message(debug.LEVEL_INFO, msg, True)
+-
+-        if current_language == other_language and current_dialect == other_dialect:
+-            msg ="SPEECH DISPATCHER: No. Language and dialect are the same."
+-            debug.print_message(debug.LEVEL_INFO, msg, True)
+-            return False
+-
+-        families = self.getVoiceFamiliesForLanguage(other_language, other_dialect, maximum=1)
+-        if families:
+-            tokens = ["SPEECH DISPATCHER: Yes. Found matching family", families[0], "."]
+-            debug.print_tokens(debug.LEVEL_INFO, tokens, True)
+-            return True
+-
+-        tokens = ["SPEECH DISPATCHER: No. No matching family in", self.getOutputModule(), "."]
+-        debug.print_tokens(debug.LEVEL_INFO, tokens, True)
+-        return True
+-
+     def getOutputModule(self):
+         return self._client.get_output_module()
+ 
+@@ -612,6 +631,7 @@ class SpeechServer(speechserver.SpeechServer):
+         # That might be desired (e.g. self._id impacts what is shown in Orca preferences),
+         # but it can be confusing.
+         self._client.set_output_module(module)
++        self.clearVoiceFamiliesCache()
+ 
+     def stop(self):
+         self._cancel()
+@@ -622,6 +642,7 @@ class SpeechServer(speechserver.SpeechServer):
+ 
+     def reset(self, text=None, acss=None):
+         self._client.close()
++        self.clearVoiceFamiliesCache()
+         self._init()
+         
+     def list_output_modules(self):
+diff --git a/src/orca/speechserver.py b/src/orca/speechserver.py
+index 282fdbb24..d22bfb254 100644
+--- a/src/orca/speechserver.py
++++ b/src/orca/speechserver.py
+@@ -260,3 +260,17 @@ class SpeechServer(object):
+     def list_output_modules(self):
+         """Return names of available output modules as a tuple of strings."""
+         return ()
++
++    def getVoiceFamiliesForLanguage(self, language, dialect="", variant=None, maximum=None):
++        """Returns the families for language available in the current synthesizer."""
++        return []
++
++    def _get_language_and_dialect(self, acss_family):
++        """Returns the language and dialect from the ACSS family dictionary."""
++
++        return "", ""
++
++    def get_language_and_dialect(self, acss_family):
++        """Returns the language and dialect from the ACSS family dictionary."""
++
++        return self._get_language_and_dialect(acss_family)
+-- 
+2.51.1
+

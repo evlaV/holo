@@ -1,0 +1,30 @@
+From 802874eb839e4c9697c3c62d2020dc6e0725d563 Mon Sep 17 00:00:00 2001
+From: Ludovico de Nittis <ludovico.denittis@collabora.com>
+Date: Mon, 10 Nov 2025 18:27:06 +0100
+Subject: [PATCH] Update the 15e3 HD Audio Controller name
+
+This applies the upstream change from
+https://admin.pci-ids.ucw.cz/read/PC/1022/15e3 and
+https://github.com/pciutils/pciids/commit/282d63a312f443378019740728c9b565cce5dc9e#diff-b6c061cb8891af78232378edf0bfdd0f5d4d3bafa3256f4f3cebc67d7d829f1dR1306-R5460
+
+Signed-off-by: Ludovico de Nittis <ludovico.denittis@collabora.com>
+---
+ pci.ids | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pci.ids b/pci.ids
+index 04edf68..a383df5 100644
+--- a/pci.ids
++++ b/pci.ids
+@@ -5468,7 +5468,7 @@
+ 	15e2  Audio Coprocessor
+ 		17aa 5124  ThinkPad E595
+ 		ea50 ce19  mCOM10-L1900
+-	15e3  Family 17h/19h/1ah HD Audio Controller
++	15e3  Ryzen HD Audio Controller
+ 		103c 8615  Pavilion Laptop 15-cw1xxx
+ 		103c 8b17  ProBook 445 G9/455 G9
+ 		1043 86c7  PRIME B450M-A Motherboard
+-- 
+2.51.2
+

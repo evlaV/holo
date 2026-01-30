@@ -1,0 +1,15 @@
+From: Olivier Tilloy <otilloy@igalia.com>
+Date: Mon, 19 Jan 2026 15:54:01 +0100
+Subject: Do not autostart the firewall applet if its python-pyqt6 dependency isn't installed
+Forwarded: not-needed
+
+--- a/config/firewall-applet.desktop.in
++++ b/config/firewall-applet.desktop.in
+@@ -4,6 +4,7 @@ _Comment=Firewall Applet
+ Icon=firewall-applet
+ Categories=System;Settings;Security;
+ Exec=/usr/bin/firewall-applet
++TryExec=/usr/bin/pyuic6
+ Type=Application
+ StartupNotify=true
+ Terminal=false

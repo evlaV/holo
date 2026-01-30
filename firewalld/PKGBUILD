@@ -1,0 +1,73 @@
+# Maintainer: Maxime Gauduin <alucryd@archlinux.org>
+# Maintainer: Robin Candau <antiz@archlinux.org>
+# Contributor: unikum <unikum.pm@gmail.com>
+# Contributor: speed145a <jonathan@tagchapter.com>
+
+pkgbase=firewalld
+pkgname=('firewalld' 'firewalld-test')
+pkgver=2.3.1
+pkgrel=1.1  # Holo: do not autostart the firewall applet if its python-pyqt6 dependency isn't installed
+url="https://firewalld.org"
+arch=('any')
+license=('GPL-2.0-or-later')
+makedepends=('docbook-xsl' 'git' 'intltool' 'podman')
+source=("git+https://github.com/firewalld/firewalld.git#tag=v${pkgver}"
+        'firewalld-sysconfigdir.patch'
+        'fix_gettext_macros_path.patch'
+        'holo-do-not-autostart-firewall-applet.patch')
+sha256sums=('33d598c45be508e2f085b9dbe5d82820fe8d6b856a7ed7d7111e76e9f1cde3c9'
+            '3b2e00f67680c2e620804eb28620d7370b4096851bcb5f6fec22460a21941ad9'
+            '49f793aeaf2e87c834c734b37dc926c9579cc2ec0782e5fe297ee286df6c7ef6'
+            'bba7a365d4d957aaa0d4ac7e349e7d9be9980052011fbc9d6bd8b1020a10aace')
+
+prepare() {
+	cd "${pkgbase}"
+
+	# Use '/etc/conf.d' rather than '/etc/sysconfdir'
+	patch -Np1 -i "${srcdir}/firewalld-sysconfigdir.patch"
+	# Fix gettext's macros path
+	patch -Np1 -i "${srcdir}/fix_gettext_macros_path.patch"
+	# Holo: do not autostart the firewall applet if its python-pyqt6 dependency isn't installed
+	patch -Np1 -i "${srcdir}/holo-do-not-autostart-firewall-applet.patch"
+
+	NOCONFIGURE=true ./autogen.sh
+}
+
+build() {
+	cd "${pkgbase}"
+	./configure \
+		--prefix=/usr \
+		--localstatedir=/var \
+		--sbindir=/usr/bin \
+		--sysconfdir=/etc \
+		--disable-schemas-compile \
+		--disable-sysconfig
+	make
+}
+
+package_firewalld() {
+	pkgdesc="Firewall daemon with D-Bus interface"
+	depends=('python-dbus' 'glib2' 'hicolor-icon-theme'
+		 'nftables' 'python-capng' 'python-gobject')
+	optdepends=('bash-completion: bash completion'
+	            'gtk3: firewall-config'
+		    'libnotify: firewall-applet'
+		    'networkmanager: NetworkManager support'
+		    'polkit: privileged actions'
+		    'python-pyqt6: firewall-applet')
+	backup=('etc/conf.d/firewalld'
+	        'etc/firewalld/firewalld.conf')
+
+	make DESTDIR="${pkgdir}" -C "${pkgbase}" install
+	python -m compileall -d /usr/lib "${pkgdir}/usr/lib"
+	python -O -m compileall -d /usr/lib "${pkgdir}/usr/lib"
+
+	# Remove test suite
+	rm -rvf "${pkgdir}/usr/share/firewalld/testsuite/"
+}
+
+package_firewalld-test() {
+	pkgdesc="FirewallD test suite"
+
+	make DESTDIR="${pkgdir}" -C "${pkgbase}/src/tests" install
+}
