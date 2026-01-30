@@ -1,0 +1,31 @@
+From 9c22feadfa5a582ca2e34220d21f678708eec236 Mon Sep 17 00:00:00 2001
+From: Alberto Garcia <berto@igalia.com>
+Date: Mon, 15 Dec 2025 11:54:29 +0100
+Subject: [PATCH] initramfs/initcpio: create MOUNT_FOLDER if it doesn't exist
+
+/usr/lib/kdumpst/kdump-mkinitcpio-hook.sh is run by the kernel hook
+when using mkinitcpio and a new kernel is installed.
+
+If MOUNT_FOLDER does not exist it will fail with the following error
+message:
+
+==> ERROR: Invalid option -g -- '<MOUNT_FOLDER>/<IMG_FILE>' must be writable
+---
+ initramfs/initcpio/initcpio-common.sh | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/initramfs/initcpio/initcpio-common.sh b/initramfs/initcpio/initcpio-common.sh
+index 500f1f4..2e51c7d 100644
+--- a/initramfs/initcpio/initcpio-common.sh
++++ b/initramfs/initcpio/initcpio-common.sh
+@@ -6,6 +6,7 @@
+ #  before running any of these functions!
+ #
+ create_initramfs_mkinitcpio() {
++	mkdir -p "${MOUNT_FOLDER}"
+ 	rm -f "${MOUNT_FOLDER}/kdump-initrd-$1.img"
+ 
+ 	mkinitcpio -A kdump -S microcode,kms,plymouth -g "${MOUNT_FOLDER}/kdump-initrd-$1.img" -k "$1" 1>/dev/null
+-- 
+GitLab
+

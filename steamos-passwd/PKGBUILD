@@ -1,0 +1,22 @@
+# Maintainer: Elliot Saba <sabae@valvesoftware.com>
+
+pkgname='steamos-passwd'
+pkgver=1.0
+pkgrel=1
+pkgdesc='SteamOS password setter tool'
+arch=('any')
+license=('MIT')
+url='https://github.com/evlav/holo'
+source=(
+  'steamos-passwd'
+)
+sha256sums=(
+  '3984383a18fa44871b43746006d93d85e298e6834f2fd8c52ffd878e06f60141'
+)
+depends=(
+  'bash'
+)
+
+package() {
+  install -Dm0755 steamos-passwd -t "${pkgdir}"/usr/bin
+}
