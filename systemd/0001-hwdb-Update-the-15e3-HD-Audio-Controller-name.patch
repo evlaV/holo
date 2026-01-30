@@ -1,0 +1,60 @@
+From 944301503096ec122a6712bfb346e42b69c58b9f Mon Sep 17 00:00:00 2001
+From: Ludovico de Nittis <ludovico.denittis@collabora.com>
+Date: Tue, 11 Nov 2025 11:33:35 +0100
+Subject: [PATCH] hwdb: Update the 15e3 HD Audio Controller name
+
+This applies the upstream change from
+https://admin.pci-ids.ucw.cz/read/PC/1022/15e3 and
+https://github.com/pciutils/pciids/commit/282d63a312f443378019740728c9b565cce5dc9e#diff-b6c061cb8891af78232378edf0bfdd0f5d4d3bafa3256f4f3cebc67d7d829f1dR1306-R5460
+
+Signed-off-by: Ludovico de Nittis <ludovico.denittis@collabora.com>
+---
+ hwdb.d/20-pci-vendor-model.hwdb | 10 +++++-----
+ hwdb.d/pci.ids                  |  2 +-
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/hwdb.d/20-pci-vendor-model.hwdb b/hwdb.d/20-pci-vendor-model.hwdb
+index c812953656..a387b89c05 100644
+--- a/hwdb.d/20-pci-vendor-model.hwdb
++++ b/hwdb.d/20-pci-vendor-model.hwdb
+@@ -15873,19 +15873,19 @@ pci:v00001022d000015E2sv0000EA50sd0000CE19*
+  ID_MODEL_FROM_DATABASE=ACP/ACP3X/ACP6x Audio Coprocessor (mCOM10-L1900)
+ 
+ pci:v00001022d000015E3*
+- ID_MODEL_FROM_DATABASE=Family 17h/19h/1ah HD Audio Controller
++ ID_MODEL_FROM_DATABASE=Ryzen HD Audio Controller
+ 
+ pci:v00001022d000015E3sv0000103Csd00008615*
+- ID_MODEL_FROM_DATABASE=Family 17h/19h/1ah HD Audio Controller (Pavilion Laptop 15-cw1xxx)
++ ID_MODEL_FROM_DATABASE=Ryzen HD Audio Controller (Pavilion Laptop 15-cw1xxx)
+ 
+ pci:v00001022d000015E3sv0000103Csd00008B17*
+- ID_MODEL_FROM_DATABASE=Family 17h/19h/1ah HD Audio Controller (ProBook 445 G9/455 G9)
++ ID_MODEL_FROM_DATABASE=Ryzen HD Audio Controller (ProBook 445 G9/455 G9)
+ 
+ pci:v00001022d000015E3sv00001043sd000086C7*
+- ID_MODEL_FROM_DATABASE=Family 17h/19h/1ah HD Audio Controller (PRIME B450M-A Motherboard)
++ ID_MODEL_FROM_DATABASE=Ryzen HD Audio Controller (PRIME B450M-A Motherboard)
+ 
+ pci:v00001022d000015E3sv000017AAsd00005124*
+- ID_MODEL_FROM_DATABASE=Family 17h/19h/1ah HD Audio Controller (ThinkPad E595)
++ ID_MODEL_FROM_DATABASE=Ryzen HD Audio Controller (ThinkPad E595)
+ 
+ pci:v00001022d000015E4*
+  ID_MODEL_FROM_DATABASE=Sensor Fusion Hub
+diff --git a/hwdb.d/pci.ids b/hwdb.d/pci.ids
+index 6c0d0cd7fe..10e9d64562 100644
+--- a/hwdb.d/pci.ids
++++ b/hwdb.d/pci.ids
+@@ -5427,7 +5427,7 @@
+ 	15e2  ACP/ACP3X/ACP6x Audio Coprocessor
+ 		17aa 5124  ThinkPad E595
+ 		ea50 ce19  mCOM10-L1900
+-	15e3  Family 17h/19h/1ah HD Audio Controller
++	15e3  Ryzen HD Audio Controller
+ 		103c 8615  Pavilion Laptop 15-cw1xxx
+ 		103c 8b17  ProBook 445 G9/455 G9
+ 		1043 86c7  PRIME B450M-A Motherboard
+-- 
+2.51.2
+
