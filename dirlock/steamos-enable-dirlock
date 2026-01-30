@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright © 2025 Valve Corporation
 #
@@ -12,6 +12,10 @@ GREEN="\033[0;32m"
 CYAN="\033[0;36m"
 NC="\033[0m"
 
+declare -r user_id=1000
+declare -r user_name="$(id -n -u "$user_id")"
+declare -r user_home="$(eval echo ~"$user_name")"
+
 if [ "$(id -u)" != 0 ]; then
     echo "This tool needs to be run as root" >&1
     exit 1
@@ -19,12 +23,12 @@ fi
 
 enable_fs_encryption() {
     echo -en "** ${CYAN}Checking if encryption support is enabled in the /home filesytem${NC}: "
-    if dumpe2fs -h /dev/disk/by-label/home 2> /dev/null | grep -q '^Filesystem features:.*encrypt'; then
+    if dumpe2fs -h /dev/disk/by-partsets/shared/home 2> /dev/null | grep -q '^Filesystem features:.*encrypt'; then
         echo -e "${GREEN}OK${NC}"
     else
         echo -e "NO"
         echo -en "** ${CYAN}Enabling encryption support in the /home filesystem${NC}: "
-        if tune2fs -O encrypt /dev/disk/by-label/home > /dev/null; then
+        if tune2fs -O encrypt /dev/disk/by-partsets/shared/home > /dev/null; then
             echo -e "${GREEN}OK${NC}"
         else
             echo -e "${RED}ERROR${NC}"
@@ -176,7 +180,7 @@ The process will enable encryption support in the system but it won't
 encrypt your data yet.
 
 Once encryption support is enabled you will be able to encrypt the
-data in /home/deck and protect it with a PIN or password, and if you
+data in $user_home and protect it with a PIN or password, and if you
 want you will also be able to revert the changes later and come back
 to a normal, unencrypted home.
 
@@ -196,7 +200,7 @@ echo "Use it at your own risk and make a backup first if you have valuable data.
 echo
 echo -n "Do you want to proceed? [y/N] "
 read n
-if [ "$n" != "y" ]; then
+if [ "$n" != "y" ] && [ "$n" != "Y" ]; then
     echo "Aborting"
     exit 0
 fi
