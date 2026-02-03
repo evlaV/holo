@@ -1,0 +1,109 @@
+From 88961457bacf3a779f13ac826cbffb699b55dff4 Mon Sep 17 00:00:00 2001
+From: Matthew Schwartz <matthew.schwartz@linux.dev>
+Date: Wed, 28 Jan 2026 09:53:29 -0800
+Subject: [PATCH 1/2] station: avoid flushing BSS cache on partial-channel
+ scans
+
+When NL80211_SCAN_FLAG_FLUSH is set, the kernel flushes all BSS entries
+regardless of which channels were scanned. For partial-channel scans,
+this causes BSS entries on non-scanned channels to be removed, which
+can result in connection failures if this happens during the connection
+process.
+---
+ src/rrm.c     |  1 -
+ src/scan.c    |  1 -
+ src/station.c | 23 +++++++++++++++--------
+ 3 files changed, 15 insertions(+), 10 deletions(-)
+
+diff --git a/src/rrm.c b/src/rrm.c
+index e5118a99..b62cfad6 100644
+--- a/src/rrm.c
++++ b/src/rrm.c
+@@ -433,7 +433,6 @@ static void rrm_handle_beacon_scan(struct rrm_state *rrm,
+ 	struct scan_freq_set *freqs = scan_freq_set_new();
+ 	struct scan_parameters params = {
+ 		.freqs = freqs,
+-		.flush = true,
+ 		.duration = beacon->duration,
+ 		.duration_mandatory = test_bit(&beacon->info.mode, 4),
+ 	};
+diff --git a/src/scan.c b/src/scan.c
+index dfd667bb..8db88063 100644
+--- a/src/scan.c
++++ b/src/scan.c
+@@ -808,7 +808,6 @@ static void add_owe_scan_cmd(struct scan_context *sc, struct scan_request *sr,
+ 
+ 	params.ssid = bss->owe_trans->ssid;
+ 	params.ssid_len = bss->owe_trans->ssid_len;
+-	params.flush = true;
+ 
+ 	cmd = scan_build_cmd(sc, ignore_flush, false, &params, params.freqs);
+ 
+diff --git a/src/station.c b/src/station.c
+index a4c3e7d1..8266769d 100644
+--- a/src/station.c
++++ b/src/station.c
+@@ -1535,7 +1535,13 @@ static uint32_t station_scan_trigger(struct station *station,
+ 	struct scan_parameters params;
+ 
+ 	memset(&params, 0, sizeof(params));
+-	params.flush = true;
++	/*
++	 * If a frequency set is given, avoid flushing the BSS cache.  A
++	 * partial-channel scan with flush set will clear BSS entries for
++	 * channels not included in the scan, which can cause connection
++	 * failures if an entry is needed on a non-scanned channel.
++	 */
++	params.flush = !freqs;
+ 	params.freqs = freqs;
+ 
+ 	if (wiphy_can_randomize_mac_addr(station->wiphy) ||
+@@ -3019,7 +3025,7 @@ static void station_roam_scan_destroy(void *userdata)
+ static int station_roam_scan(struct station *station,
+ 				struct scan_freq_set *freq_set)
+ {
+-	struct scan_parameters params = { .freqs = freq_set, .flush = true };
++	struct scan_parameters params = { .freqs = freq_set };
+ 	_auto_(scan_freq_set_free) struct scan_freq_set *allowed =
+ 					station_get_allowed_freqs(station);
+ 
+@@ -3038,6 +3044,7 @@ static int station_roam_scan(struct station *station,
+ 	if (!freq_set) {
+ 		station->roam_scan_full = true;
+ 		params.freqs = allowed;
++		params.flush = true;
+ 	} else
+ 		scan_freq_set_constrain(freq_set, allowed);
+ 
+@@ -5483,10 +5490,12 @@ static struct l_dbus_message *station_force_roam(struct l_dbus *dbus,
+ 		return dbus_error_not_connected(message);
+ 
+ 	target = network_bss_find_by_addr(station->connected_network, mac);
+-	if (!target)
+-		goto full_scan;
++	if (!target) {
++		params.flush = true;
++		goto do_scan;
++	}
+ 
+-	if (target && target == station->connected_bss)
++	if (target == station->connected_bss)
+ 		return dbus_error_already_exists(message);
+ 
+ 	if (station->connected_bss->ssid_len != target->ssid_len)
+@@ -5502,11 +5511,9 @@ static struct l_dbus_message *station_force_roam(struct l_dbus *dbus,
+ 	 */
+ 	freqs = scan_freq_set_new();
+ 	scan_freq_set_add(freqs, target->frequency);
+-
+ 	params.freqs = freqs;
+ 
+-full_scan:
+-	params.flush = true;
++do_scan:
+ 
+ 	data = l_new(struct station_roam_data, 1);
+ 	data->station = station;
+-- 
+2.52.0
+
