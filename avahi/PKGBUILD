@@ -9,7 +9,7 @@
 # avahi: mDNS browsing (finding network printers for CUPS)
 pkgname=avahi
 pkgver=0.8+r194+g3f79789c
-pkgrel=3.1
+pkgrel=3.2
 epoch=1
 pkgdesc="Service Discovery for Linux using mDNS/DNS-SD (compatible with Bonjour)"
 url="https://github.com/avahi/avahi"
@@ -58,10 +58,12 @@ source=(
   "git+https://github.com/avahi/avahi#commit=$_commit"
   0001-HACK-Install-fixes.patch
   0002-disable-publishing-by-default.patch
+  9c4214146738146e454f098264690e8e884c39bd.context-trimmed.patch
 )
 b2sums=(SKIP
         'a15b00c05cce3b6a1479d88b1393cd955a80c669fed03be5f624a8e8701f22fe327bbd42f7563a532ae8ebc39408f3aedfc982c42a2b6141ccc22af96f16293c'
-        'c815c1c394df7f098d2d68651c6b8837d7b8519db782df89212b7865ea4d99533f623f376529c1234becaae6dada5574089541011ba1443ad12855d6a2fe2c2f')
+        'c815c1c394df7f098d2d68651c6b8837d7b8519db782df89212b7865ea4d99533f623f376529c1234becaae6dada5574089541011ba1443ad12855d6a2fe2c2f'
+        '2794f19b8d55d94ad86eabb09f951a68333e308ad72b8ea72314af7e80c0b2af7e5b760d16bf8c7268eb2d3679a8833be6c3e9c28d7b4a5f1ac30f395b39d357')
 
 pkgver() {
   cd avahi
@@ -76,6 +78,12 @@ prepare() {
 
   # Holo: disable publishing by default (handled by sd-resolved on Holo)
   patch -p1 < ../0002-disable-publishing-by-default.patch
+
+  # Holo: disable enable-wide-area to mitigate CVE-2024-52615 and
+  # CVE-2024-52616, and because it's been disabled by default due to other
+  # problems.  Patch taken from upstream, with slightly trimmed context to apply
+  # cleanly, as previous patches modify the same lines.
+  patch -p1 < ../9c4214146738146e454f098264690e8e884c39bd.context-trimmed.patch
 
   NOCONFIGURE=1 ./autogen.sh
 }
