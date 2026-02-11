@@ -1,7 +1,7 @@
 # Maintainer: Ludovico de Nittis <ludovico.denittis@collabora.com>
 
 pkgname=atomupd-daemon
-pkgver=0.20260123.0
+pkgver=0.20260210.0
 pkgrel=1
 pkgdesc='Atomic updates daemon'
 arch=('x86_64')
@@ -15,7 +15,7 @@ depends=('dbus' 'glib2' 'json-glib' 'steamos-atomupd-client' 'polkit' 'systemd')
 provides=("${pkgname}")
 conflicts=("${pkgname}")
 source=("${pkgname}::git+https://github.com/evlav/atomupd-daemon#tag=v${pkgver}")
-sha256sums=('a299a9d2e4f5d4e3edeafb4f66d3df6820356cede3d70e3a17dde822e0dd94ad')
+sha256sums=('2ff9ade7414f3b151a302379cdad14ac0a3278ee76e2fe04a5e01e31aed9ab3a')
 
 build() {
   arch-meson "${pkgname}" build
