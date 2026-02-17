@@ -1,0 +1,87 @@
+# Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Contributor: Mateusz 'mrlemux' Lemusisk mrlemux at gmail dotcom
+# Based on the pcre package by Sébastien "Seblu" Luttringer
+# Contributor: Allan McRae <allan@archlinux.org>
+# Contributor: Eric Belanger <eric@archlinux.org>
+# Contributor: John Proctor <jproctor@prium.net>
+
+pkgname=pcre2
+pkgver=10.47
+pkgrel=1.1 # Rebuild for Holo
+pkgdesc='A library that implements Perl 5-style regular expressions. 2nd version'
+arch=(x86_64)
+url='https://github.com/PCRE2Project/pcre2'
+license=(
+  BSD-2-Clause
+  'BSD-3-Clause WITH PCRE2-exception'
+)
+depends=(
+  bzip2
+  glibc
+  readline
+  zlib
+)
+makedepends=(git)
+optdepends=('sh: for pcre2-config')
+provides=(libpcre2-{8,16,32,posix}.so)
+options=(staticlibs)
+source=(
+  $pkgname::git+$url?signed#tag=$pkgname-$pkgver
+  sljit::git+https://github.com/zherczeg/sljit.git
+)
+sha512sums=('5410982555171a3ab0713d04e0cac56f4d45c28cf7b89b4a39dd81ce6b3a19c665b1f0e63ea27deb89f2b9b85e0b959727a048958ba49d98c2b8d4d736578340'
+            'SKIP')
+b2sums=('ef02f212fe31db86dd8868a3bfc2957ef9af561b561d54c02b421ba9bf9439d9db0d9878cd829a1fcd4d483901c32e15d453d5576014c6e39a5971ffa56a6faf'
+        'SKIP')
+validpgpkeys=(
+  45F68D54BBE23FB3039B46E59766E084FB0F43D8  # Philip Hazel <ph10@hermes.cam.ac.uk>
+  A95536204A3BB489715231282A98E77EB6F24CA8  # Nicholas Wilson <nicholas@nicholaswilson.me.uk>
+)
+
+prepare() {
+  cd $pkgname
+
+  git submodule init
+  git config submodule."deps/sljit".url ../sljit
+  git -c protocol.file.allow=always submodule update
+
+  ./autogen.sh
+
+  # extract licenses
+  cp -v deps/sljit/LICENSE ../BSD-2-Clause.txt
+  sed -n '70,94p' LICENCE.md > ../BSD-3-Clause.txt
+  sed -n '100,104p' LICENCE.md > ../PCRE2-exception.txt
+}
+
+build() {
+  local configure_options=(
+    --enable-jit
+    --enable-pcre2-16
+    --enable-pcre2-32
+    --enable-pcre2grep-libbz2
+    --enable-pcre2grep-libz
+    --enable-pcre2test-libreadline
+    --prefix=/usr
+  )
+
+  cd $pkgname
+
+  # use fat LTO objects for static libraries
+  CFLAGS+=" -ffat-lto-objects"
+  CXXFLAGS+=" -ffat-lto-objects"
+
+  ./configure "${configure_options[@]}"
+  make
+}
+
+check() {
+  make -j1 check -C $pkgname
+}
+
+package() {
+  make DESTDIR="$pkgdir" install -C $pkgname
+
+  install -Dm644 ./*.txt -t "$pkgdir/usr/share/licenses/$pkgname/"
+}
+
+# vim:set sw=2 sts=-1 et:
