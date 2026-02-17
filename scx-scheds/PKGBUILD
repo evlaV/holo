@@ -5,7 +5,7 @@
 
 pkgname=scx-scheds
 gitname=scx
-pkgver=1.0.19.linux.neptune
+pkgver=1.0.20.linux.steamos
 pkgrel=1
 pkgdesc="sched_ext schedulers"
 arch=('x86_64')
@@ -15,7 +15,7 @@ depends=('libelf' 'zlib' 'jq')
 makedepends=('git' 'openssh' 'python' 'clang' 'llvm' 'llvm-libs' 'rust' 'cargo' 'upx')
 backup=('etc/default/scx' 'etc/systemd/journald@sched-ext.conf')
 source=("git+https://github.com/evlav/scx.git#tag=v$pkgver")
-sha256sums=('7674a83a8a79c716f59054dee28b684d837f319a97ca82021e01302b3825bb33')
+sha256sums=('9ecb5c8a81f760b82cbd69b1cf4317921ffe89e53be4f1383b5d9cffbe2aaa5b')
 options=(!lto)
 provides=("scx-scheds=$pkgver")
 conflicts=(
@@ -63,6 +63,6 @@ build() {
 package() {
   cd $gitname
   install -Dm644 "services/scx" "${pkgdir}/etc/default/scx"
-  install -Dm644 "services/systemd/scx.service" "${pkgdir}/usr/lib/systemd/system/scx.service"
+  install -Dm644 "services/scx.service" "${pkgdir}/usr/lib/systemd/system/scx.service"
   install -Dm755 "target/release-tiny/scx_lavd" "${pkgdir}/usr/bin/scx_lavd"
 }
