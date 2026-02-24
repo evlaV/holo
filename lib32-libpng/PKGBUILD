@@ -6,7 +6,7 @@
 
 _pkgbasename=libpng
 pkgname=lib32-$_pkgbasename
-pkgver=1.6.51
+pkgver=1.6.55
 _libversion=16
 pkgrel=1.1 # Rebuild for Holo
 pkgdesc='A collection of routines used to create PNG format graphics files (32-bit)'
@@ -16,13 +16,14 @@ license=('libpng-2.0')
 depends=('lib32-zlib' 'lib32-gcc-libs' $_pkgbasename)
 makedepends=('git')
 provides=('libpng16.so')
-source=("git+https://github.com/pnggroup/libpng.git?signed#tag=v${pkgver}")
-sha256sums=('0b3026798a564f3a0af4ed4e1fef6ecc5f36664527eee2f96376b72a52aa75c0')
+source=("git+https://github.com/pnggroup/libpng.git?signed#tag=v${pkgver}?signed")
+sha256sums=('aadb3e69cbc28b1e4f6bdd9fe6bc27487253121a7bde1e26068973002d5fe260')
 validpgpkeys=('F57A55036A4D45837074FD92C9E384533403C2F8'  # Cosmin Truta <ctruta@gmail.com>
               '1FED507E3236B4A6E53E922BB292C64843FF5BCF') # Cosmin Truta <ctruta@gmail.com>
 
 prepare() {
   cd libpng
+
   autoreconf -fiv
 }
 
