@@ -19,7 +19,7 @@ pkgname=('systemd'
 # way or another. We use proper version for pacman here (no dash for rc
 # release!), and change in source array below.
 pkgver=257.7
-pkgrel=2.2
+pkgrel=2.3
 arch=('x86_64')
 license=('LGPL-2.1-or-later')
 url='https://www.github.com/systemd/systemd'
@@ -52,6 +52,13 @@ source=("git+https://github.com/systemd/systemd#tag=v${pkgver/rc/-rc}?signed"
         # 2025-11-08, to update their https://github.com/systemd/systemd/blob/main/hwdb.d/20-pci-vendor-model.hwdb
         '0001-hwdb-Update-the-15e3-HD-Audio-Controller-name.patch'
 
+        # Holo: Backport the fingerprint rules update from upstream systemd to avoid
+        # battery drain on ROG Ally models.
+        # Addresses https://github.com/ValveSoftware/steamos/issues/2268
+        # Can be removed once the systemd package is updated to systemd v259 stable
+        # or later.
+        '0001-hwdb-update-autosuspend-rules.patch'
+
         # bootloader files
         'arch.conf'
         'loader.conf'
@@ -75,6 +82,7 @@ sha512sums=('94c4f1fa540395653594d25a9633a47d2ce3053f0511b041b0ec73ddbb0db7877a5
             '78065bde708118b7d6e4ed492e096c763e4679a1c54bd98750d5d609d8cc2f1373023f308880f14fc923ae7f9fea34824917ef884c0f996b1f43d08ef022c0fb'
             'f0a8a7ec9ab53ad5273c491f3b8d94cf76b51434a030e572178bd04d3ebb5936b38bf17a708290f4d054d5cb93545b2e2049113268b234f12004d0c7d296989e'
             '128681afb3cf58708c98fd53c57d4d86d2f3ff11fb6135e40b0c3202112cf0eab64e126bc33aca00c650a85284d77e60a64400da36abc8b2a2724da8b6545521'
+            '3b602e4a47f524fdc285d3f1f501c7791e4934906715eee561ee9e4f8524049652d77f60e004d9a8d30345acc06571d21974d4488ee4af7c1d2ccc2f7eb2f88d'
             '61032d29241b74a0f28446f8cf1be0e8ec46d0847a61dadb2a4f096e8686d5f57fe5c72bcf386003f6520bc4b5856c32d63bf3efe7eb0bc0deefc9f68159e648'
             'c416e2121df83067376bcaacb58c05b01990f4614ad9de657d74b6da3efa441af251d13bf21e3f0f71ddcb4c9ea658b81da3d915667dc5c309c87ec32a1cb5a5'
             '5a1d78b5170da5abe3d18fdf9f2c3a4d78f15ba7d1ee9ec2708c4c9c2e28973469bc19386f70b3cf32ffafbe4fcc4303e5ebbd6d5187a1df3314ae0965b25e75'
