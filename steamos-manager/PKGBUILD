@@ -1,7 +1,7 @@
 # Maintainer: Vicki Pfau <vi@endrift.com>
 
 pkgname=steamos-manager
-_srctag=v26.0.0
+_srctag=v26.0.1
 pkgver=${_srctag##v}
 pkgrel=1
 pkgdesc='SteamOS Manager daemon for running various system management tasks'
@@ -233,7 +233,7 @@ source=("$pkgname-$pkgver::git+https://github.com/evlav/$pkgname.git#tag=${_srct
         'zvariant-5.8.0.tar.gz::https://crates.io/api/v1/crates/zvariant/5.8.0/download'
         'zvariant_derive-5.8.0.tar.gz::https://crates.io/api/v1/crates/zvariant_derive/5.8.0/download'
         'zvariant_utils-3.2.1.tar.gz::https://crates.io/api/v1/crates/zvariant_utils/3.2.1/download')
-sha256sums=('4ef551237ae7e666676c017b0dab3ecd22ae9d9f7774637277f3a20fba313616'
+sha256sums=('a8fa7620a7d55128775d40776b4ad1346e1ee4a2f6a1b23a21732cf5dfe70568'
             'ddd31a130427c27518df266943a5308ed92d4b226cc639f5a8f1002816174301'
             '5192cca8006f1fd4f7237516f40fa183bb07f8fbdfedaa0036de5ea9b0b45e78'
             'a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61'
@@ -473,6 +473,9 @@ package () {
 
 	install -d -m0755 "$pkgdir/usr/lib/systemd/user/graphical-session-pre.target.wants/"
 	ln -s ../steamos-manager-session-cleanup.service "$pkgdir/usr/lib/systemd/user/graphical-session-pre.target.wants/"
+
+	install -d -m0755 "$pkgdir/usr/lib/systemd/user/cecd.service.wants/"
+	ln -s ../steamos-manager-configure-cecd.service "$pkgdir/usr/lib/systemd/user/cecd.service.wants/"
 }
 
 check() {
