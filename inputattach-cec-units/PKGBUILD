@@ -1,0 +1,19 @@
+# Maintainer: Vicki Pfau <vi@endrift.com>
+
+pkgname=inputattach-cec-units
+_srctag=v1
+pkgver=${_srctag##v}
+pkgrel=1
+pkgdesc="Systemd units and udev rules for automatically attaching CEC devices via inputattach"
+url="https://github.com/evlav/inputattach-cec-units"
+arch=('any')
+license=('GPL2')
+source=("git+https://github.com/evlav/inputattach-cec-units#tag=${_srctag}")
+sha256sums=('228a2781373629ed3243cdb8e4f88552712be87879c1f290550005db632f13fc')
+depends=('inputattach' 'systemd' 'udev')
+makedepends=('git' 'pkgconf')
+
+package() {
+	cd "$pkgname"
+	make install DESTDIR="$pkgdir"
+}
