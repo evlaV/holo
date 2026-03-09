@@ -1,0 +1,59 @@
+From 1a4955313da28d863cc6a66dc7843231422ec2a8 Mon Sep 17 00:00:00 2001
+From: Vignesh Raman <vignesh.raman@collabora.com>
+Date: Wed, 4 Feb 2026 16:36:46 +0530
+Subject: [PATCH 1/2] actions: overlay: Allow absolute paths in overlay
+
+path.Join() always prepends origin to source, breaking absolute
+paths. Use CleanPathAt() which preserves absolute paths and joins
+relative ones. This allows overlaying files from locations outside
+the recipe directory.
+
+Example recipe using absolute path:
+  - action: overlay
+    source: /tmp/external-overlay
+    destination: /
+
+Run with: debos --artifactdir=/tmp recipe.yaml
+
+Without this fix, the absolute path /tmp/external-overlay would be
+incorrectly resolved to <recipe-dir>/tmp/external-overlay.
+
+Signed-off-by: John Schoenick <johns@valvesoftware.com>
+Signed-off-by: Vignesh Raman <vignesh.raman@collabora.com>
+---
+ actions/overlay_action.go | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/actions/overlay_action.go b/actions/overlay_action.go
+index 1cd624d..010505c 100644
+--- a/actions/overlay_action.go
++++ b/actions/overlay_action.go
+@@ -29,7 +29,6 @@ import (
+ 	"fmt"
+ 	"log"
+ 	"os"
+-	"path"
+ 
+ 	"github.com/go-debos/debos"
+ )
+@@ -52,7 +51,7 @@ func (overlay *OverlayAction) Verify(context *debos.Context) error {
+ 
+ 	/* if origin is the recipe, check the path exists on disk */
+ 	if len(overlay.Origin) == 0 || overlay.Origin == "recipe" {
+-		sourceDir := path.Join(context.RecipeDir, overlay.Source)
++		sourceDir := debos.CleanPathAt(overlay.Source, context.RecipeDir)
+ 		if _, err := os.Stat(sourceDir); err != nil {
+ 			return err
+ 		}
+@@ -72,7 +71,7 @@ func (overlay *OverlayAction) Run(context *debos.Context) error {
+ 		}
+ 	}
+ 
+-	sourcedir := path.Join(origin, overlay.Source)
++	sourcedir := debos.CleanPathAt(overlay.Source, origin)
+ 	destination, err := debos.RestrictedPath(context.Rootdir, overlay.Destination)
+ 	if err != nil {
+ 		return err
+-- 
+2.47.3
+
