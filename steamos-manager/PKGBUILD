@@ -1,7 +1,7 @@
 # Maintainer: Vicki Pfau <vi@endrift.com>
 
 pkgname=steamos-manager
-_srctag=v25.12.0
+_srctag=v26.0.1
 pkgver=${_srctag##v}
 pkgrel=1
 pkgdesc='SteamOS Manager daemon for running various system management tasks'
@@ -14,10 +14,11 @@ depends=('dbus'
          'systemd'
          'wireless_tools' # For iwconfig
          'gsettings-desktop-schemas')
-optdepends=('jupiter-hw-support: jupiter support'  # Needed for jupiter-get-als-gain, jupiter-biosupdate, steamos-format-device, steamos-trim-devices
+optdepends=('cecd: CEC support'
+            'jupiter-hw-support: jupiter support'  # Needed for jupiter-get-als-gain, jupiter-biosupdate, steamos-format-device, steamos-trim-devices
             'jupiter-dock-updater-bin: jupiter dock updater'  # Needed for jupiter-dock-updater
             'orca: Screen reader support'
-            'plasma-remotecontrollers: CEC wake support'
+            'plasma-remotecontrollers: CEC support'
             'scx-scheds: LAVD scheduler support'
             'steamos-customizations-jupiter: jupiter support'  # Needed for steamos-factory-reset-config
             'steamos-log-submitter: ftrace logging'
@@ -39,6 +40,7 @@ source=("$pkgname-$pkgver::git+https://github.com/evlav/$pkgname.git#tag=${_srct
         'bitflags-2.10.0.tar.gz::https://crates.io/api/v1/crates/bitflags/2.10.0/download'
         'bumpalo-3.19.1.tar.gz::https://crates.io/api/v1/crates/bumpalo/3.19.1/download'
         'bytes-1.11.0.tar.gz::https://crates.io/api/v1/crates/bytes/1.11.0/download'
+        'cecd-proxy-0.1.0.tar.gz::https://crates.io/api/v1/crates/cecd-proxy/0.1.0/download'
         'cexpr-0.6.0.tar.gz::https://crates.io/api/v1/crates/cexpr/0.6.0/download'
         'cfg_aliases-0.2.1.tar.gz::https://crates.io/api/v1/crates/cfg_aliases/0.2.1/download'
         'cfg-expr-0.20.5.tar.gz::https://crates.io/api/v1/crates/cfg-expr/0.20.5/download'
@@ -231,7 +233,7 @@ source=("$pkgname-$pkgver::git+https://github.com/evlav/$pkgname.git#tag=${_srct
         'zvariant-5.8.0.tar.gz::https://crates.io/api/v1/crates/zvariant/5.8.0/download'
         'zvariant_derive-5.8.0.tar.gz::https://crates.io/api/v1/crates/zvariant_derive/5.8.0/download'
         'zvariant_utils-3.2.1.tar.gz::https://crates.io/api/v1/crates/zvariant_utils/3.2.1/download')
-sha256sums=('34ffb754d4ed440c0bb0af71444f93bac2f62d31c92499f7f6c990fd0d22acf3'
+sha256sums=('a8fa7620a7d55128775d40776b4ad1346e1ee4a2f6a1b23a21732cf5dfe70568'
             'ddd31a130427c27518df266943a5308ed92d4b226cc639f5a8f1002816174301'
             '5192cca8006f1fd4f7237516f40fa183bb07f8fbdfedaa0036de5ea9b0b45e78'
             'a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61'
@@ -243,6 +245,7 @@ sha256sums=('34ffb754d4ed440c0bb0af71444f93bac2f62d31c92499f7f6c990fd0d22acf3'
             '812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3'
             '5dd9dc738b7a8311c7ade152424974d8115f2cdad61e8dab8dac9f2362298510'
             'b35204fbdc0b3f4446b89fc1ac2cf84a8a68971995d0bf2e925ec7cd960f9cb3'
+            '10d5b3be61ce94b290dc4afc8e9a233649dd788b2307429f942f1ebd575c4df3'
             '6fac387a98bb7c37292057cffc56d62ecb629900026402633ae9160df93a8766'
             '613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724'
             '21be0e1ce6cdb2ee7fff840f922fb04ead349e5cfb1e750b769132d44ce04720'
@@ -458,21 +461,24 @@ EOF
 
 build() {
 	cd "$pkgname-$pkgver"
-	make build
+	make build CARGOFLAGS=--frozen
 }
 
 package () {
 	cd "$pkgname-$pkgver"
-	make install DESTDIR="$pkgdir"
+	make install CARGOFLAGS=--frozen DESTDIR="$pkgdir"
 
 	install -d -m0755 "$pkgdir/usr/lib/systemd/user/gamescope-session.service.wants/"
 	ln -s ../steamos-manager.service "$pkgdir/usr/lib/systemd/user/gamescope-session.service.wants/"
 
 	install -d -m0755 "$pkgdir/usr/lib/systemd/user/graphical-session-pre.target.wants/"
 	ln -s ../steamos-manager-session-cleanup.service "$pkgdir/usr/lib/systemd/user/graphical-session-pre.target.wants/"
+
+	install -d -m0755 "$pkgdir/usr/lib/systemd/user/cecd.service.wants/"
+	ln -s ../steamos-manager-configure-cecd.service "$pkgdir/usr/lib/systemd/user/cecd.service.wants/"
 }
 
 check() {
 	cd "$pkgname-$pkgver"
-	dbus-run-session make test
+	dbus-run-session make CARGOFLAGS=--frozen test
 }
