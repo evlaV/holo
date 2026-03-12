@@ -1,0 +1,213 @@
+From 9021a8f3f7753fee78d4dd7dc2aacefff8050749 Mon Sep 17 00:00:00 2001
+From: vigneshraman <vignesh.raman@collabora.com>
+Date: Sat, 7 Feb 2026 13:51:33 +0530
+Subject: [PATCH] Avoid rewriting self-seed chunks already on disk (#300)
+
+* Avoid rewriting self-seed chunks already on disk
+
+writeChunk checked the self-seed before reading the target from disk,
+causing it to rewrite data that was already correct. Move the on-disk
+check first. If the data is already there, it returns immediately.
+
+Signed-off-by: Vignesh Raman <vignesh.raman@collabora.com>
+
+* Add test for in-place chunk detection
+
+Add an automated test to validate that chunks are taken in-place
+instead of from the store.
+
+Signed-off-by: Vignesh Raman <vignesh.raman@collabora.com>
+
+---------
+
+Signed-off-by: Vignesh Raman <vignesh.raman@collabora.com>
+---
+ assemble.go      |  31 ++++++------
+ assemble_test.go | 119 +++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 136 insertions(+), 14 deletions(-)
+
+diff --git a/assemble.go b/assemble.go
+index c0e5d27..ce9c81e 100644
+--- a/assemble.go
++++ b/assemble.go
+@@ -26,23 +26,13 @@ type AssembleOptions struct {
+ }
+ 
+ // writeChunk tries to write a chunk by looking at the self seed, if it is already existing in the
+-// destination file or by taking it from the store
++// destination file or by taking it from the store. The in-place check runs first to avoid unnecessary
++// writes. If the target already has the correct data, no write is performed.
+ func writeChunk(c IndexChunk, ss *selfSeed, f *os.File, blocksize uint64, s Store, stats *ExtractStats, isBlank bool) error {
+-	// If we already took this chunk from the store we can reuse it by looking
+-	// into the selfSeed.
+-	if segment := ss.getChunk(c.ID); segment != nil {
+-		copied, cloned, err := segment.WriteInto(f, c.Start, c.Size, blocksize, isBlank)
+-		if err != nil {
+-			return err
+-		}
+-		stats.addBytesCopied(copied)
+-		stats.addBytesCloned(cloned)
+-		return nil
+-	}
+-
+ 	// If we operate on an existing file there's a good chance we already
+ 	// have the data written for this chunk. Let's read it from disk and
+-	// compare to what is expected.
++	// compare to what is expected. This is checked first to avoid rewriting
++	// data that is already correct, even for chunks available in the selfSeed.
+ 	if !isBlank {
+ 		b := make([]byte, c.Size)
+ 		if _, err := f.ReadAt(b, int64(c.Start)); err != nil {
+@@ -55,6 +45,19 @@ func writeChunk(c IndexChunk, ss *selfSeed, f *os.File, blocksize uint64, s Stor
+ 			return nil
+ 		}
+ 	}
++
++	// If we already took this chunk from the store we can reuse it by looking
++	// into the selfSeed.
++	if segment := ss.getChunk(c.ID); segment != nil {
++		copied, cloned, err := segment.WriteInto(f, c.Start, c.Size, blocksize, isBlank)
++		if err != nil {
++			return err
++		}
++		stats.addBytesCopied(copied)
++		stats.addBytesCloned(cloned)
++		return nil
++	}
++
+ 	// Record this chunk having been pulled from the store
+ 	stats.incChunksFromStore()
+ 	// Pull the (compressed) chunk from the store
+diff --git a/assemble_test.go b/assemble_test.go
+index 75f91ff..99427bf 100644
+--- a/assemble_test.go
++++ b/assemble_test.go
+@@ -290,6 +290,125 @@ func TestSeed(t *testing.T) {
+ 
+ }
+ 
++// TestSelfSeedInPlace is the same as TestSelfSeed but the target file is
++// pre-populated with the correct content before extraction. Every chunk must
++// be kept in-place and the self-seed must not cause any re-writes.
++func TestSelfSeedInPlace(t *testing.T) {
++	// Setup a temporary store
++	store, err := ioutil.TempDir("", "store")
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer os.RemoveAll(store)
++
++	s, err := NewLocalStore(store, StoreOptions{})
++	if err != nil {
++		t.Fatal(err)
++	}
++
++	// Build a number of fake chunks that can then be used in the test in any order
++	type rawChunk struct {
++		id   ChunkID
++		data []byte
++	}
++	size := 1024
++	numChunks := 10
++	chunks := make([]rawChunk, numChunks)
++
++	for i := 0; i < numChunks; i++ {
++		b := make([]byte, size)
++		rand.Read(b)
++		chunk := NewChunk(b)
++		if err = s.StoreChunk(chunk); err != nil {
++			t.Fatal(err)
++		}
++		chunks[i] = rawChunk{chunk.ID(), b}
++	}
++
++	// The target is pre-written with the correct content,
++	// so every chunk should be detected as in-place.
++	tests := map[string]struct {
++		index []int
++	}{
++		"single chunk": {
++			index: []int{0},
++		},
++		"repeating single chunk": {
++			index: []int{0, 0, 0, 0, 0},
++		},
++		"repeating chunk sequence": {
++			index: []int{0, 1, 2, 0, 1, 2, 2},
++		},
++		"repeating chunk sequence mid file": {
++			index: []int{1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3},
++		},
++		"repeating chunk sequence reversed": {
++			index: []int{0, 1, 2, 2, 1, 0},
++		},
++		"non-repeating chunks": {
++			index: []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
++		},
++	}
++
++	for name, test := range tests {
++		t.Run(name, func(t *testing.T) {
++			// Build an index from the target chunks
++			var idx Index
++			var b []byte
++			for i, p := range test.index {
++				chunk := IndexChunk{
++					ID:    chunks[p].id,
++					Start: uint64(i * size),
++					Size:  uint64(size),
++				}
++				b = append(b, chunks[p].data...)
++				idx.Chunks = append(idx.Chunks, chunk)
++			}
++
++			// Calculate the expected checksum
++			sum := md5.Sum(b)
++
++			// Build a temp target file pre-populated with the correct content
++			dst, err := ioutil.TempFile("", "dst")
++			if err != nil {
++				t.Fatal(err)
++			}
++			defer os.Remove(dst.Name())
++			_, err = dst.Write(b)
++			if err != nil {
++				t.Fatal(err)
++			}
++			dst.Close()
++
++			// Extract the file
++			stats, err := AssembleFile(context.Background(), dst.Name(), idx, s, nil,
++				AssembleOptions{1, InvalidSeedActionBailOut},
++			)
++			if err != nil {
++				t.Fatal(err)
++			}
++
++			// Compare the checksums to that of the input data
++			b, err = ioutil.ReadFile(dst.Name())
++			if err != nil {
++				t.Fatal(err)
++			}
++			outSum := md5.Sum(b)
++			if sum != outSum {
++				t.Fatal("checksum of extracted file doesn't match expected")
++			}
++
++			// All chunks must be in-place. The in-place check in writeChunk
++			// runs before the self-seed lookup, so repeated chunks are not
++			// re-written from the self-seed.
++			if stats.ChunksInPlace != uint64(len(test.index)) {
++				t.Fatalf("expected all %d chunks in-place, got %d", len(test.index), stats.ChunksInPlace)
++			}
++		})
++	}
++
++}
++
+ func join(slices ...[]byte) []byte {
+ 	var out []byte
+ 	for _, b := range slices {
+-- 
+2.47.3
+
