@@ -5,7 +5,7 @@
 
 pkgname=scx-scheds
 gitname=scx
-pkgver=1.0.20.linux.steamos
+pkgver=1.1.0.linux.steamos
 pkgrel=1
 pkgdesc="sched_ext schedulers"
 arch=('x86_64')
@@ -15,7 +15,7 @@ depends=('libelf' 'zlib' 'jq')
 makedepends=('git' 'openssh' 'python' 'clang' 'llvm' 'llvm-libs' 'rust' 'cargo' 'upx')
 backup=('etc/default/scx' 'etc/systemd/journald@sched-ext.conf')
 source=("git+https://github.com/evlav/scx.git#tag=v$pkgver")
-sha256sums=('9ecb5c8a81f760b82cbd69b1cf4317921ffe89e53be4f1383b5d9cffbe2aaa5b')
+sha256sums=('79bdc07b4bdc3d521c2cb56ad6a68da887666da251312db982886515a9e8734a')
 options=(!lto)
 provides=("scx-scheds=$pkgver")
 conflicts=(
