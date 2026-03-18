@@ -3,8 +3,8 @@
 # and then manually merge the resulting PKGBUILD with this file.
 
 pkgname=dmemcg-booster
-pkgver=0.1.0
-pkgrel=2
+pkgver=0.1.1
+pkgrel=1
 arch=('i686' 'pentium4' 'x86_64' 'arm' 'armv7h' 'armv6h' 'aarch64')
 pkgdesc="Service to enable and manage dmem cgroups for boosting foreground apps."
 url="https://github.com/evlav/dmemcg-booster"
@@ -28,7 +28,7 @@ depends=('glibc'
 makedepends=('cargo'
              'holo-rust-packaging-tools')
 license=('None')
-sha256sums=('787a8b913be54e1a660026d4d9108f1ebe4aeccd9a903412e2768e6e16d69858'
+sha256sums=('3dddbecbc835f7fe6387a8d33719efa26d72350e4bc0942fe832af59afe4e0fd'
             '21b3aa68d7e7abee336255bd7248ea965cc393f3e70411135a6f6a4b651345d4'
             '6800badb6cb2082ffd7b6a67e6125bb39f18782f793520caee8cb8846be06112'
             '328c4789d42200f1eeec05bd86c9c13c7f091d2ba9a6ea35acdf51f31bc0f043'
