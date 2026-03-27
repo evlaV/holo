@@ -11,7 +11,7 @@ pkgbase=plasma-workspace
 pkgname=(plasma-workspace plasma-x11-session)
 pkgver=6.4.3
 _dirver=$(echo $pkgver | cut -d. -f1-3)
-pkgrel=1.2
+pkgrel=1.3
 pkgdesc='KDE Plasma Workspace'
 arch=(x86_64)
 url='https://kde.org/plasma-desktop/'
@@ -125,10 +125,12 @@ makedepends=(baloo
              qcoro)
 groups=(plasma)
 source=(https://download.kde.org/stable/plasma/$_dirver/$pkgname-$pkgver.tar.xz{,.sig}
-        0001-shutdown-Stop-graphical-session.target-directly.patch)
+        0001-shutdown-Stop-graphical-session.target-directly.patch
+        0002-skip-checking-disk-when-clicking-mount-and-open.patch)
 sha256sums=('7254f285a91ec802b0612a7adb242d98362accdff866fc1285bb65b8048dedb8'
             'SKIP'
-            '671cc54bf9b932ee5a8b73739523d0c7b99d0b2e76674350743bab056822b13e')
+            '671cc54bf9b932ee5a8b73739523d0c7b99d0b2e76674350743bab056822b13e'
+            'e5908cc9a89fcd0e1e026a785aa7b0dbedbd83f2440a77ac652364a9a6acdd4d')
 validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>
               '0AAC775BB6437A8D9AF7A3ACFE0784117FBCE11D'  # Bhushan Shah <bshah@kde.org>
               'D07BD8662C56CB291B316EB2F5675605C74E02CF'  # David Edmundson <davidedmundson@kde.org>
@@ -136,6 +138,8 @@ validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell
 
 prepare() {
   patch -d plasma-workspace-6.4.3 -Np1 -i "$srcdir/0001-shutdown-Stop-graphical-session.target-directly.patch"
+ # Skip the verification of a drive when clicking mount and open, can be removed in 6.6.0
+  patch -d plasma-workspace-6.4.3 -Np1 -i "$srcdir/0002-skip-checking-disk-when-clicking-mount-and-open.patch"
 }
 
 build() {
