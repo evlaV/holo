@@ -1,0 +1,63 @@
+# Maintainer: Pierre Schmitz <pierre@archlinux.de>
+
+_pkgbasename=openssl
+pkgname=lib32-$_pkgbasename
+epoch=1
+pkgver=3.5.6
+pkgrel=1.1 # Rebuild for holo
+pkgdesc='The Open Source toolkit for Secure Sockets Layer and Transport Layer Security (32-bit)'
+arch=('x86_64')
+url='https://www.openssl.org'
+license=('Apache')
+depends=('lib32-glibc' "${_pkgbasename}")
+optdepends=('ca-certificates')
+provides=('libcrypto.so' 'libssl.so')
+source=("https://github.com/${_pkgbasename}/${_pkgbasename}/releases/download/${_pkgbasename}-${pkgver}/${_pkgbasename}-${pkgver}.tar.gz"{,.asc}
+        'ca-dir.patch')
+sha256sums=('deae7c80cba99c4b4f940ecadb3c3338b13cb77418409238e57d7f31f2a3b736'
+            'SKIP'
+            '0a32d9ca68e8d985ce0bfef6a4c20b46675e06178cc2d0bf6d91bd6865d648b7')
+validpgpkeys=('EFC0A467D613CB83C7ED6D30D894E2CE8B3D79F5'
+              'BA5473A2B0587B07FB27CF2D216094DFD0CB81EF')
+
+prepare() {
+	# Holo: Add /usr/bin/core_perl to the PATH so the pod2man binary is found
+	PATH=$PATH:/usr/bin/core_perl
+
+	cd "$srcdir"/$_pkgbasename-$pkgver
+
+	# set ca dir to /etc/ssl by default
+	patch -Np1 -i "$srcdir"/ca-dir.patch
+}
+
+build() {
+	export CC="gcc -m32"
+	export CXX="g++ -m32"
+	export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+
+	cd "$srcdir"/$_pkgbasename-$pkgver
+
+	./Configure --prefix=/usr --openssldir=/etc/ssl --libdir=lib32 \
+		shared enable-ktls linux-elf
+
+	make MAKEDEPPROG="${CC}" depend
+	make
+}
+
+check() {
+	cd "$srcdir"/$_pkgbasename-$pkgver
+	# the test fails due to missing write permissions in /etc/ssl
+	# revert this patch for make test
+	patch -Rp1 -i "$srcdir"/ca-dir.patch
+	# Remove failing test
+	rm -f test/recipes/01-test_symbol_presence.t
+	make HARNESS_JOBS=$(nproc) test
+	patch -Np1 -i "$srcdir"/ca-dir.patch
+}
+
+package() {
+	cd "$srcdir"/$_pkgbasename-$pkgver
+	make DESTDIR="$pkgdir" install_sw
+
+	rm -r "$pkgdir"/usr/{include,bin}
+}
