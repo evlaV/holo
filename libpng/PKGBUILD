@@ -5,7 +5,7 @@
 # Contributor: Douglas Soares de Andrade <douglas@archlinux.org>
 
 pkgname=libpng
-pkgver=1.6.56
+pkgver=1.6.57
 pkgrel=1.1 # Rebuild for Holo
 pkgdesc='A collection of routines used to create PNG format graphics files'
 arch=('x86_64')
@@ -15,7 +15,7 @@ depends=('zlib' 'sh')
 makedepends=('git')
 provides=('libpng16.so')
 source=("git+https://github.com/pnggroup/libpng.git?signed#tag=v${pkgver}?signed")
-sha256sums=('314c61ef53d40a8ad4afa91dacb8cb172f3a1d02621da9ba4ffa6954b3d408b8')
+sha256sums=('045cb51f2eafc719b87c65be9f42732152243afbe572919e7f163475db4351db')
 validpgpkeys=('F57A55036A4D45837074FD92C9E384533403C2F8'  # Cosmin Truta <ctruta@gmail.com>
               '1FED507E3236B4A6E53E922BB292C64843FF5BCF') # Cosmin Truta <ctruta@gmail.com>
 
