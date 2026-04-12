@@ -2,16 +2,13 @@
 # Contributor: Bartłomiej Piotrowski <bpiotrowski@archlinux.org>
 # Contributor: Jan Alexander Steffens (heftig) <jan.steffens@gmail.com>
 
-# TODO: Keep at stable versions starting with 1.16.0
-# https://gitlab.archlinux.org/archlinux/packaging/packages/flatpak/-/issues/1
-
 pkgbase=flatpak
 pkgname=(
   flatpak
   flatpak-docs
 )
-pkgver=1.15.10
-pkgrel=1.1
+pkgver=1.16.6
+pkgrel=1.1 # Rebuild for holo
 epoch=1
 pkgdesc="Linux application sandboxing and distribution framework (formerly xdg-app)"
 url="https://flatpak.org"
@@ -25,21 +22,20 @@ depends=(
   dbus
   dconf
   fuse3
-  gcc-libs
   gdk-pixbuf2
   glib2
   glibc
   gpgme
   json-glib
   libarchive
+  gcc-libs
   libmalcontent
   libseccomp
   libxau
   libxml2
   ostree
   polkit
-  'python>=3.11'
-  'python<3.12'
+  python
   python-gobject
   systemd
   systemd-libs
@@ -51,8 +47,7 @@ depends=(
 makedepends=(
   docbook-xsl
   git
-# Holo: Arch split glib2 devel files into their own package
-# glib2-devel
+  glib2-devel
   gobject-introspection
   gtk-doc
   meson
@@ -68,17 +63,23 @@ checkdepends=(
 source=(
   "git+https://github.com/flatpak/flatpak?signed#tag=$pkgver"
   https://dl.flathub.org/repo/flathub.flatpakrepo
+  disable-lseek-warning.patch
   flatpak-bindir.sh
 )
-b2sums=('SKIP'
+b2sums=('c1423f0086e0a779be3d6c4322daf8122af221a2c2e94d0534085339415b0d9d0d40b45339f062f6fe199bac7033b460e9805c1acf0b633a2cb8e1db550ad33c'
         'c094461a28dab284c1d32cf470f38118a6cbce27acce633b81945fb859daef9bdec1261490f344221b5cacf4437f53934cb51173f7ad2f1d2e05001139e75c54'
+        '5d717297d940d9faac500f5773ac8e60506d812227d6f36517426bfba1a50c91c84230f01e38f8396465f4465e8128c9706186f02c22d98812a8249d34b77985'
         '1c45caa65e2a1598f219977d5a81dcb8ea5d458880c43c40ba452b0c77cbbf41b36fa6911741f22c807d318e04e39e4fcc1455ed8d68faaba10162dae2570abc')
 validpgpkeys=(
   DA98F25C0871C49A59EAFF2C4DE8FF2A63C7CC90 # Simon McVittie <smcv@collabora.com>
+  9038F70CA72FAC9D10C6327B89AFE307C861D158 # Georges Basile Stavracas Neto (Primary Key) <georges.stavracas@gmail.com>
+  6B0266175A1A8BC8892D3DF79E4D520F7EC588CF # Sebastian Wick <sebastian.wick@redhat.com>
 )
 
 prepare() {
   cd flatpak
+  # holo: disable bogus warning
+  patch -p1 < ../disable-lseek-warning.patch
 }
 
 build() {
@@ -118,7 +119,7 @@ package_flatpak() {
   meson install -C build --destdir "$pkgdir"
 
   install -Dt "$pkgdir/etc/profile.d" -m644 flatpak-bindir.sh
-  install -Dt "$pkgdir/etc/flatpak/remotes.d" flathub.flatpakrepo
+  install -Dt "$pkgdir/usr/share/flatpak/remotes.d" flathub.flatpakrepo
 
   _pick docs "$pkgdir"/usr/share/{doc,gtk-doc}
 }
