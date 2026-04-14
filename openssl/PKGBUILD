@@ -1,7 +1,7 @@
 # Maintainer: Pierre Schmitz <pierre@archlinux.de>
 
 pkgname=openssl
-pkgver=3.5.5
+pkgver=3.5.6
 pkgrel=1.1 # Rebuild for holo
 pkgdesc='The Open Source toolkit for Secure Sockets Layer and Transport Layer Security'
 arch=('x86_64')
@@ -15,7 +15,7 @@ provides=('libcrypto.so' 'libssl.so')
 backup=('etc/ssl/openssl.cnf')
 source=("https://github.com/${pkgname}/${pkgname}/releases/download/${pkgname}-${pkgver}/${pkgname}-${pkgver}.tar.gz"{,.asc}
         'ca-dir.patch')
-sha256sums=('b28c91532a8b65a1f983b4c28b7488174e4a01008e29ce8e69bd789f28bc2a89'
+sha256sums=('deae7c80cba99c4b4f940ecadb3c3338b13cb77418409238e57d7f31f2a3b736'
             'SKIP'
             '0a32d9ca68e8d985ce0bfef6a4c20b46675e06178cc2d0bf6d91bd6865d648b7')
 validpgpkeys=('EFC0A467D613CB83C7ED6D30D894E2CE8B3D79F5'
