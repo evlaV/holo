@@ -1,8 +1,8 @@
 # Maintainer: Ludovico de Nittis <ludovico.denittis@collabora.com>
 
 pkgname=steamos-atomupd-client
-pkgver=0.20260331.1
-pkgrel=1
+pkgver=0.20260414.1
+pkgrel=2
 pkgdesc='SteamOS Atomic Update (client) - Atomic update client for SteamOS.'
 arch=('any')
 url='https://store.steampowered.com/steamos/'
@@ -13,7 +13,7 @@ optdepends=('desync')
 provides=("${pkgname}")
 conflicts=("${pkgname}")
 source=("${pkgname}::git+https://github.com/evlav/${pkgname%-client}.git#tag=v${pkgver}")
-sha256sums=('3781ac5bd21ebae7b9263cdc23563c699122e46248b5b2d080e1e8f0d9057f46')
+sha256sums=('b0a4a0d9e1555fdb33eb1e9b5a5a04d58c8dc7d4e6e27acade4f7a67d691e633')
 
 build() {
 	cd "${pkgname}"
@@ -25,12 +25,12 @@ package () {
 
 	python setup.py install --root="$pkgdir/" --optimize=1 --skip-build
 
-	install -Dm755 "bin/steamos-atomupd-client" "$pkgdir/usr/bin/steamos-atomupd-client"
-	install -Dm755 "bin/steamos-atomupd-mkmanifest" "$pkgdir/usr/bin/steamos-atomupd-mkmanifest"
-	install -Dm644 "completions/steamos-atomupd-client" "$pkgdir/usr/share/bash-completion/completions/steamos-atomupd-client"
-	install -Dm644 "completions/steamos-atomupd-mkmanifest" "$pkgdir/usr/share/bash-completion/completions/steamos-atomupd-mkmanifest"
-	install -dm755 "$pkgdir/usr/lib/steamos-atomupd"
-	install -dm755 "$pkgdir/etc/steamos-atomupd"
-	install -Dm644 "examples/client.conf" "$pkgdir/usr/share/steamos-atomupd-client/examples/client.conf"
-	install -Dm644 "examples/image.manifest.json" "$pkgdir/usr/share/steamos-atomupd-client/examples/image.manifest.json"
+	install -Dm755 "bin/holo-atomupd-client" "$pkgdir/usr/bin/holo-atomupd-client"
+	install -Dm755 "bin/holo-atomupd-mkmanifest" "$pkgdir/usr/bin/holo-atomupd-mkmanifest"
+	install -Dm644 "completions/holo-atomupd-client" "$pkgdir/usr/share/bash-completion/completions/holo-atomupd-client"
+	install -Dm644 "completions/holo-atomupd-mkmanifest" "$pkgdir/usr/share/bash-completion/completions/holo-atomupd-mkmanifest"
+	install -dm755 "$pkgdir/usr/lib/holo-atomupd"
+	install -dm755 "$pkgdir/etc/holo-atomupd"
+	install -Dm644 "examples/client.conf" "$pkgdir/usr/share/holo-atomupd-client/examples/client.conf"
+	install -Dm644 "examples/image.manifest.json" "$pkgdir/usr/share/holo-atomupd-client/examples/image.manifest.json"
 }
