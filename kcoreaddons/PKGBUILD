@@ -4,7 +4,7 @@
 
 pkgname=kcoreaddons
 pkgver=6.16.0
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc='Addons to QtCore'
 arch=(x86_64)
 url='https://community.kde.org/Frameworks'
@@ -31,6 +31,10 @@ sha256sums=('798a2744c296d13b216eadd7e5d801a6fd6956944a2147ab2830c399930ae2a0'
 validpgpkeys=(53E6B47B45CEA3E0D5B7457758D0EE648A48B3BB  # David Faure <faure@kde.org>
               E0A3EB202F8E57528E13E72FD7574483BB57B18D  # Jonathan Esk-Riddell <jr@jriddell.org>
               90A968ACA84537CC27B99EAF2C8DF587A6D4AAC1) # Nicolas Fella <nicolas.fella@kde.org>
+
+prepare() {
+  patch -p1 -d "$srcdir/$pkgname-$pkgver" -i "$srcdir/0001-Backport-Remove-control-characters-when-quoting-args.patch"
+}
 
 build() {
   cmake -B build -S $pkgname-$pkgver \
