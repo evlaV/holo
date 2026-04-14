@@ -1,9 +1,9 @@
 # Maintainer: Olivier Tilloy <otilloy@igalia.com>
 
 pkgname=xdg-desktop-portal-holo
-_commit=bb73298cd763e0ce131912e48c766a4032c9f910
-pkgver=0.1.14.bb73298
-pkgrel=2
+_commit=5ad92bfab460cd8ea536831789c43590b3a7a71c
+pkgver=0.1.18.5ad92bf
+pkgrel=1
 pkgdesc='A backend implementation for xdg-desktop-portal of holo-specific interfaces'
 url="https://github.com/evlav/$pkgname"
 arch=('x86_64')
@@ -17,7 +17,7 @@ makedepends=('fontconfig'
              'systemd'
              'xdg-desktop-portal')
 license=('LGPL-2.1-or-later')
-sha256sums=('SKIP')
+sha256sums=('e148928f03d08a9e9ce6d7984e3d38c2cf7bb36d0ed0153132f9d5d469b4e3c8')
 provides=('xdg-desktop-portal-impl')
 
 pkgver() {
