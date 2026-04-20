@@ -1,11 +1,11 @@
 #  SPDX-License-Identifier: LGPL-2.1-or-later
 #
-#  Copyright (c) 2023 Valve.
+#  Copyright (c) 2023,2026 Valve.
 #  Maintainer: Guilherme G. Piccoli <gpiccoli@igalia.com>
 #
 
 [Unit]
-Description=SteamOS kdumpst tiny layer service
+Description=Holo kdumpst tiny layer service
 ConditionPathExistsGlob=/home/.steamos/offload/var/kdumpst/logs/*
 After=basic.target kdumpst-init.service
 
