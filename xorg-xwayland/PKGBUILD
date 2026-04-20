@@ -6,7 +6,7 @@
 
 pkgname=xorg-xwayland
 pkgver=24.1.10
-pkgrel=1.1 # Add seamless boot fixes
+pkgrel=1.2 # Add seamless boot fixes
 arch=('x86_64')
 license=(
     LicenseRef-Adobe-Display-PostScript
@@ -50,7 +50,7 @@ sha512sums=('bceba1db7f4d7ac92d2b2a3c8f6f7ab0cc093f396fe89406f8dba25e32ffc3edfa5
             'SKIP'
             'a32fbd58e47e6f276d91f23cb16bd9e5fa010e8faea4116b20011b49000125966e090ea0bc64fc6d825b1d23694b2d57f018e392860ab2418e0625a0f4df80a5'
             '99f0935a4efc26c0f992063cd03c121a68f9972fbf6938c40585e9f2b20d15068e722e85ac945511af3cfa206132ca980aaae36a3734f65c2829327ea471ec4f'
-            'f79f9ffa25f991d547e6447f2470df93978e8846c7223690595e33f269448afe046509c78e39bcad9d032ec646010bb3f6e401a9eb2434b370d0b0daa8e28eb3')
+            '1b7d1e09e963fc1c47974565a0516e7de948a7f24dbd3fd011e237c4e8d1ee198a3c85979a2b40a5e2c6cd6286a793cd36f94ae4bed72aec9ac418cf843e6b85')
 provides=('xorg-server-xwayland')
 conflicts=('xorg-server-xwayland')
 replaces=('xorg-server-xwayland')
