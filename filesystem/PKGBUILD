@@ -1,26 +1,18 @@
-# Maintainer: Sébastien Luttringer
+# Maintainer: Holo Team
+# Contributor: Sébastien Luttringer
 # Contributor: Tom Gundersen <teg@jklm.no>
 
+_os_id=holo
+
+# Include common filesystem build definitions
+source filesystem_common.pkgbuild
+
+# Keep the pkgname exactly `filesystem`, otherwise the package from Arch Linux
+# upstream will be chosen instead
 pkgname=filesystem
-pkgver=2021.12.07
-# https://bugs.archlinux.org/task/72284
-pkgrel=1.17
-pkgdesc='Base SteamOS Linux files'
-arch=('x86_64')
-license=('GPL')
-url='http://repo.steampowered.com'
-depends=('iana-etc')
-backup=('etc/crypttab' 'etc/fstab' 'etc/group' 'etc/gshadow' 'etc/host.conf'
-        'etc/hosts' 'etc/issue' 'etc/ld.so.conf' 'etc/nsswitch.conf'
-        'etc/passwd' 'etc/profile' 'etc/resolv.conf' 'etc/securetty'
-        'etc/shadow' 'etc/shells')
-source=('crypttab' 'env-generator' 'fstab' 'group' 'gshadow' 'host.conf' 'hosts'
-        'issue' 'ld.so.conf' 'locale.sh' 'nsswitch.conf' 'os-release'
-        'passwd' 'profile' 'resolv.conf' 'securetty' 'shadow' 'shells' 'sysctl'
-        'sysusers' 'tmpfiles' 'archlinux-logo.svg' 'archlinux-logo.png'
-        'archlinux-logo-text.svg' 'archlinux-logo-text-dark.svg'
-        'hosts-steamos' 'issue-steamos' 'os-release-steamos' 'tmpfiles-steamos'
-        'steamos.png' '01-steamos-enforce-UID-GID.conf')
+pkgver=${_pkgver:-1}
+pkgrel=${_pkgrel:-1}
+pkgdesc='Base Holo Linux files'
 sha256sums=('e03bede3d258d680548696623d5979c6edf03272e801a813c81ba5a5c64f4f82'
             'ed0cb4f1db4021f8c3b5ce78fdf91d2c0624708f58f36c9cf867f4d93c3bc6da'
             'e54626e74ed8fee4173b62a545ab1c3a3a069e4217a0ee8fc398d9933e9c1696'
@@ -47,144 +39,10 @@ sha256sums=('e03bede3d258d680548696623d5979c6edf03272e801a813c81ba5a5c64f4f82'
             '601069e6e8920309178c397fd8cebe43410827d01899d31777d13212f0dfacf8'
             '96e3cc81623c0537a19799f9eefa966fe46ff5f28a9dc7af1187990973baa127'
             '87e07d0a4413de7894a7e7afba180350fd283f35370f62f134f473a8406be44a'
-            '073e8484c77bfec866f2446a05d8d4070d65377ee8b2f3aff0a8b8758105af08'
-            '0c695976070be67822551215fc74a4c2d4e0892665c3cb0c8c64a58b8644b2a3'
+            'e01b7f7b38e456fb939d1fcc555eb49a0b88d95f4276ae6736576aa33b052e8d'
+            'd40e4e9b9ac1facae3bedf170782ac95bebf707c0f4defff9b06432d6216e9a6'
             'c3e409ac247f13c47c0d3f5627e9544ffe9a4aa9403dab079f695025d9c76fee'
-            '5660b669eea8739dd7c671aa92300c15c6f836e0df3402476d53e88bad99446b'
+            '934ff7bf4ed4e8f9b57e300136fe866f157e40b52559ee05263fe0fca9e24f52'
             'e9a358abfa9a7946af556befdb18a8f72d1e47add4bceb422768341b7bb2b421')
-
-package() {
-  cd "$pkgdir"
-
-  # setup root filesystem
-  for d in boot dev etc home mnt usr var opt srv/http run; do
-    install -d -m755 $d
-  done
-  install -d -m555 proc
-  install -d -m555 sys
-  install -d -m0750 root
-  install -d -m1777 tmp
-  # vsftpd won't run with write perms on /srv/ftp
-  # ftp (uid 14/gid 11)
-  install -d -m555 -g 11 srv/ftp
-
-  # setup /etc and /usr/share/factory/etc
-  install -d etc/{ld.so.conf.d,skel,profile.d} usr/share/factory/etc
-  for f in fstab group host.conf hosts issue ld.so.conf nsswitch.conf \
-  passwd resolv.conf securetty shells profile; do
-    install -m644 "$srcdir"/$f etc/
-    install -m644 "$srcdir"/$f usr/share/factory/etc/
-  done
-  ln -s ../proc/self/mounts etc/mtab
-  for f in gshadow shadow crypttab; do
-    install -m600 "$srcdir"/$f etc/
-    install -m600 "$srcdir"/$f usr/share/factory/etc/
-  done
-  touch etc/arch-release
-  install -m644 "$srcdir"/locale.sh etc/profile.d/locale.sh
-  install -Dm644 "$srcdir"/os-release usr/lib/os-release
-
-  # setup /var
-  # SteamOS for any /var changes, update the tmpfiles-steamos
-  for d in cache local opt log/old lib/misc empty; do
-    install -d -m755 var/$d
-  done
-  install -d -m1777 var/{tmp,spool/mail}
-
-  # allow setgid games (gid 50) to write scores
-  install -d -m775 -g 50 var/games
-  ln -s spool/mail var/mail
-  ln -s ../run var/run
-  ln -s ../run/lock var/lock
-
-  # setup /usr hierarchy
-  for d in bin include lib share/{misc,pixmaps} src; do
-    install -d -m755 usr/$d
-  done
-  for d in {1..8}; do
-    install -d -m755 usr/share/man/man$d
-  done
-
-  # add lib symlinks
-  ln -s usr/lib lib
-  [[ $CARCH = 'x86_64' ]] && {
-    ln -s usr/lib lib64
-    ln -s lib usr/lib64
-  }
-
-  # add bin symlinks
-  ln -s usr/bin bin
-  ln -s usr/bin sbin
-  ln -s bin usr/sbin
-
-  # setup /usr/local hierarchy
-  for d in bin etc games include lib man sbin share src; do
-    install -d -m755 usr/local/$d
-  done
-  ln -s ../man usr/local/share/man
-
-  # setup systemd-sysctl
-  install -D -m644 "$srcdir"/sysctl usr/lib/sysctl.d/10-arch.conf
-
-  # setup systemd-sysusers
-  install -D -m644 "$srcdir"/sysusers usr/lib/sysusers.d/arch.conf
-
-  # setup systemd-tmpfiles
-  install -D -m644 "$srcdir"/tmpfiles usr/lib/tmpfiles.d/arch.conf
-
-  # setup systemd.environment-generator
-  install -D -m755 "$srcdir"/env-generator usr/lib/systemd/system-environment-generators/10-arch
-
-  # add logo
-  install -D -m644 "$srcdir"/archlinux-logo{.png,.svg,-text.svg,-text-dark.svg} usr/share/pixmaps
-
-  # HERE BE DRAGONS: SteamOS customisations
-  # Keep each one clearly documented, where possible with references
-
-  # We have first and second stage boot-loader, residing in esp and efi
-  for d in efi esp; do
-    install -d -m700 $d
-  done
-
-  # add boot/efi symlink for compatibility
-  ln -s ../efi boot/efi
-
-  # In RO mode, we bind-mount over this so software installed in /usr/local
-  # can still have their debug symbols resolved.
-  # makepkg uses this path, regardless of the package install location
-  install -d -m755 usr/lib/debug
-
-  # customize for read-only root filesystem, inspired by ostree:
-  # https://ostree.readthedocs.io/en/latest/manual/adapting-existing/
-  mv mnt var
-  ln -s var/mnt
-
-  # Install the SteamOS version of /etc/hosts
-  install -m644 "$srcdir"/hosts-steamos etc/hosts
-  install -m644 "$srcdir"/hosts-steamos usr/share/factory/etc/hosts
-
-  # Overwrite Arch specific (branding) files with SteamOS ones
-  install -m644 "$srcdir"/issue-steamos etc/issue
-  install -m644 "$srcdir"/issue-steamos usr/share/factory/etc/issue
-  install -Dm644 "$srcdir"/os-release-steamos usr/lib/os-release
-
-  # Add separate release file, for clarity-sake
-  ln -s arch-release etc/steamos-release
-
-  # Additional systemd-tmpfiles
-  install -D -m644 "$srcdir"/tmpfiles-steamos usr/lib/tmpfiles.d/steamos.conf
-  # Factory entries for the "C" tmpfiles entries
-  install -d -m750 usr/share/factory/root
-  for d in dkms modules; do
-    install -d -m755 usr/share/factory/var/lib/$d
-  done
-
-  # Swap the logos
-  rm usr/share/pixmaps/archlinux-logo{.png,.svg,-text.svg,-text-dark.svg}
-  install -D -m644 "$srcdir"/steamos.png usr/share/pixmaps
-
-  # Install the sysusers file to enforce consistent UIDs and GIDs
-  install -D -m644 "$srcdir"/01-steamos-enforce-UID-GID.conf usr/lib/sysusers.d/01-steamos-enforce-UID-GID.conf
-}
 
 # vim:set ts=2 sw=2 et:

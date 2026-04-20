@@ -1,71 +1,60 @@
-# Author : Vivek Das Mohapatra <vivek@collabora.com>
+# Maintainer: Holo Team
 
+pkgbase='steamos-reset'
 pkgname=('steamos-reset' 'steamos-reset-ui')
-_srctag=jupiter-20241008.1
+_srctag=jupiter-20260414.1
 pkgver=${_srctag#jupiter-}
-pkgrel=3
+pkgrel=1
 arch=('x86_64')
 license=('GPL')
 makedepends=('git' 'qt5-base' 'qt5-quickcontrols2')
-depends=(curl bash steamos-efi steamos-atomupd-client jq)
 url='https://github.com/evlav/steamos-reset'
-source=("${pkgname}::git+${url}#tag=${_srctag}")
-sha256sums=('SKIP')
+source=("${pkgbase}::git+https://github.com/evlav/steamos-reset#tag=${_srctag}")
+sha256sums=('10e1dbb04dd00a54a07d4613e9e7a62d725ac9bd3cc8416deca8e9c0539ec2e4')
 
-build () {
-    local unsplit=$(readlink -f .inst)
-    cd "${pkgname}"
+_uifiles=(
+    usr/share/holo-reset/lighttpd/holo-reset.conf
+    usr/lib/holo-reset/bin/holo-reset-qml
+    usr/bin/holo-reset-service
+    usr/share/applications/holo-factory-reset.qml.desktop
+    usr/share/holo-reset/holo-reset.svg
+    usr/lib/systemd/system/holo-reset.service
+)
+
+build() {
+    cd "$pkgbase"
     autoreconf -ivf
     ./configure --prefix=/usr --libexecdir=/usr/lib --sbindir=/usr/bin \
                 --with-ui=qml
-    make && make DESTDIR=$unsplit install
-}
-
-_split_install ()
-{
-    local pkg=$1
-    local from=$2
-    local to=$3
-    local src dir dst x
-
-    local -a uifiles=(\
-        /usr/share/steamos-reset/lighttpd/steamos-reset.conf \
-        /usr/lib/steamos-reset/bin/steamos-reset-qml \
-        /usr/bin/steamos-reset-service \
-        /usr/share/applications/steamos-factory-reset.qml.desktop \
-        /usr/share/steamos-reset/steamos-reset.svg \
-        /usr/lib/systemd/system/steamos-reset.service)
-    local -A UIFILES=()
-    for x in "${uifiles[@]}"; do UIFILES["$x"]=1; done
-
-    while read src
-    do
-        src=${src#.}
-        case $pkg in
-            steamos-reset)
-                if [ ${UIFILES["$src"]:-0} -eq 1 ]; then continue; fi
-                ;;
-            steamos-reset-ui)
-                if [ ${UIFILES["$src"]:-0} -ne 1 ]; then continue; fi
-                ;;
-        esac
-        dst=${to}$(dirname $src)
-        install -m755 -d $dst
-        mv ${from}${src} $dst
-    done < <(cd $from && find -mindepth 1 -type f)
+    make
 }
 
 package_steamos-reset() {
-    local unsplit=$(readlink -f .inst)
+    depends=('curl' 'bash' 'steamos-efi' 'steamos-atomupd-client' 'jq')
+    optdepends=(
+        'steamos-customizations-jupiter: for holo-alias compatibility symlinks'
+    )
     pkgdesc='Backend and CLI to reset SteamOS to a freshly installed state'
 
-    _split_install "$pkgname" "$unsplit" "$pkgdir"
+    cd "${pkgbase}"
+    make DESTDIR="${pkgdir}" install
+
+    for f in "${_uifiles[@]}"; do
+        rm -f "${pkgdir}/${f}"
+    done
+
+    find "$pkgdir" -type d -empty -delete
 }
 
 package_steamos-reset-ui() {
-    local unsplit=$(readlink -f .inst)
-    depends=(steamos-reset lighttpd gcc-libs qt5-base qt5-declarative)
-    pkgdesc='GUI tool reset SteamOS to a freshly installed state'
+    depends=('steamos-reset' 'lighttpd' 'gcc-libs' 'qt5-base' 'qt5-declarative')
+    pkgdesc='GUI tool to reset SteamOS to a freshly installed state'
 
-    _split_install "$pkgname" "$unsplit" "$pkgdir"
+    cd "${pkgbase}"
+    make DESTDIR="${srcdir}/${pkgbase}-ui" install
+
+    for f in "${_uifiles[@]}"; do
+        install -d "${pkgdir}/${f%/*}"
+        cp -a "${srcdir}/${pkgbase}-ui/${f}" "${pkgdir}/${f}"
+    done
 }

@@ -6,7 +6,7 @@ After=etc.mount
 ConditionPathExists=/var/lib/overlays/etc/upper/fstab
 
 [Service]
-ExecStart=/usr/lib/steamos/holo-fstab-repair
+ExecStart=/usr/lib/holo/holo-fstab-repair
 
 [Install]
 WantedBy=local-fs.target
