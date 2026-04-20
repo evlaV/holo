@@ -1,0 +1,1433 @@
+From 8e601363f8bb536cf024c174edcd19489047c2b5 Mon Sep 17 00:00:00 2001
+From: Vivek Das Mohapatra <vivek@collabora.com>
+Date: Thu, 15 Jan 2026 18:24:05 +0000
+Subject: [PATCH 1/3] libdiscover/backends/SteamOS: rename to Holo
+
+---
+ .kde-ci.yml                                   |   2 +-
+ libdiscover/backends/CMakeLists.txt           |   6 +-
+ .../backends/HoloBackend/CMakeLists.txt       |  51 +++++
+ .../HoloBackend.cpp}                          | 121 +++++------
+ .../HoloBackend.h}                            |  24 +--
+ .../backends/HoloBackend/HoloResource.cpp     | 202 ++++++++++++++++++
+ .../HoloResource.h}                           |  10 +-
+ .../HoloTransaction.cpp}                      |  46 ++--
+ .../HoloTransaction.h}                        |  14 +-
+ .../com.steampowered.Atomupd1.xml             |  10 +-
+ .../dbushelpers.h                             |   0
+ .../org.freedesktop.DBus.Properties.xml       |   0
+ .../backends/HoloBackend/tests/CMakeLists.txt |  14 ++
+ .../tests/HoloTest.cpp}                       |  24 +--
+ .../tests/HoloTest.h}                         |   6 +-
+ .../tests/atomupd1_adaptor.cpp                |   0
+ .../tests/atomupd1_adaptor.h                  |   0
+ .../tests/mock_server.cpp                     |   0
+ .../tests/mock_server.h                       |   0
+ .../backends/SteamOSBackend/CMakeLists.txt    |  51 -----
+ .../SteamOSBackend/SteamOSResource.cpp        | 202 ------------------
+ .../SteamOSBackend/tests/CMakeLists.txt       |  14 --
+ 22 files changed, 399 insertions(+), 398 deletions(-)
+ create mode 100644 libdiscover/backends/HoloBackend/CMakeLists.txt
+ rename libdiscover/backends/{SteamOSBackend/SteamOSBackend.cpp => HoloBackend/HoloBackend.cpp} (58%)
+ rename libdiscover/backends/{SteamOSBackend/SteamOSBackend.h => HoloBackend/HoloBackend.h} (83%)
+ create mode 100644 libdiscover/backends/HoloBackend/HoloResource.cpp
+ rename libdiscover/backends/{SteamOSBackend/SteamOSResource.h => HoloBackend/HoloResource.h} (86%)
+ rename libdiscover/backends/{SteamOSBackend/SteamOSTransaction.cpp => HoloBackend/HoloTransaction.cpp} (65%)
+ rename libdiscover/backends/{SteamOSBackend/SteamOSTransaction.h => HoloBackend/HoloTransaction.h} (65%)
+ rename libdiscover/backends/{SteamOSBackend => HoloBackend}/com.steampowered.Atomupd1.xml (97%)
+ rename libdiscover/backends/{SteamOSBackend => HoloBackend}/dbushelpers.h (100%)
+ rename libdiscover/backends/{SteamOSBackend => HoloBackend}/org.freedesktop.DBus.Properties.xml (100%)
+ create mode 100644 libdiscover/backends/HoloBackend/tests/CMakeLists.txt
+ rename libdiscover/backends/{SteamOSBackend/tests/SteamOSTest.cpp => HoloBackend/tests/HoloTest.cpp} (82%)
+ rename libdiscover/backends/{SteamOSBackend/tests/SteamOSTest.h => HoloBackend/tests/HoloTest.h} (89%)
+ rename libdiscover/backends/{SteamOSBackend => HoloBackend}/tests/atomupd1_adaptor.cpp (100%)
+ rename libdiscover/backends/{SteamOSBackend => HoloBackend}/tests/atomupd1_adaptor.h (100%)
+ rename libdiscover/backends/{SteamOSBackend => HoloBackend}/tests/mock_server.cpp (100%)
+ rename libdiscover/backends/{SteamOSBackend => HoloBackend}/tests/mock_server.h (100%)
+ delete mode 100644 libdiscover/backends/SteamOSBackend/CMakeLists.txt
+ delete mode 100644 libdiscover/backends/SteamOSBackend/SteamOSResource.cpp
+ delete mode 100644 libdiscover/backends/SteamOSBackend/tests/CMakeLists.txt
+
+diff --git a/.kde-ci.yml b/.kde-ci.yml
+index 89a348871..7c60a844e 100644
+--- a/.kde-ci.yml
++++ b/.kde-ci.yml
+@@ -39,4 +39,4 @@ RuntimeDependencies:
+ 
+ Options:
+  require-passing-tests-on: ['Linux', 'FreeBSD']
+- cmake-options: -DBUILD_RpmOstreeBackend=ON -DBUILD_SteamOSBackend=ON
++ cmake-options: -DBUILD_RpmOstreeBackend=ON -DBUILD_HoloBackend=ON
+diff --git a/libdiscover/backends/CMakeLists.txt b/libdiscover/backends/CMakeLists.txt
+index f2a00b7f4..e2ed145cc 100644
+--- a/libdiscover/backends/CMakeLists.txt
++++ b/libdiscover/backends/CMakeLists.txt
+@@ -58,9 +58,9 @@ set_package_properties(Snapd PROPERTIES
+     TYPE OPTIONAL
+ )
+ 
+-option(BUILD_SteamOSBackend "Build SteamOS support." "OFF")
+-if (BUILD_SteamOSBackend)
+-    add_subdirectory(SteamOSBackend)
++option(BUILD_HoloBackend "Build Holo support." "OFF")
++if (BUILD_HoloBackend)
++    add_subdirectory(HoloBackend)
+ endif()
+ 
+ option(BUILD_SystemdSysupdateBackend "Build support for Systemd's SysUpdate." "OFF")
+diff --git a/libdiscover/backends/HoloBackend/CMakeLists.txt b/libdiscover/backends/HoloBackend/CMakeLists.txt
+new file mode 100644
+index 000000000..69d0946e9
+--- /dev/null
++++ b/libdiscover/backends/HoloBackend/CMakeLists.txt
+@@ -0,0 +1,51 @@
++set(holo-backend_SRCS
++    HoloResource.h
++    HoloResource.cpp
++    HoloBackend.h
++    HoloBackend.cpp
++    HoloTransaction.h
++    HoloTransaction.cpp
++    dbushelpers.h
++)
++
++set(atomupd1_xml com.steampowered.Atomupd1.xml)
++set_source_files_properties(${atomupd1_xml} PROPERTIES
++    INCLUDE "dbushelpers.h"
++    NA_NAMESPACE TRUE
++)
++qt_add_dbus_interface(holo-backend_SRCS ${atomupd1_xml} atomupd1)
++qt_add_dbus_interface(holo-backend_SRCS org.freedesktop.DBus.Properties.xml dbusproperties_interface)
++
++ecm_qt_declare_logging_category(holo-backend_SRCS
++    HEADER libdiscover_holo_debug.h
++    IDENTIFIER LIBDISCOVER_BACKEND_HOLO_LOG
++    CATEGORY_NAME org.kde.plasma.libdiscover.backend.holo
++    DESCRIPTION "libdiscover (backend - Holo)"
++    EXPORT DISCOVER
++)
++
++kcoreaddons_add_plugin(holo-backend SOURCES ${holo-backend_SRCS} INSTALL_NAMESPACE "discover")
++
++add_library(libdiscover-backend-holo-logging-category STATIC
++    ${libdiscover-backend-holo-logging-category_SRCS}
++)
++
++set_property(TARGET libdiscover-backend-holo-logging-category PROPERTY POSITION_INDEPENDENT_CODE ON)
++
++target_link_libraries(libdiscover-backend-holo-logging-category
++    PRIVATE
++        Qt::Core
++)
++
++if(BUILD_TESTING)
++    add_subdirectory(tests)
++endif()
++
++target_link_libraries(holo-backend
++    Qt::Core
++    Qt::Widgets
++    Qt::DBus
++    KF6::CoreAddons
++    KF6::ConfigCore
++    Discover::Common
++)
+diff --git a/libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp b/libdiscover/backends/HoloBackend/HoloBackend.cpp
+similarity index 58%
+rename from libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp
+rename to libdiscover/backends/HoloBackend/HoloBackend.cpp
+index 4b2b850e9..20b56183f 100644
+--- a/libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp
++++ b/libdiscover/backends/HoloBackend/HoloBackend.cpp
+@@ -4,9 +4,9 @@
+  *   SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+  */
+ 
+-#include "SteamOSBackend.h"
+-#include "SteamOSResource.h"
+-#include "SteamOSTransaction.h"
++#include "HoloBackend.h"
++#include "HoloResource.h"
++#include "HoloTransaction.h"
+ 
+ #include <Transaction/Transaction.h>
+ #include <Transaction/TransactionModel.h>
+@@ -30,25 +30,25 @@
+ #include <QTimer>
+ 
+ #include "atomupd1.h"
+-#include "libdiscover_steamos_debug.h"
++#include "libdiscover_holo_debug.h"
+ 
+-DISCOVER_BACKEND_PLUGIN(SteamOSBackend)
++DISCOVER_BACKEND_PLUGIN(HoloBackend)
+ 
+ // We expect 2 results, updates and later updates
+ #define CHECK_UPDATES_RETURN_COUNT 2
+ #define ATOMUPD_SERVICE_PATH "/usr/lib/systemd/system/atomupd.service"
+ 
+-QString SteamOSBackend::service()
++QString HoloBackend::service()
+ {
+     return QStringLiteral("com.steampowered.Atomupd1");
+ }
+ 
+-QString SteamOSBackend::path()
++QString HoloBackend::path()
+ {
+     return QStringLiteral("/com/steampowered/Atomupd1");
+ }
+ 
+-SteamOSBackend::SteamOSBackend(QObject *parent)
++HoloBackend::HoloBackend(QObject *parent)
+     : AbstractResourcesBackend(parent)
+     , m_updater(new StandardBackendUpdater(this))
+     , m_updateVersion()
+@@ -59,13 +59,14 @@ SteamOSBackend::SteamOSBackend(QObject *parent)
+ {
+     qDBusRegisterMetaType<VariantMapMap>();
+ 
+-    if (qEnvironmentVariableIsSet("STEAMOS_TEST_MODE")) {
+-        const QString path = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/discover-steamos-test");
+-        qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "running steamos backend on test mode" << path;
++    if (qEnvironmentVariableIsSet("HOLO_TEST_MODE") ||
++        qEnvironmentVariableIsSet("STEAMOS_TEST_MODE")) {
++        const QString path = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/discover-holo-test");
++        qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "running holo backend on test mode" << path;
+         m_testing = true;
+     }
+ 
+-    connect(m_updater, &StandardBackendUpdater::updatesCountChanged, this, &SteamOSBackend::updatesCountChanged);
++    connect(m_updater, &StandardBackendUpdater::updatesCountChanged, this, &HoloBackend::updatesCountChanged);
+ 
+     // Use the session bus when testing.
+     if (m_testing) {
+@@ -78,7 +79,7 @@ SteamOSBackend::SteamOSBackend(QObject *parent)
+     // this could wake up the service
+     m_currentVersion = m_interface->currentVersion();
+     m_currentBuildID = m_interface->currentBuildID();
+-    qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "steamos-backend: Current version from dbus api: " << m_currentVersion << " and build ID: " << m_currentBuildID;
++    qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "holo-backend: Current version from dbus api: " << m_currentVersion << " and build ID: " << m_currentBuildID;
+ 
+     // If we got a version property, assume the service is responding and check for updates
+     if (!m_currentVersion.isEmpty() && !m_currentBuildID.isEmpty()) {
+@@ -88,26 +89,26 @@ SteamOSBackend::SteamOSBackend(QObject *parent)
+ 
+         checkForUpdates();
+     } else {
+-        qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "steamos-backend: Unable to query atomupd for SteamOS Updates...";
++        qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "holo-backend: Unable to query atomupd for Holo Updates...";
+         // Should never happen, since trying to open the interface above starts
+-        // it, but if this plugin is on non steamos devices we should show something
+-        Q_EMIT passiveMessage(i18n("SteamOS: Unable to query atomupd for SteamOS Updates..."));
++        // it, but if this plugin is on non holo devices we should show something
++        Q_EMIT passiveMessage(i18n("Holo: Unable to query atomupd for Holo Updates..."));
+     }
+ }
+ 
+-void SteamOSBackend::hasUpdateChanged(bool hasUpdate)
++void HoloBackend::hasUpdateChanged(bool hasUpdate)
+ {
+     if (hasUpdate) {
+         // Create or update resource from m_updateVersion, m_updateBuildID
+         if (!m_resource) {
+-            qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "steamos-backend: Creating new SteamOSResource with build id: " << m_updateBuildID;
+-            m_resource = new SteamOSResource(m_updateVersion,
+-                                             m_updateBuildID,
+-                                             m_updateSize,
+-                                             QStringLiteral("%1 - %2").arg(m_currentVersion).arg(m_currentBuildID),
+-                                             this);
++            qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "holo-backend: Creating new HoloResource with build id: " << m_updateBuildID;
++            m_resource = new HoloResource(m_updateVersion,
++                                          m_updateBuildID,
++                                          m_updateSize,
++                                          QStringLiteral("%1 - %2").arg(m_currentVersion).arg(m_currentBuildID),
++                                          this);
+         } else {
+-            qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "steamos-backend: Updating SteamOSResource with new version: " << m_updateVersion
++            qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "holo-backend: Updating HoloResource with new version: " << m_updateVersion
+                                                      << " and new build id: " << m_updateBuildID;
+             m_resource->setVersion(m_updateVersion);
+             m_resource->setBuild(m_updateBuildID);
+@@ -117,16 +118,16 @@ void SteamOSBackend::hasUpdateChanged(bool hasUpdate)
+         // Clear or remove any previously created resource
+     }
+ 
+-    qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "steamos-backend: Updates count is now " << updatesCount();
++    qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "holo-backend: Updates count is now " << updatesCount();
+ }
+ 
+-void SteamOSBackend::needRebootChanged()
++void HoloBackend::needRebootChanged()
+ {
+     // Tell gui we need to reboot
+     m_updater->setNeedsReboot(true);
+ }
+ 
+-void SteamOSBackend::acquireFetching(bool f)
++void HoloBackend::acquireFetching(bool f)
+ {
+     if (f) {
+         m_fetching++;
+@@ -141,18 +142,18 @@ void SteamOSBackend::acquireFetching(bool f)
+     }
+ }
+ 
+-bool SteamOSBackend::fetchExistingTransaction()
++bool HoloBackend::fetchExistingTransaction()
+ {
+     // Do we already know that we have a transaction in progress?
+     if (m_transaction) {
+-        qInfo() << "steamos-backend: A transaction is already in progress";
++        qInfo() << "holo-backend: A transaction is already in progress";
+         return true;
+     }
+ 
+     // Is there actualy a transaction in progress we don't know about yet?
+     uint status = m_interface->updateStatus();
+     if (status != Idle) {
+-        qInfo() << "steamos-backend: Found a transaction in progress";
++        qInfo() << "holo-backend: Found a transaction in progress";
+         // We don't check that m_currentlyBootedDeployment is != nullptr here as we expect
+         // that the backend is initialized when we're called.
+         m_updateVersion = m_interface->updateVersion();
+@@ -160,7 +161,7 @@ bool SteamOSBackend::fetchExistingTransaction()
+         m_currentVersion = m_interface->currentVersion();
+         m_currentBuildID = m_interface->currentBuildID();
+         m_resource =
+-            new SteamOSResource(m_updateVersion, m_updateBuildID, m_updateSize, QStringLiteral("[%1] - %2").arg(m_currentVersion).arg(m_currentBuildID), this);
++            new HoloResource(m_updateVersion, m_updateBuildID, m_updateSize, QStringLiteral("[%1] - %2").arg(m_currentVersion).arg(m_currentBuildID), this);
+         setupTransaction(m_resource);
+         TransactionModel::global()->addTransaction(m_transaction);
+         return true;
+@@ -169,13 +170,13 @@ bool SteamOSBackend::fetchExistingTransaction()
+     return false;
+ }
+ 
+-void SteamOSBackend::setupTransaction(SteamOSResource *app)
++void HoloBackend::setupTransaction(HoloResource *app)
+ {
+-    m_transaction = new SteamOSTransaction(app, Transaction::InstallRole, m_interface);
+-    connect(m_transaction, &SteamOSTransaction::needReboot, this, &SteamOSBackend::needRebootChanged);
++    m_transaction = new HoloTransaction(app, Transaction::InstallRole, m_interface);
++    connect(m_transaction, &HoloTransaction::needReboot, this, &HoloBackend::needRebootChanged);
+ }
+ 
+-void SteamOSBackend::checkForUpdates()
++void HoloBackend::checkForUpdates()
+ {
+     if (m_fetching) {
+         return;
+@@ -188,31 +189,31 @@ void SteamOSBackend::checkForUpdates()
+     }
+ 
+     if (fetchExistingTransaction()) {
+-        qInfo() << "steamos-backend: Not checking for updates while a transaction is in progress";
++        qInfo() << "holo-backend: Not checking for updates while a transaction is in progress";
+         return;
+     }
+ 
+     acquireFetching(true);
+ 
+-    qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "steamos-backend-backend::checkForUpdates asking DBus api";
++    qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "holo-backend-backend::checkForUpdates asking DBus api";
+ 
+     // We don't send any options for now, dbus api doesn't do anything with them yet anyway
+     QDBusPendingReply<VariantMapMap, VariantMapMap> reply = m_interface->CheckForUpdates({});
+     QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(reply, this);
+-    connect(watcher, &QDBusPendingCallWatcher::finished, this, &SteamOSBackend::checkForUpdatesFinished);
++    connect(watcher, &QDBusPendingCallWatcher::finished, this, &HoloBackend::checkForUpdatesFinished);
+ }
+ 
+-void SteamOSBackend::checkForUpdatesFinished(QDBusPendingCallWatcher *call)
++void HoloBackend::checkForUpdatesFinished(QDBusPendingCallWatcher *call)
+ {
+     QDBusPendingReply<VariantMapMap, VariantMapMap> reply = *call;
+     //            qobject_cast<QDBusPendingReply<VariantMapMap, VariantMapMap>(*call);
+     if (call->isError()) {
+         Q_EMIT passiveMessage(call->error().message());
+-        qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "steamos-backend: CheckForUpdates error: " << call->error().message();
++        qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "holo-backend: CheckForUpdates error: " << call->error().message();
+     } else {
+         // Valid response, parse it
+         VariantMapMap versions = reply.argumentAt<0>();
+-        qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "steamos-backend-backend: Versions available: " << versions;
++        qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "holo-backend-backend: Versions available: " << versions;
+         VariantMapMap laterVersions = reply.argumentAt<1>();
+ 
+         if (versions.isEmpty()) {
+@@ -223,7 +224,7 @@ void SteamOSBackend::checkForUpdatesFinished(QDBusPendingCallWatcher *call)
+             QVariantMap data = versions.value(m_updateBuildID);
+             m_updateVersion = data.value(QLatin1String("version")).toString();
+             m_updateSize = data.value(QLatin1String("estimated_size")).toUInt();
+-            qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "steamos-backend: Data values: " << data.values();
++            qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "holo-backend: Data values: " << data.values();
+             hasUpdateChanged(true);
+         }
+     }
+@@ -232,71 +233,71 @@ void SteamOSBackend::checkForUpdatesFinished(QDBusPendingCallWatcher *call)
+     call->deleteLater();
+ }
+ 
+-int SteamOSBackend::updatesCount() const
++int HoloBackend::updatesCount() const
+ {
+     return m_updater->updatesCount();
+ }
+ 
+-// SteamOS never has any searchable packages or anything, so just always
++// Holo never has any searchable packages or anything, so just always
+ // give a void stream
+-ResultsStream *SteamOSBackend::search(const AbstractResourcesBackend::Filters &filter)
++ResultsStream *HoloBackend::search(const AbstractResourcesBackend::Filters &filter)
+ {
+     // We only support updates. All targeted searches are not applicable.
+     if (!filter.resourceUrl.isEmpty()) {
+-        return new ResultsStream(QStringLiteral("SteamOS-empty"), {});
++        return new ResultsStream(QStringLiteral("Holo-empty"), {});
+     }
+ 
+     QVector<StreamResult> res;
+     if (m_resource && m_resource->state() >= filter.state) {
+         res << StreamResult{m_resource, 0};
+     }
+-    return new ResultsStream(QLatin1String("SteamOS-stream"), res);
++    return new ResultsStream(QLatin1String("Holo-stream"), res);
+ }
+ 
+-QHash<QString, SteamOSResource *> SteamOSBackend::resources() const
++QHash<QString, HoloResource *> HoloBackend::resources() const
+ {
+     return m_resources;
+ }
+ 
+-bool SteamOSBackend::isValid() const
++bool HoloBackend::isValid() const
+ {
+     if (m_testing)
+         return true;
+     return QFile(QStringLiteral(ATOMUPD_SERVICE_PATH)).exists();
+ }
+ 
+-AbstractBackendUpdater *SteamOSBackend::backendUpdater() const
++AbstractBackendUpdater *HoloBackend::backendUpdater() const
+ {
+     return m_updater;
+ }
+ 
+-AbstractReviewsBackend *SteamOSBackend::reviewsBackend() const
++AbstractReviewsBackend *HoloBackend::reviewsBackend() const
+ {
+     return nullptr;
+ }
+ 
+-Transaction *SteamOSBackend::installApplication(AbstractResource *app, const AddonList &addons)
++Transaction *HoloBackend::installApplication(AbstractResource *app, const AddonList &addons)
+ {
+     Q_UNUSED(addons);
+     return installApplication(app);
+ }
+ 
+-Transaction *SteamOSBackend::installApplication(AbstractResource *app)
++Transaction *HoloBackend::installApplication(AbstractResource *app)
+ {
+-    setupTransaction(static_cast<SteamOSResource *>(app));
++    setupTransaction(static_cast<HoloResource *>(app));
+     return m_transaction;
+ }
+ 
+-Transaction *SteamOSBackend::removeApplication(AbstractResource *)
++Transaction *HoloBackend::removeApplication(AbstractResource *)
+ {
+-    qWarning() << "steamos-backend: Unsupported operation:" << __PRETTY_FUNCTION__;
++    qWarning() << "holo-backend: Unsupported operation:" << __PRETTY_FUNCTION__;
+     return nullptr;
+ }
+ 
+-QString SteamOSBackend::displayName() const
++QString HoloBackend::displayName() const
+ {
+-    return QStringLiteral("SteamOS");
++    return QStringLiteral("Holo");
+ }
+ 
+-#include "SteamOSBackend.moc"
+-#include "moc_SteamOSBackend.cpp"
++#include "HoloBackend.moc"
++#include "moc_HoloBackend.cpp"
+diff --git a/libdiscover/backends/SteamOSBackend/SteamOSBackend.h b/libdiscover/backends/HoloBackend/HoloBackend.h
+similarity index 83%
+rename from libdiscover/backends/SteamOSBackend/SteamOSBackend.h
+rename to libdiscover/backends/HoloBackend/HoloBackend.h
+index 296001e83..d85c4279e 100644
+--- a/libdiscover/backends/SteamOSBackend/SteamOSBackend.h
++++ b/libdiscover/backends/HoloBackend/HoloBackend.h
+@@ -4,8 +4,8 @@
+  *   SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+  */
+ 
+-#ifndef STEAMOSBACKEND_H
+-#define STEAMOSBACKEND_H
++#ifndef HOLOBACKEND_H
++#define HOLOBACKEND_H
+ 
+ #include <QDBusMessage>
+ #include <QPointer>
+@@ -15,14 +15,14 @@
+ class ComSteampoweredAtomupd1Interface;
+ class QDBusPendingCallWatcher;
+ class StandardBackendUpdater;
+-class SteamOSResource;
+-class SteamOSTransaction;
++class HoloResource;
++class HoloTransaction;
+ 
+-class SteamOSBackend : public AbstractResourcesBackend
++class HoloBackend : public AbstractResourcesBackend
+ {
+     Q_OBJECT
+ public:
+-    explicit SteamOSBackend(QObject *parent = nullptr);
++    explicit HoloBackend(QObject *parent = nullptr);
+ 
+     // Status is one of these from the xml definition:
+     //    0 = IDLE, the update has not been launched yet
+@@ -44,7 +44,7 @@ public:
+     AbstractBackendUpdater *backendUpdater() const override;
+     AbstractReviewsBackend *reviewsBackend() const override;
+     ResultsStream *search(const AbstractResourcesBackend::Filters &search) override;
+-    QHash<QString, SteamOSResource *> resources() const;
++    QHash<QString, HoloResource *> resources() const;
+     bool isValid() const override;
+     Transaction *installApplication(AbstractResource *app) override;
+     Transaction *installApplication(AbstractResource *app, const AddonList &addons) override;
+@@ -75,9 +75,9 @@ private:
+     bool fetchExistingTransaction();
+ 
+     /* Helper to setup a Transaction and connect all signals/slots */
+-    void setupTransaction(SteamOSResource *app);
++    void setupTransaction(HoloResource *app);
+ 
+-    QHash<QString, SteamOSResource *> m_resources;
++    QHash<QString, HoloResource *> m_resources;
+     StandardBackendUpdater *m_updater;
+     uint m_fetching = 0;
+ 
+@@ -85,10 +85,10 @@ private:
+     QString m_updateBuildID; // Next build version.
+     quint64 m_updateSize; // Estimated size of next update
+ 
+-    QPointer<SteamOSResource> m_resource; // Since we only ever have one, cache it.
++    QPointer<HoloResource> m_resource; // Since we only ever have one, cache it.
+ 
+     /* The current transaction in progress, if any */
+-    SteamOSTransaction *m_transaction;
++    HoloTransaction *m_transaction;
+ 
+     QPointer<ComSteampoweredAtomupd1Interface> m_interface; // Interface to atomupd dbus api
+     QString m_currentVersion;
+@@ -96,4 +96,4 @@ private:
+     bool m_testing;
+ };
+ 
+-#endif // STEAMOSBACKEND_H
++#endif // HOLOBACKEND_H
+diff --git a/libdiscover/backends/HoloBackend/HoloResource.cpp b/libdiscover/backends/HoloBackend/HoloResource.cpp
+new file mode 100644
+index 000000000..7b56fd769
+--- /dev/null
++++ b/libdiscover/backends/HoloBackend/HoloResource.cpp
+@@ -0,0 +1,202 @@
++/*
++ *   SPDX-FileCopyrightText: 2022 Jeremy Whiting <jeremy.whiting@collabora.com>
++ *
++ *   SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
++ */
++
++#include "HoloResource.h"
++#include <KLocalizedString>
++#include <QDesktopServices>
++#include <QStringList>
++#include <QTimer>
++#include <Transaction/AddonList.h>
++
++HoloResource::HoloResource(const QString &version, const QString &build, quint64 size, const QString &currentVersion, AbstractResourcesBackend *parent)
++    : AbstractResource(parent)
++    , m_name(i18n("Holo"))
++    , m_build(build)
++    , m_version(version)
++    , m_currentVersion(currentVersion)
++    , m_appstreamId(QLatin1String("holo.") + m_build)
++    , m_state(State::Upgradeable)
++    , m_addons()
++    , m_type(AbstractResource::System)
++    , m_size(size)
++{
++}
++
++QString HoloResource::appstreamId() const
++{
++    return m_appstreamId;
++}
++
++QList<PackageState> HoloResource::addonsInformation()
++{
++    return m_addons;
++}
++
++QString HoloResource::availableVersion() const
++{
++    return QStringLiteral("%1 - %2").arg(m_version, m_build);
++}
++
++bool HoloResource::hasCategory(const QString &category) const
++{
++    return QStringLiteral("holo") == category;
++}
++
++QString HoloResource::comment()
++{
++    return name();
++}
++
++quint64 HoloResource::size()
++{
++    return m_size;
++}
++
++QUrl HoloResource::homepage()
++{
++    return QUrl(QStringLiteral("https://store.steampowered.com/"));
++}
++
++QUrl HoloResource::helpURL()
++{
++    return QUrl(QStringLiteral("https://store.steampowered.com/"));
++}
++
++QUrl HoloResource::bugURL()
++{
++    return QUrl(QStringLiteral("https://steamcommunity.com/app/1675200/discussions/"));
++}
++
++QUrl HoloResource::donationURL()
++{
++    return {};
++}
++
++QUrl HoloResource::contributeURL()
++{
++    return {};
++}
++
++QVariant HoloResource::icon() const
++{
++    return QStringLiteral("steam");
++}
++
++QString HoloResource::installedVersion() const
++{
++    return m_currentVersion;
++}
++
++QJsonArray HoloResource::licenses()
++{
++    return {};
++}
++
++QString HoloResource::longDescription()
++{
++    return {};
++}
++
++QString HoloResource::name() const
++{
++    return m_name;
++}
++
++QString HoloResource::origin() const
++{
++    return QStringLiteral("Holo");
++}
++
++QString HoloResource::packageName() const
++{
++    return m_name;
++}
++
++bool HoloResource::isRemovable() const
++{
++    return false;
++}
++
++AbstractResource::Type HoloResource::type() const
++{
++    return m_type;
++}
++
++bool HoloResource::canExecute() const
++{
++    return false;
++}
++
++QString HoloResource::section()
++{
++    return QStringLiteral("Holo");
++}
++
++AbstractResource::State HoloResource::state()
++{
++    return m_state;
++}
++
++void HoloResource::fetchChangelog()
++{
++    QString log = longDescription();
++    log.replace(QLatin1Char('\n'), QLatin1String("<br />"));
++
++    Q_EMIT changelogFetched(log);
++}
++
++void HoloResource::setState(AbstractResource::State state)
++{
++    if (m_state == state)
++        return;
++
++    m_state = state;
++    Q_EMIT stateChanged();
++}
++
++void HoloResource::setSize(quint64 size)
++{
++    m_size = size;
++    Q_EMIT sizeChanged();
++}
++
++QString HoloResource::sourceIcon() const
++{
++    return QStringLiteral("steam");
++}
++
++QDate HoloResource::releaseDate() const
++{
++    return {};
++}
++
++void HoloResource::setVersion(const QString &version)
++{
++    m_version = version;
++}
++
++void HoloResource::setBuild(const QString &build)
++{
++    m_build = build;
++    m_appstreamId = QLatin1String("holo.") + m_build;
++}
++
++QString HoloResource::getBuild() const
++{
++    return m_build;
++}
++
++QUrl HoloResource::url() const
++{
++    return QUrl(QLatin1String("holo://") + packageName().replace(QLatin1Char(' '), QLatin1Char('.')));
++}
++
++QString HoloResource::author() const
++{
++    return QStringLiteral("Valve");
++}
++
++#include "moc_HoloResource.cpp"
+diff --git a/libdiscover/backends/SteamOSBackend/SteamOSResource.h b/libdiscover/backends/HoloBackend/HoloResource.h
+similarity index 86%
+rename from libdiscover/backends/SteamOSBackend/SteamOSResource.h
+rename to libdiscover/backends/HoloBackend/HoloResource.h
+index 9a103efb9..48eb67947 100644
+--- a/libdiscover/backends/SteamOSBackend/SteamOSResource.h
++++ b/libdiscover/backends/HoloBackend/HoloResource.h
+@@ -4,17 +4,17 @@
+  *   SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+  */
+ 
+-#ifndef STEAMOSRESOURCE_H
+-#define STEAMOSRESOURCE_H
++#ifndef HOLORESOURCE_H
++#define HOLORESOURCE_H
+ 
+ #include <resources/AbstractResource.h>
+ 
+ class AddonList;
+-class SteamOSResource : public AbstractResource
++class HoloResource : public AbstractResource
+ {
+     Q_OBJECT
+ public:
+-    explicit SteamOSResource(const QString &version, const QString &build, quint64 size, const QString &currentVersion, AbstractResourcesBackend *parent);
++    explicit HoloResource(const QString &version, const QString &build, quint64 size, const QString &currentVersion, AbstractResourcesBackend *parent);
+ 
+     QString appstreamId() const override;
+     QList<PackageState> addonsInformation() override;
+@@ -65,4 +65,4 @@ public:
+     quint64 m_size;
+ };
+ 
+-#endif // STEAMOSRESOURCE_H
++#endif // HOLORESOURCE_H
+diff --git a/libdiscover/backends/SteamOSBackend/SteamOSTransaction.cpp b/libdiscover/backends/HoloBackend/HoloTransaction.cpp
+similarity index 65%
+rename from libdiscover/backends/SteamOSBackend/SteamOSTransaction.cpp
+rename to libdiscover/backends/HoloBackend/HoloTransaction.cpp
+index 9a46f31d1..9a6efb3ac 100644
+--- a/libdiscover/backends/SteamOSBackend/SteamOSTransaction.cpp
++++ b/libdiscover/backends/HoloBackend/HoloTransaction.cpp
+@@ -4,18 +4,18 @@
+  *   SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+  */
+ 
+-#include "SteamOSTransaction.h"
+-#include "SteamOSResource.h"
++#include "HoloTransaction.h"
++#include "HoloResource.h"
+ #include <KLocalizedString>
+ #include <QDebug>
+ #include <QTimer>
+ #include <QtGlobal>
+ 
+-#include "SteamOSBackend.h"
++#include "HoloBackend.h"
+ #include "dbusproperties_interface.h"
+-#include "libdiscover_steamos_debug.h"
++#include "libdiscover_holo_debug.h"
+ 
+-SteamOSTransaction::SteamOSTransaction(SteamOSResource *app, Transaction::Role role, ComSteampoweredAtomupd1Interface *interface)
++HoloTransaction::HoloTransaction(HoloResource *app, Transaction::Role role, ComSteampoweredAtomupd1Interface *interface)
+     : Transaction(app->backend(), app, role, {})
+     , m_app(app)
+     , m_interface(interface)
+@@ -23,12 +23,12 @@ SteamOSTransaction::SteamOSTransaction(SteamOSResource *app, Transaction::Role r
+     setCancellable(true);
+     setStatus(Status::SetupStatus);
+ 
+-    auto steamosProperties = new OrgFreedesktopDBusPropertiesInterface(SteamOSBackend::service(), SteamOSBackend::path(), QDBusConnection::systemBus(), this);
+-    connect(steamosProperties,
++    auto holoProperties = new OrgFreedesktopDBusPropertiesInterface(HoloBackend::service(), HoloBackend::path(), QDBusConnection::systemBus(), this);
++    connect(holoProperties,
+             &OrgFreedesktopDBusPropertiesInterface::PropertiesChanged,
+             this,
+             [this](const QString &interface_name, const QVariantMap &changed_properties, const QStringList &invalidated_properties) {
+-                if (interface_name != SteamOSBackend::service()) {
++                if (interface_name != HoloBackend::service()) {
+                     return;
+                 }
+ 
+@@ -38,15 +38,15 @@ SteamOSTransaction::SteamOSTransaction(SteamOSResource *app, Transaction::Role r
+                 if (changed(QLatin1String("ProgressPercentage"))) {
+                     // Get percentage and pass on to gui
+                     double percent = m_interface->progressPercentage();
+-                    qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "steamos-backend: Progress percentage: " << percent;
++                    qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "holo-backend: Progress percentage: " << percent;
+                     setProgress(qBound(0.0, percent, 100.0));
+                 }
+                 if (changed(QLatin1String("EstimatedCompletionTime"))) {
+                     qulonglong estimatedCompletion = m_interface->estimatedCompletionTime();
+                     QDateTime potentialEndTime = QDateTime::fromSecsSinceEpoch(estimatedCompletion);
+-                    qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "steamos-backend: Estimated completion time:" << potentialEndTime.toString();
++                    qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "holo-backend: Estimated completion time:" << potentialEndTime.toString();
+                     qulonglong secondsLeft = QDateTime::currentDateTimeUtc().secsTo(potentialEndTime);
+-                    qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "Remaining seconds:" << secondsLeft;
++                    qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "Remaining seconds:" << secondsLeft;
+                     setRemainingTime(secondsLeft);
+                 }
+                 if (changed(QLatin1String("UpdateStatus"))) {
+@@ -58,11 +58,11 @@ SteamOSTransaction::SteamOSTransaction(SteamOSResource *app, Transaction::Role r
+     refreshStatus();
+ }
+ 
+-void SteamOSTransaction::cancel()
++void HoloTransaction::cancel()
+ {
+     if (!m_interface) {
+         // This should never happen
+-        qWarning() << "steamos-backend: Error: No DBus interface provided to cancel. Please file a bug.";
++        qWarning() << "holo-backend: Error: No DBus interface provided to cancel. Please file a bug.";
+         return;
+     }
+ 
+@@ -71,7 +71,7 @@ void SteamOSTransaction::cancel()
+     setStatus(CancelledStatus);
+ }
+ 
+-void SteamOSTransaction::finishTransaction(bool installed)
++void HoloTransaction::finishTransaction(bool installed)
+ {
+     AbstractResource::State newState;
+     if (installed) {
+@@ -85,34 +85,34 @@ void SteamOSTransaction::finishTransaction(bool installed)
+     deleteLater();
+ }
+ 
+-void SteamOSTransaction::refreshStatus()
++void HoloTransaction::refreshStatus()
+ {
+     // Get update state and update our state
+     uint status = m_interface->updateStatus();
+-    qCDebug(LIBDISCOVER_BACKEND_STEAMOS_LOG) << "steamos-backend: New state: " << status;
++    qCDebug(LIBDISCOVER_BACKEND_HOLO_LOG) << "holo-backend: New state: " << status;
+ 
+     switch (status) {
+-    case SteamOSBackend::Idle:
++    case HoloBackend::Idle:
+         break;
+-    case SteamOSBackend::InProgress:
++    case HoloBackend::InProgress:
+         setStatus(Status::DownloadingStatus);
+         break;
+-    case SteamOSBackend::Paused:
++    case HoloBackend::Paused:
+         setStatus(Status::QueuedStatus);
+         break;
+-    case SteamOSBackend::Successful: // SUCCESSFUL
++    case HoloBackend::Successful: // SUCCESSFUL
+         setStatus(Status::DoneStatus);
+         finishTransaction(true);
+         break;
+-    case SteamOSBackend::Failed: // FAILED
++    case HoloBackend::Failed: // FAILED
+         setStatus(Status::DoneWithErrorStatus);
+         finishTransaction(false);
+         break;
+-    case SteamOSBackend::Cancelled: // CANCELLED
++    case HoloBackend::Cancelled: // CANCELLED
+         setStatus(Status::CancelledStatus);
+         finishTransaction(false);
+         break;
+     }
+ }
+ 
+-#include "moc_SteamOSTransaction.cpp"
++#include "moc_HoloTransaction.cpp"
+diff --git a/libdiscover/backends/SteamOSBackend/SteamOSTransaction.h b/libdiscover/backends/HoloBackend/HoloTransaction.h
+similarity index 65%
+rename from libdiscover/backends/SteamOSBackend/SteamOSTransaction.h
+rename to libdiscover/backends/HoloBackend/HoloTransaction.h
+index d61524fa0..7d6ab5c12 100644
+--- a/libdiscover/backends/SteamOSBackend/SteamOSTransaction.h
++++ b/libdiscover/backends/HoloBackend/HoloTransaction.h
+@@ -4,8 +4,8 @@
+  *   SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+  */
+ 
+-#ifndef STEAMOSTRANSACTION_H
+-#define STEAMOSTRANSACTION_H
++#ifndef HOLOTRANSACTION_H
++#define HOLOTRANSACTION_H
+ 
+ #include <QPointer>
+ #include <Transaction/Transaction.h>
+@@ -13,12 +13,12 @@
+ #include "atomupd1.h"
+ 
+ class QTimer;
+-class SteamOSResource;
+-class SteamOSTransaction : public Transaction
++class HoloResource;
++class HoloTransaction : public Transaction
+ {
+     Q_OBJECT
+ public:
+-    SteamOSTransaction(SteamOSResource *app, Role role, ComSteampoweredAtomupd1Interface *interface);
++    HoloTransaction(HoloResource *app, Role role, ComSteampoweredAtomupd1Interface *interface);
+ 
+     void cancel() override;
+ 
+@@ -31,8 +31,8 @@ private Q_SLOTS:
+ private:
+     void finishTransaction(bool installed);
+ 
+-    SteamOSResource *const m_app;
++    HoloResource *const m_app;
+     QPointer<ComSteampoweredAtomupd1Interface> m_interface; // Interface to atomupd dbus api
+ };
+ 
+-#endif // STEAMOSTRANSACTION_H
++#endif // HOLOTRANSACTION_H
+diff --git a/libdiscover/backends/SteamOSBackend/com.steampowered.Atomupd1.xml b/libdiscover/backends/HoloBackend/com.steampowered.Atomupd1.xml
+similarity index 97%
+rename from libdiscover/backends/SteamOSBackend/com.steampowered.Atomupd1.xml
+rename to libdiscover/backends/HoloBackend/com.steampowered.Atomupd1.xml
+index 205225f79..859d5c95c 100644
+--- a/libdiscover/backends/SteamOSBackend/com.steampowered.Atomupd1.xml
++++ b/libdiscover/backends/HoloBackend/com.steampowered.Atomupd1.xml
+@@ -105,7 +105,7 @@
+         String that represents the chosen update variant that is currently
+         being tracked.
+         This value is updated every time a new variant is chosen with
+-        `SwitchToVariant` method or via the CLI tool steamos-select-branch.
++        `SwitchToVariant` method or via the CLI tool `atomupd-manager switch-branch …`
+         A typical value is `steamdeck`.
+         It defaults to the variant value from the steamos-atomupd manifest JSON
+         if the text file is empty or missing.
+@@ -282,8 +282,8 @@
+         @variant: Desired update variant. A typical value is `steamdeck`
+ 
+         Change the update variant to @variant.
+-        This value is stored in the same text file that the CLI tool
+-        steamos-select-branch uses.
++        This value is stored in the same text file that the CLI
++        `atomupd-manager switch-branch` uses.
+     -->
+     <method name="SwitchToVariant">
+       <arg type="s" name="variant" direction="in"/>
+@@ -295,8 +295,8 @@
+           `stable` and `beta`
+ 
+         Change the update branch to @branch.
+-        This value is stored in the same text file that the CLI tool
+-        steamos-select-branch uses.
++        This value is stored in the same text file that the CLI
++        `atomupd-manager switch-branch` uses.
+     -->
+     <method name="SwitchToBranch">
+       <arg type="s" name="branch" direction="in"/>
+diff --git a/libdiscover/backends/SteamOSBackend/dbushelpers.h b/libdiscover/backends/HoloBackend/dbushelpers.h
+similarity index 100%
+rename from libdiscover/backends/SteamOSBackend/dbushelpers.h
+rename to libdiscover/backends/HoloBackend/dbushelpers.h
+diff --git a/libdiscover/backends/SteamOSBackend/org.freedesktop.DBus.Properties.xml b/libdiscover/backends/HoloBackend/org.freedesktop.DBus.Properties.xml
+similarity index 100%
+rename from libdiscover/backends/SteamOSBackend/org.freedesktop.DBus.Properties.xml
+rename to libdiscover/backends/HoloBackend/org.freedesktop.DBus.Properties.xml
+diff --git a/libdiscover/backends/HoloBackend/tests/CMakeLists.txt b/libdiscover/backends/HoloBackend/tests/CMakeLists.txt
+new file mode 100644
+index 000000000..87e09b77e
+--- /dev/null
++++ b/libdiscover/backends/HoloBackend/tests/CMakeLists.txt
+@@ -0,0 +1,14 @@
++set(EXTRA_LIBS
++    libdiscover-backend-holo-logging-category
++)
++add_unit_test(holotest HoloTest.cpp atomupd1_adaptor.cpp mock_server.cpp )
++set_tests_properties(holotest PROPERTIES TIMEOUT 600)
++
++target_link_libraries(holotest
++    Qt::Core
++    Qt::Widgets
++    Qt::DBus
++    KF6::CoreAddons
++    KF6::ConfigCore
++    Discover::Common
++)
+diff --git a/libdiscover/backends/SteamOSBackend/tests/SteamOSTest.cpp b/libdiscover/backends/HoloBackend/tests/HoloTest.cpp
+similarity index 82%
+rename from libdiscover/backends/SteamOSBackend/tests/SteamOSTest.cpp
+rename to libdiscover/backends/HoloBackend/tests/HoloTest.cpp
+index 75a8692e7..afb34b5f5 100644
+--- a/libdiscover/backends/SteamOSBackend/tests/SteamOSTest.cpp
++++ b/libdiscover/backends/HoloBackend/tests/HoloTest.cpp
+@@ -18,14 +18,14 @@
+ #include <QStandardPaths>
+ #include <QTest>
+ 
+-#include "libdiscover_steamos_debug.h"
++#include "libdiscover_holo_debug.h"
+ 
+ #include "atomupd1_adaptor.h"
+ #include "mock_server.h"
+ 
+-#include "SteamOSTest.h"
++#include "HoloTest.h"
+ 
+-AbstractResourcesBackend *SteamOSTest::backendByName(ResourcesModel *m, const QString &name)
++AbstractResourcesBackend *HoloTest::backendByName(ResourcesModel *m, const QString &name)
+ {
+     const QVector<AbstractResourcesBackend *> backends = m->backends();
+     for (AbstractResourcesBackend *backend : backends) {
+@@ -36,10 +36,10 @@ AbstractResourcesBackend *SteamOSTest::backendByName(ResourcesModel *m, const QS
+     return nullptr;
+ }
+ 
+-SteamOSTest::SteamOSTest(QObject *parent)
++HoloTest::HoloTest(QObject *parent)
+     : QObject(parent)
+ {
+-    QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/discover-steamos-test")).removeRecursively();
++    QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/discover-holo-test")).removeRecursively();
+ 
+     m_server = new MockServer();
+     m_adaptor = new Atomupd1Adaptor(m_server);
+@@ -47,12 +47,12 @@ SteamOSTest::SteamOSTest(QObject *parent)
+     dbus.registerObject(QLatin1String("/com/steampowered/Atomupd1"), m_server);
+     dbus.registerService(QLatin1String("com.steampowered.Atomupd1"));
+     QStandardPaths::setTestModeEnabled(true);
+-    qputenv("STEAMOS_TEST_MODE", "ON");
+-    m_model = new ResourcesModel(QStringLiteral("steamos-backend"), this);
+-    m_appBackend = backendByName(m_model, QStringLiteral("SteamOSBackend"));
++    qputenv("HOLO_TEST_MODE", "ON");
++    m_model = new ResourcesModel(QStringLiteral("holo-backend"), this);
++    m_appBackend = backendByName(m_model, QStringLiteral("HoloBackend"));
+ }
+ 
+-void SteamOSTest::initTestCase()
++void HoloTest::initTestCase()
+ {
+     QVERIFY(m_appBackend);
+     if (!m_appBackend || !m_appBackend->isValid()) {
+@@ -82,14 +82,14 @@ void SteamOSTest::initTestCase()
+     }
+ }
+ 
+-void SteamOSTest::testUpdateInProgress()
++void HoloTest::testUpdateInProgress()
+ {
+     // Then change it and check change stuck.
+     m_server->setUpdateStatus(AU_UPDATE_STATUS_IN_PROGRESS);
+     Q_ASSERT(m_server->updateStatus() == AU_UPDATE_STATUS_IN_PROGRESS);
+     Q_ASSERT(m_adaptor->updateStatus() == AU_UPDATE_STATUS_IN_PROGRESS);
+ 
+-    // Now check the steamos backend's reaction matches
++    // Now check the holo backend's reaction matches
+     QSignalSpy spyNewTransaction(TransactionModel::global(), &TransactionModel::transactionAdded);
+     m_server->setUpdatesAvailable(true);
+     m_appBackend->checkForUpdates();
+@@ -98,4 +98,4 @@ void SteamOSTest::testUpdateInProgress()
+ 
+     QCOMPARE(spyNewTransaction.count(), 1);
+ }
+-QTEST_GUILESS_MAIN(SteamOSTest)
++QTEST_GUILESS_MAIN(HoloTest)
+diff --git a/libdiscover/backends/SteamOSBackend/tests/SteamOSTest.h b/libdiscover/backends/HoloBackend/tests/HoloTest.h
+similarity index 89%
+rename from libdiscover/backends/SteamOSBackend/tests/SteamOSTest.h
+rename to libdiscover/backends/HoloBackend/tests/HoloTest.h
+index c682ffb91..75a93e33f 100644
+--- a/libdiscover/backends/SteamOSBackend/tests/SteamOSTest.h
++++ b/libdiscover/backends/HoloBackend/tests/HoloTest.h
+@@ -14,18 +14,18 @@
+ #include <resources/ResourcesProxyModel.h>
+ #include <resources/SourcesModel.h>
+ 
+-#include "libdiscover_steamos_debug.h"
++#include "libdiscover_holo_debug.h"
+ 
+ class Atomupd1Adaptor;
+ class MockServer;
+ 
+-class SteamOSTest : public QObject
++class HoloTest : public QObject
+ {
+     Q_OBJECT
+ public:
+     AbstractResourcesBackend *backendByName(ResourcesModel *m, const QString &name);
+ 
+-    SteamOSTest(QObject *parent = nullptr);
++    HoloTest(QObject *parent = nullptr);
+ 
+ private Q_SLOTS:
+     void initTestCase();
+diff --git a/libdiscover/backends/SteamOSBackend/tests/atomupd1_adaptor.cpp b/libdiscover/backends/HoloBackend/tests/atomupd1_adaptor.cpp
+similarity index 100%
+rename from libdiscover/backends/SteamOSBackend/tests/atomupd1_adaptor.cpp
+rename to libdiscover/backends/HoloBackend/tests/atomupd1_adaptor.cpp
+diff --git a/libdiscover/backends/SteamOSBackend/tests/atomupd1_adaptor.h b/libdiscover/backends/HoloBackend/tests/atomupd1_adaptor.h
+similarity index 100%
+rename from libdiscover/backends/SteamOSBackend/tests/atomupd1_adaptor.h
+rename to libdiscover/backends/HoloBackend/tests/atomupd1_adaptor.h
+diff --git a/libdiscover/backends/SteamOSBackend/tests/mock_server.cpp b/libdiscover/backends/HoloBackend/tests/mock_server.cpp
+similarity index 100%
+rename from libdiscover/backends/SteamOSBackend/tests/mock_server.cpp
+rename to libdiscover/backends/HoloBackend/tests/mock_server.cpp
+diff --git a/libdiscover/backends/SteamOSBackend/tests/mock_server.h b/libdiscover/backends/HoloBackend/tests/mock_server.h
+similarity index 100%
+rename from libdiscover/backends/SteamOSBackend/tests/mock_server.h
+rename to libdiscover/backends/HoloBackend/tests/mock_server.h
+diff --git a/libdiscover/backends/SteamOSBackend/CMakeLists.txt b/libdiscover/backends/SteamOSBackend/CMakeLists.txt
+deleted file mode 100644
+index ad098fb8d..000000000
+--- a/libdiscover/backends/SteamOSBackend/CMakeLists.txt
++++ /dev/null
+@@ -1,51 +0,0 @@
+-set(steamos-backend_SRCS
+-    SteamOSResource.h
+-    SteamOSResource.cpp
+-    SteamOSBackend.h
+-    SteamOSBackend.cpp
+-    SteamOSTransaction.h
+-    SteamOSTransaction.cpp
+-    dbushelpers.h
+-)
+-
+-set(atomupd1_xml com.steampowered.Atomupd1.xml)
+-set_source_files_properties(${atomupd1_xml} PROPERTIES
+-    INCLUDE "dbushelpers.h"
+-    NA_NAMESPACE TRUE
+-)
+-qt_add_dbus_interface(steamos-backend_SRCS ${atomupd1_xml} atomupd1)
+-qt_add_dbus_interface(steamos-backend_SRCS org.freedesktop.DBus.Properties.xml dbusproperties_interface)
+-
+-ecm_qt_declare_logging_category(steamos-backend_SRCS
+-    HEADER libdiscover_steamos_debug.h
+-    IDENTIFIER LIBDISCOVER_BACKEND_STEAMOS_LOG
+-    CATEGORY_NAME org.kde.plasma.libdiscover.backend.steamos
+-    DESCRIPTION "libdiscover (backend - SteamOS)"
+-    EXPORT DISCOVER
+-)
+-
+-kcoreaddons_add_plugin(steamos-backend SOURCES ${steamos-backend_SRCS} INSTALL_NAMESPACE "discover")
+-
+-add_library(libdiscover-backend-steamos-logging-category STATIC
+-    ${libdiscover-backend-steamos-logging-category_SRCS}
+-)
+-
+-set_property(TARGET libdiscover-backend-steamos-logging-category PROPERTY POSITION_INDEPENDENT_CODE ON)
+-
+-target_link_libraries(libdiscover-backend-steamos-logging-category
+-    PRIVATE
+-        Qt::Core
+-)
+-
+-if(BUILD_TESTING)
+-    add_subdirectory(tests)
+-endif()
+-
+-target_link_libraries(steamos-backend
+-    Qt::Core
+-    Qt::Widgets
+-    Qt::DBus
+-    KF6::CoreAddons
+-    KF6::ConfigCore
+-    Discover::Common
+-)
+diff --git a/libdiscover/backends/SteamOSBackend/SteamOSResource.cpp b/libdiscover/backends/SteamOSBackend/SteamOSResource.cpp
+deleted file mode 100644
+index 83d5d7555..000000000
+--- a/libdiscover/backends/SteamOSBackend/SteamOSResource.cpp
++++ /dev/null
+@@ -1,202 +0,0 @@
+-/*
+- *   SPDX-FileCopyrightText: 2022 Jeremy Whiting <jeremy.whiting@collabora.com>
+- *
+- *   SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+- */
+-
+-#include "SteamOSResource.h"
+-#include <KLocalizedString>
+-#include <QDesktopServices>
+-#include <QStringList>
+-#include <QTimer>
+-#include <Transaction/AddonList.h>
+-
+-SteamOSResource::SteamOSResource(const QString &version, const QString &build, quint64 size, const QString &currentVersion, AbstractResourcesBackend *parent)
+-    : AbstractResource(parent)
+-    , m_name(i18n("SteamOS"))
+-    , m_build(build)
+-    , m_version(version)
+-    , m_currentVersion(currentVersion)
+-    , m_appstreamId(QLatin1String("steamos.") + m_build)
+-    , m_state(State::Upgradeable)
+-    , m_addons()
+-    , m_type(AbstractResource::System)
+-    , m_size(size)
+-{
+-}
+-
+-QString SteamOSResource::appstreamId() const
+-{
+-    return m_appstreamId;
+-}
+-
+-QList<PackageState> SteamOSResource::addonsInformation()
+-{
+-    return m_addons;
+-}
+-
+-QString SteamOSResource::availableVersion() const
+-{
+-    return QStringLiteral("%1 - %2").arg(m_version, m_build);
+-}
+-
+-bool SteamOSResource::hasCategory(const QString &category) const
+-{
+-    return QStringLiteral("steamos") == category;
+-}
+-
+-QString SteamOSResource::comment()
+-{
+-    return name();
+-}
+-
+-quint64 SteamOSResource::size()
+-{
+-    return m_size;
+-}
+-
+-QUrl SteamOSResource::homepage()
+-{
+-    return QUrl(QStringLiteral("https://store.steampowered.com/"));
+-}
+-
+-QUrl SteamOSResource::helpURL()
+-{
+-    return QUrl(QStringLiteral("https://store.steampowered.com/"));
+-}
+-
+-QUrl SteamOSResource::bugURL()
+-{
+-    return QUrl(QStringLiteral("https://steamcommunity.com/app/1675200/discussions/"));
+-}
+-
+-QUrl SteamOSResource::donationURL()
+-{
+-    return {};
+-}
+-
+-QUrl SteamOSResource::contributeURL()
+-{
+-    return {};
+-}
+-
+-QVariant SteamOSResource::icon() const
+-{
+-    return QStringLiteral("steam");
+-}
+-
+-QString SteamOSResource::installedVersion() const
+-{
+-    return m_currentVersion;
+-}
+-
+-QJsonArray SteamOSResource::licenses()
+-{
+-    return {};
+-}
+-
+-QString SteamOSResource::longDescription()
+-{
+-    return {};
+-}
+-
+-QString SteamOSResource::name() const
+-{
+-    return m_name;
+-}
+-
+-QString SteamOSResource::origin() const
+-{
+-    return QStringLiteral("SteamOS");
+-}
+-
+-QString SteamOSResource::packageName() const
+-{
+-    return m_name;
+-}
+-
+-bool SteamOSResource::isRemovable() const
+-{
+-    return false;
+-}
+-
+-AbstractResource::Type SteamOSResource::type() const
+-{
+-    return m_type;
+-}
+-
+-bool SteamOSResource::canExecute() const
+-{
+-    return false;
+-}
+-
+-QString SteamOSResource::section()
+-{
+-    return QStringLiteral("SteamOS");
+-}
+-
+-AbstractResource::State SteamOSResource::state()
+-{
+-    return m_state;
+-}
+-
+-void SteamOSResource::fetchChangelog()
+-{
+-    QString log = longDescription();
+-    log.replace(QLatin1Char('\n'), QLatin1String("<br />"));
+-
+-    Q_EMIT changelogFetched(log);
+-}
+-
+-void SteamOSResource::setState(AbstractResource::State state)
+-{
+-    if (m_state == state)
+-        return;
+-
+-    m_state = state;
+-    Q_EMIT stateChanged();
+-}
+-
+-void SteamOSResource::setSize(quint64 size)
+-{
+-    m_size = size;
+-    Q_EMIT sizeChanged();
+-}
+-
+-QString SteamOSResource::sourceIcon() const
+-{
+-    return QStringLiteral("steam");
+-}
+-
+-QDate SteamOSResource::releaseDate() const
+-{
+-    return {};
+-}
+-
+-void SteamOSResource::setVersion(const QString &version)
+-{
+-    m_version = version;
+-}
+-
+-void SteamOSResource::setBuild(const QString &build)
+-{
+-    m_build = build;
+-    m_appstreamId = QLatin1String("steamos.") + m_build;
+-}
+-
+-QString SteamOSResource::getBuild() const
+-{
+-    return m_build;
+-}
+-
+-QUrl SteamOSResource::url() const
+-{
+-    return QUrl(QLatin1String("steamos://") + packageName().replace(QLatin1Char(' '), QLatin1Char('.')));
+-}
+-
+-QString SteamOSResource::author() const
+-{
+-    return QStringLiteral("Valve");
+-}
+-
+-#include "moc_SteamOSResource.cpp"
+diff --git a/libdiscover/backends/SteamOSBackend/tests/CMakeLists.txt b/libdiscover/backends/SteamOSBackend/tests/CMakeLists.txt
+deleted file mode 100644
+index b3c8e6047..000000000
+--- a/libdiscover/backends/SteamOSBackend/tests/CMakeLists.txt
++++ /dev/null
+@@ -1,14 +0,0 @@
+-set(EXTRA_LIBS
+-    libdiscover-backend-steamos-logging-category
+-)
+-add_unit_test(steamostest SteamOSTest.cpp atomupd1_adaptor.cpp mock_server.cpp )
+-set_tests_properties(steamostest PROPERTIES TIMEOUT 600)
+-
+-target_link_libraries(steamostest
+-    Qt::Core
+-    Qt::Widgets
+-    Qt::DBus
+-    KF6::CoreAddons
+-    KF6::ConfigCore
+-    Discover::Common
+-)
+\ No newline at end of file
+-- 
+2.50.1
+

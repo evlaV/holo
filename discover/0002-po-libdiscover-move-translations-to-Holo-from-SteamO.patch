@@ -1,0 +1,1711 @@
+From 1ebddfcad451ab1fdf7043e628f0a01b0141efc5 Mon Sep 17 00:00:00 2001
+From: Vivek Das Mohapatra <vivek@collabora.com>
+Date: Thu, 15 Jan 2026 18:25:48 +0000
+Subject: [PATCH 2/3] po/*/libdiscover: move translations to Holo from SteamOS
+
+---
+ po/ar/libdiscover.po                |  8 ++++----
+ po/ast/libdiscover.po               | 10 +++++-----
+ po/az/libdiscover.po                | 12 ++++++------
+ po/be/libdiscover.po                | 12 ++++++------
+ po/bg/libdiscover.po                | 12 ++++++------
+ po/bs/libdiscover.po                |  8 ++++----
+ po/ca/libdiscover.po                | 14 +++++++-------
+ po/ca@valencia/libdiscover.po       | 14 +++++++-------
+ po/cs/libdiscover.po                | 10 +++++-----
+ po/da/libdiscover.po                |  8 ++++----
+ po/de/libdiscover.po                | 12 ++++++------
+ po/el/libdiscover.po                | 14 +++++++-------
+ po/en_GB/libdiscover.po             | 12 ++++++------
+ po/eo/libdiscover.po                | 12 ++++++------
+ po/es/libdiscover.po                | 14 +++++++-------
+ po/et/libdiscover.po                |  8 ++++----
+ po/eu/libdiscover.po                | 12 ++++++------
+ po/fi/libdiscover.po                | 12 ++++++------
+ po/fr/libdiscover.po                | 14 +++++++-------
+ po/ga/libdiscover.po                |  8 ++++----
+ po/gl/libdiscover.po                | 12 ++++++------
+ po/he/libdiscover.po                | 12 ++++++------
+ po/hi/libdiscover.po                |  8 ++++----
+ po/hsb/libdiscover.po               |  8 ++++----
+ po/hu/libdiscover.po                | 12 ++++++------
+ po/ia/libdiscover.po                | 12 ++++++------
+ po/id/libdiscover.po                | 12 ++++++------
+ po/is/libdiscover.po                | 12 ++++++------
+ po/it/libdiscover.po                | 12 ++++++------
+ po/ja/libdiscover.po                | 12 ++++++------
+ po/ka/libdiscover.po                | 12 ++++++------
+ po/kk/libdiscover.po                |  8 ++++----
+ po/ko/libdiscover.po                | 12 ++++++------
+ po/lt/libdiscover.po                | 12 ++++++------
+ po/lv/libdiscover.po                | 12 ++++++------
+ po/ml/libdiscover.po                |  8 ++++----
+ po/mr/libdiscover.po                |  8 ++++----
+ po/my/libdiscover.po                |  8 ++++----
+ po/nb/libdiscover.po                | 10 +++++-----
+ po/nds/libdiscover.po               |  8 ++++----
+ po/nl/libdiscover.po                | 12 ++++++------
+ po/nn/libdiscover.po                | 12 ++++++------
+ po/pa/libdiscover.po                | 10 +++++-----
+ po/pl/libdiscover.po                | 12 ++++++------
+ po/pt/libdiscover.po                | 14 +++++++-------
+ po/pt_BR/libdiscover.po             | 12 ++++++------
+ po/ro/libdiscover.po                | 12 ++++++------
+ po/ru/libdiscover.po                | 12 ++++++------
+ po/sa/libdiscover.po                | 12 ++++++------
+ po/sk/libdiscover.po                | 12 ++++++------
+ po/sl/libdiscover.po                | 12 ++++++------
+ po/sr/libdiscover.po                |  8 ++++----
+ po/sr@ijekavian/libdiscover.po      |  8 ++++----
+ po/sr@ijekavianlatin/libdiscover.po |  8 ++++----
+ po/sr@latin/libdiscover.po          |  8 ++++----
+ po/sv/libdiscover.po                | 12 ++++++------
+ po/ta/libdiscover.po                |  8 ++++----
+ po/tg/libdiscover.po                |  8 ++++----
+ po/tr/libdiscover.po                | 12 ++++++------
+ po/ug/libdiscover.po                |  8 ++++----
+ po/uk/libdiscover.po                | 12 ++++++------
+ po/vi/libdiscover.po                |  8 ++++----
+ po/zh_CN/libdiscover.po             | 12 ++++++------
+ po/zh_TW/libdiscover.po             | 12 ++++++------
+ 64 files changed, 346 insertions(+), 346 deletions(-)
+
+diff --git a/po/ar/libdiscover.po b/po/ar/libdiscover.po
+index 330b851ff..d2edc2acf 100644
+--- a/po/ar/libdiscover.po
++++ b/po/ar/libdiscover.po
+@@ -2583,14 +2583,14 @@ msgstr ""
+ "تطبيق سناب هذا غير متوافق مع وضع الحماية للأمان وسيكون له حق الوصول الكامل "
+ "إلى هذا الحاسوب. أتثبته على أي حال؟"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr "ستيم او اس: لم يتمكن من استعلام atomupd لتحديثات ستيم او اس…"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr "ستيم أو إس"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/ast/libdiscover.po b/po/ast/libdiscover.po
+index be497afc0..ef6018772 100644
+--- a/po/ast/libdiscover.po
++++ b/po/ast/libdiscover.po
+@@ -2466,15 +2466,15 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/az/libdiscover.po b/po/az/libdiscover.po
+index 7cfda7aba..88e043d1e 100644
+--- a/po/az/libdiscover.po
++++ b/po/az/libdiscover.po
+@@ -2631,15 +2631,15 @@ msgstr ""
+ "Bu Snap tətbiqi, qorunan təcrid sahəsi (sandbox) ilə uyğun deyil və "
+ "komputerinəz tam giriş iəldə edəcək. İstənilən halda quraşdırılsın?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: SteamOS üçün atomar yenilənmələr haqqında məlumat alınmadı..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Holo üçün atomar yenilənmələr haqqında məlumat alınmadı..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/be/libdiscover.po b/po/be/libdiscover.po
+index d7a06c73f..56bb5c426 100644
+--- a/po/be/libdiscover.po
++++ b/po/be/libdiscover.po
+@@ -2604,15 +2604,15 @@ msgstr ""
+ "Гэтая праграма Snap несумяшчальная з ізаляваным асяроддзем бяспекі і будзе "
+ "мець поўны доступ да гэтага камп'ютара. Усё адно ўсталяваць?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: не ўдалося запытаць у atomupd абнаўленні SteamOS..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: не ўдалося запытаць у atomupd абнаўленні Holo..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/bg/libdiscover.po b/po/bg/libdiscover.po
+index 39341d622..12d1b1c5e 100644
+--- a/po/bg/libdiscover.po
++++ b/po/bg/libdiscover.po
+@@ -2593,16 +2593,16 @@ msgstr ""
+ "Това Snap приложение не е съвместимо със sandboxing сигурност и ще има пълен "
+ "достъп до този компютър. Да се инсталира ли въпреки това?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: Невъзможност за запитване към atomupd за актуализации на SteamOS…"
++"Holo: Невъзможност за запитване към atomupd за актуализации на Holo…"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/bs/libdiscover.po b/po/bs/libdiscover.po
+index 96f00d57e..b8015bc89 100644
+--- a/po/bs/libdiscover.po
++++ b/po/bs/libdiscover.po
+@@ -2636,14 +2636,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/ca/libdiscover.po b/po/ca/libdiscover.po
+index 6964d5c95..2f8854b0f 100644
+--- a/po/ca/libdiscover.po
++++ b/po/ca/libdiscover.po
+@@ -2612,17 +2612,17 @@ msgstr ""
+ "Aquesta aplicació de Snap no és compatible amb l'espai aïllat de seguretat i "
+ "tindrà accés complet a aquest equip. La instal·lo de totes maneres?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: no s'ha pogut consultar «atomupd» cercant actualitzacions de "
+-"l'SteamOS..."
++"Holo: no s'ha pogut consultar «atomupd» cercant actualitzacions de "
++"l'Holo..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/ca@valencia/libdiscover.po b/po/ca@valencia/libdiscover.po
+index 6449e7f76..d03dcd916 100644
+--- a/po/ca@valencia/libdiscover.po
++++ b/po/ca@valencia/libdiscover.po
+@@ -2615,17 +2615,17 @@ msgstr ""
+ "Esta aplicació de Snap no és compatible amb l'espai aïllat de seguretat i "
+ "tindrà accés complet a este equip. La instal·le de totes maneres?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: no s'ha pogut consultar «atomupd» buscant actualitzacions de "
+-"SteamOS…"
++"Holo: no s'ha pogut consultar «atomupd» buscant actualitzacions de "
++"Holo…"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/cs/libdiscover.po b/po/cs/libdiscover.po
+index d19e7bdfd..947244285 100644
+--- a/po/cs/libdiscover.po
++++ b/po/cs/libdiscover.po
+@@ -2478,15 +2478,15 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/da/libdiscover.po b/po/da/libdiscover.po
+index 1788a8250..285ea816b 100644
+--- a/po/da/libdiscover.po
++++ b/po/da/libdiscover.po
+@@ -2670,14 +2670,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/de/libdiscover.po b/po/de/libdiscover.po
+index 07e9aa68c..2e6df5854 100644
+--- a/po/de/libdiscover.po
++++ b/po/de/libdiscover.po
+@@ -2620,16 +2620,16 @@ msgstr ""
+ "Diese Snap-Anwendung ist nicht mit der Sicherheits-Sandbox kompatibel und "
+ "hat vollen Zugriff auf Ihren Computer. Dennoch installieren?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: atomupd für SteamOS-Aktualisierungen kann nicht abgefragt werden …"
++"Holo: atomupd für Holo-Aktualisierungen kann nicht abgefragt werden …"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/el/libdiscover.po b/po/el/libdiscover.po
+index 3cc2690f9..0fb1c7465 100644
+--- a/po/el/libdiscover.po
++++ b/po/el/libdiscover.po
+@@ -2631,17 +2631,17 @@ msgstr ""
+ "Αυτή η εφαρμογή Snap δεν είναι συμβατή με ασφαλές sandboxing και θα έχει "
+ "πλήρη πρόσβαση στον υπολογιστή σας. Να εγκατασταθεί ούτως ή άλλως;"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: Δεν είναι δυνατή η υποβολή ερωτήματος στο atomupd για ενημερώσεις "
+-"SteamOS..."
++"Holo: Δεν είναι δυνατή η υποβολή ερωτήματος στο atomupd για ενημερώσεις "
++"Holo..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/en_GB/libdiscover.po b/po/en_GB/libdiscover.po
+index 24eaba66d..aa7a973a5 100644
+--- a/po/en_GB/libdiscover.po
++++ b/po/en_GB/libdiscover.po
+@@ -2591,15 +2591,15 @@ msgstr ""
+ "This Snap application is not compatible with security sandboxing and will "
+ "have full access to this computer. Install it anyway?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Unable to query atomupd for Holo Updates..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/eo/libdiscover.po b/po/eo/libdiscover.po
+index 104a6dce2..43d312cdc 100644
+--- a/po/eo/libdiscover.po
++++ b/po/eo/libdiscover.po
+@@ -2580,15 +2580,15 @@ msgstr ""
+ "Ĉi tiu Snap-aplikaĵo ne kongruas kun sekureca sandboxing kaj havos plenan "
+ "aliron al ĉi tiu komputilo. Ĉu instali ĝin ĉiukaze?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: Ne eblas pridemandi atomupd por SteamOS-Ĝisdatigoj..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Ne eblas pridemandi atomupd por Holo-Ĝisdatigoj..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/es/libdiscover.po b/po/es/libdiscover.po
+index 5e2786c0e..da83d1f68 100644
+--- a/po/es/libdiscover.po
++++ b/po/es/libdiscover.po
+@@ -2608,17 +2608,17 @@ msgstr ""
+ "seguridad y tendrá acceso completo a este equipo. ¿Desea instalarla de todos "
+ "modos?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: No se ha podido consultar en atomupd la existencia de "
+-"actualizaciones de SteamOS…"
++"Holo: No se ha podido consultar en atomupd la existencia de "
++"actualizaciones de Holo…"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/et/libdiscover.po b/po/et/libdiscover.po
+index 505017cfd..3490083d3 100644
+--- a/po/et/libdiscover.po
++++ b/po/et/libdiscover.po
+@@ -2677,14 +2677,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/eu/libdiscover.po b/po/eu/libdiscover.po
+index 6377e0558..3427ecd25 100644
+--- a/po/eu/libdiscover.po
++++ b/po/eu/libdiscover.po
+@@ -2608,15 +2608,15 @@ msgstr ""
+ "bateragarria eta ordenagailu honetara sarbide osoa izango du. Hala ere "
+ "instalatu?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: Ez da SteamOSetik «atomupd» itauntzeko gai"
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Ez da Holoetik «atomupd» itauntzeko gai"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/fi/libdiscover.po b/po/fi/libdiscover.po
+index 2d7bd33fa..b88251e6e 100644
+--- a/po/fi/libdiscover.po
++++ b/po/fi/libdiscover.po
+@@ -2586,15 +2586,15 @@ msgstr ""
+ "Tämä Snap-sovellus ei ole yhteensopiva tietoturvahiekkalaatikon kanssa, "
+ "joten sillä on tietokoneeseen täydet käyttöoikeudet. Asennetaanko se silti?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: atomupd-kyselyä SteamOS-päivityksistä ei voida suorittaa…"
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: atomupd-kyselyä Holo-päivityksistä ei voida suorittaa…"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/fr/libdiscover.po b/po/fr/libdiscover.po
+index d465250d7..878e42e60 100644
+--- a/po/fr/libdiscover.po
++++ b/po/fr/libdiscover.po
+@@ -2634,17 +2634,17 @@ msgstr ""
+ "Elle n'aura pas un accès total à cet ordinateur. Voulez-vous vraiment "
+ "l'installer ?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS : impossible d'interroger « atomupd » pour des mises à jour de "
+-"SteamOS..."
++"Holo : impossible d'interroger « atomupd » pour des mises à jour de "
++"Holo..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/ga/libdiscover.po b/po/ga/libdiscover.po
+index c4af48243..3a709c08f 100644
+--- a/po/ga/libdiscover.po
++++ b/po/ga/libdiscover.po
+@@ -2680,14 +2680,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/gl/libdiscover.po b/po/gl/libdiscover.po
+index cfba2a4ea..7698999c2 100644
+--- a/po/gl/libdiscover.po
++++ b/po/gl/libdiscover.po
+@@ -2607,16 +2607,16 @@ msgstr ""
+ "A aplicación de Snap non é compatíbel co illamento de seguridade e terá "
+ "acceso total ao computador. Quere instalala aínda así?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: non é posíbel consultar atomupd sobre actualizacións de SteamOS…"
++"Holo: non é posíbel consultar atomupd sobre actualizacións de Holo…"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/he/libdiscover.po b/po/he/libdiscover.po
+index f5ee43a98..e68815da8 100644
+--- a/po/he/libdiscover.po
++++ b/po/he/libdiscover.po
+@@ -2556,15 +2556,15 @@ msgstr ""
+ "יישום Snap זה לא תואם לדגם בידוד האבטחה ותהיה לו גישה מלאה למחשב. להתקין "
+ "אותו בכל זאת?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: לא ניתן לתשאל את atomupd לאיתור עדכוני SteamOS…"
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: לא ניתן לתשאל את atomupd לאיתור עדכוני Holo…"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/hi/libdiscover.po b/po/hi/libdiscover.po
+index 83a7826e8..169600739 100644
+--- a/po/hi/libdiscover.po
++++ b/po/hi/libdiscover.po
+@@ -2474,14 +2474,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/hsb/libdiscover.po b/po/hsb/libdiscover.po
+index d8e1cbecd..15058e703 100644
+--- a/po/hsb/libdiscover.po
++++ b/po/hsb/libdiscover.po
+@@ -2494,14 +2494,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/hu/libdiscover.po b/po/hu/libdiscover.po
+index 86a8a51ae..9e265f509 100644
+--- a/po/hu/libdiscover.po
++++ b/po/hu/libdiscover.po
+@@ -2597,15 +2597,15 @@ msgstr ""
+ "Ez a Snap alkalmazás nem kompatibilis a biztonsági tesztkörnyezettel, és "
+ "teljes hozzáférés lesz a számítógéphez. Biztosan telepíti?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: Az atomupd nem kérhető le a SteamOS frissítésekhez…"
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Az atomupd nem kérhető le a Holo frissítésekhez…"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/ia/libdiscover.po b/po/ia/libdiscover.po
+index 4d793a332..235bfc15c 100644
+--- a/po/ia/libdiscover.po
++++ b/po/ia/libdiscover.po
+@@ -2605,16 +2605,16 @@ msgstr ""
+ "Iste application de Snap non es compatibile con le sendbox de securitate e "
+ "habera plen accesso a iste computator. Tu installa lo malgrado isto?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS : incapace a demandar atomupd per Actualisationes de SteamOS ..."
++"Holo : incapace a demandar atomupd per Actualisationes de Holo ..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/id/libdiscover.po b/po/id/libdiscover.po
+index 0ac1d2776..94753d6f0 100644
+--- a/po/id/libdiscover.po
++++ b/po/id/libdiscover.po
+@@ -2598,15 +2598,15 @@ msgstr ""
+ "Aplikasi Snap ini tidaklah kompatibel dengan security sandboxing dan akan "
+ "diakses penuh ke komputer ini. Tetap instal meskipun begitu?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: Tidak dapat mengkueri automupd untuk Pembaruan SteamOS..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Tidak dapat mengkueri automupd untuk Pembaruan Holo..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/is/libdiscover.po b/po/is/libdiscover.po
+index c1e71a0b6..3cf680581 100644
+--- a/po/is/libdiscover.po
++++ b/po/is/libdiscover.po
+@@ -2573,15 +2573,15 @@ msgstr ""
+ "Þetta Snap-forrit er ekki samhæft við öryggissandkassa og mun hafa fullan "
+ "aðgang að tölvunni. Viltu samt setja það upp?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: Gat ekki sent beiðni á atomupd vegna SteamOS uppfærslna..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Gat ekki sent beiðni á atomupd vegna Holo uppfærslna..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/it/libdiscover.po b/po/it/libdiscover.po
+index 6fd5bf041..fb1f82369 100644
+--- a/po/it/libdiscover.po
++++ b/po/it/libdiscover.po
+@@ -2590,16 +2590,16 @@ msgstr ""
+ "Questa applicazione Snap non è compatibile con la sandbox di sicurezza e "
+ "avrà pieno accesso a questo computer. Vuoi installarla comunque?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: impossibile interrogare atomupd per gli aggiornamenti di SteamOS..."
++"Holo: impossibile interrogare atomupd per gli aggiornamenti di Holo..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/ja/libdiscover.po b/po/ja/libdiscover.po
+index 485dbd66d..254627a1f 100644
+--- a/po/ja/libdiscover.po
++++ b/po/ja/libdiscover.po
+@@ -2567,17 +2567,17 @@ msgstr ""
+ "この Snap アプリケーションはセキュリティサンドボックス機能に対応しておらず、"
+ "このコンピュータへの完全なアクセス権を持ちます。インストールを続行しますか？"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: SteamOS Updates のために atomupd をクエリすることができませんでし"
++"Holo: Holo Updates のために atomupd をクエリすることができませんでし"
+ "た..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/ka/libdiscover.po b/po/ka/libdiscover.po
+index b48125ff8..37163b583 100644
+--- a/po/ka/libdiscover.po
++++ b/po/ka/libdiscover.po
+@@ -2577,15 +2577,15 @@ msgstr ""
+ "ეს Snap აპლიკაცია უსაფრთხო შემოსაზღვრასთან თავსებადი არაა და მას "
+ "კომპიუტერთან სრული წვდომა ექნება. გნებავთ, მაინც დავაყენოთ?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: atomupd -დან SteamOS -ის განახლებების გამოთხოვის შეცდომა..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: atomupd -დან Holo -ის განახლებების გამოთხოვის შეცდომა..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/kk/libdiscover.po b/po/kk/libdiscover.po
+index 13857c8e9..b83bd2b2b 100644
+--- a/po/kk/libdiscover.po
++++ b/po/kk/libdiscover.po
+@@ -2739,14 +2739,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/ko/libdiscover.po b/po/ko/libdiscover.po
+index 3326d9988..8d611c630 100644
+--- a/po/ko/libdiscover.po
++++ b/po/ko/libdiscover.po
+@@ -2545,15 +2545,15 @@ msgstr ""
+ "Snap 앱이 보안 샌드박스와 호환되지 않으며 컴퓨터의 모든 자원에 접근할 수 있습"
+ "니다. 그래도 설치하시겠습니까?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: atomupd에 SteamOS 업데이트를 질의할 수 없음..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: atomupd에 Holo 업데이트를 질의할 수 없음..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/lt/libdiscover.po b/po/lt/libdiscover.po
+index 3e2e12490..9558fa8d6 100644
+--- a/po/lt/libdiscover.po
++++ b/po/lt/libdiscover.po
+@@ -2630,15 +2630,15 @@ msgstr ""
+ "Ši Snap programa yra nesuderinama su saugumo smėliadėže ir turės pilną "
+ "prieigą prie šio kompiuterio. Ar vis tiek ją įdiegti?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: Nepavyko užklausti atomupd dėl SteamOS atnaujinimų..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Nepavyko užklausti atomupd dėl Holo atnaujinimų..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/lv/libdiscover.po b/po/lv/libdiscover.po
+index 8306ba595..79a28e2d6 100644
+--- a/po/lv/libdiscover.po
++++ b/po/lv/libdiscover.po
+@@ -2578,17 +2578,17 @@ msgstr ""
+ "Šī „Snap“ programma nav saderīga ar drošības smilšu kasti un tai būs pilna "
+ "pieeja šim datoram. Vai to tik un tā instalēt?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: Neizdodas nosūtīt vaicājumu „SteamOS“ atjauninājumu „atomupd“ "
++"Holo: Neizdodas nosūtīt vaicājumu „Holo“ atjauninājumu „atomupd“ "
+ "pakalpojumam..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/ml/libdiscover.po b/po/ml/libdiscover.po
+index 51ba1ed0c..0c19abb16 100644
+--- a/po/ml/libdiscover.po
++++ b/po/ml/libdiscover.po
+@@ -2499,14 +2499,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/mr/libdiscover.po b/po/mr/libdiscover.po
+index 06db6dc7c..94a2679bc 100644
+--- a/po/mr/libdiscover.po
++++ b/po/mr/libdiscover.po
+@@ -2628,14 +2628,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/my/libdiscover.po b/po/my/libdiscover.po
+index 908f5020f..8fab04a9c 100644
+--- a/po/my/libdiscover.po
++++ b/po/my/libdiscover.po
+@@ -2520,14 +2520,14 @@ msgstr ""
+ "ဤစနပ်အပ္ပလီကေးရှင်းသည် သီးသန့်ကန့်ထားခြင်း မရှိဘဲ သင်၏ကွန်ပြူတာကို အပြည့်အဝအသုံးပြုခွင့်ရရှိလိမ့်မည်။ ၎င်းကို "
+ "ဘာဖြစ်ဖြစ်တပ်ဆင်မှာလား။"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/nb/libdiscover.po b/po/nb/libdiscover.po
+index 7b89fce58..ff7c76adc 100644
+--- a/po/nb/libdiscover.po
++++ b/po/nb/libdiscover.po
+@@ -2577,16 +2577,16 @@ msgstr ""
+ "Dette Snap-programmet er ikke kompatibelt med sandkasse-sikkerhet, og får "
+ "dermed full tilgang til systemet. Installer likevel?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: Kunne ikke sende forespørsel til «atomupd» om SteamOS-"
++"Holo: Kunne ikke sende forespørsel til «atomupd» om Holo-"
+ "oppdateringer …"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/nds/libdiscover.po b/po/nds/libdiscover.po
+index 03cc5b89f..8e9f0bff5 100644
+--- a/po/nds/libdiscover.po
++++ b/po/nds/libdiscover.po
+@@ -2818,14 +2818,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/nl/libdiscover.po b/po/nl/libdiscover.po
+index 7b2ab5730..ec8c50e38 100644
+--- a/po/nl/libdiscover.po
++++ b/po/nl/libdiscover.po
+@@ -2595,15 +2595,15 @@ msgstr ""
+ "Deze toepassing uit Snap is niet compatibel met beveiliging via een sandbox "
+ "en zal volledig toegang tot deze computer hebben. Toch installeren?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: kan atomupd vragen om updates van SteamOS..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: kan atomupd vragen om updates van Holo..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/nn/libdiscover.po b/po/nn/libdiscover.po
+index c85eef6b9..73dd5fd6f 100644
+--- a/po/nn/libdiscover.po
++++ b/po/nn/libdiscover.po
+@@ -2575,15 +2575,15 @@ msgstr ""
+ "Snap-programmet er ikkje kompatibelt med sandkasse-tryggleik, og det får "
+ "derfor full tilgang til datamaskina. Vil du likevel installera det?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: Klarte ikkje spørja atomupd om SteamOS-oppdateringar …"
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Klarte ikkje spørja atomupd om Holo-oppdateringar …"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/pa/libdiscover.po b/po/pa/libdiscover.po
+index cb8bea038..09ac7e3c7 100644
+--- a/po/pa/libdiscover.po
++++ b/po/pa/libdiscover.po
+@@ -2541,14 +2541,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: ਸਟੀਮਓ.ਐਸ. ਅੱਪਡੇਟ ਲਈ atomupd ਕਿਊਰੀ ਲਈ ਅਸਮਰੱਥ ਹੈ..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: ਸਟੀਮਓ.ਐਸ. ਅੱਪਡੇਟ ਲਈ atomupd ਕਿਊਰੀ ਲਈ ਅਸਮਰੱਥ ਹੈ..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr "ਸਟੀਮ-ਓ.ਐਸ."
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/pl/libdiscover.po b/po/pl/libdiscover.po
+index 1cf903ea9..283335df5 100644
+--- a/po/pl/libdiscover.po
++++ b/po/pl/libdiscover.po
+@@ -2601,15 +2601,15 @@ msgstr ""
+ "umieszczaniu programów w piaskownicy, więc będzie miał pełny dostęp do tego "
+ "komputera. Czy mimo to go wgrać?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: Nie można odpytać atomupd o uaktualnienia SteamOS..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Nie można odpytać atomupd o uaktualnienia Holo..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/pt/libdiscover.po b/po/pt/libdiscover.po
+index f6eca0a7e..91243d312 100644
+--- a/po/pt/libdiscover.po
++++ b/po/pt/libdiscover.po
+@@ -19,7 +19,7 @@ msgstr ""
+ "X-POFile-SpellExtra: stable deb main ppa Appstream Kate AppStream Flatpak\n"
+ "X-POFile-SpellExtra: flatpakrepo Flathub Snap FWUPD Discover ostree Smart\n"
+ "X-POFile-IgnoreConsistency: Snap\n"
+-"X-POFile-SpellExtra: Cards smart card ptrace SteamOS atomupd\n"
++"X-POFile-SpellExtra: Cards smart card ptrace Holo atomupd\n"
+ "X-POFile-IgnoreConsistency: Broken\n"
+ 
+ #, kde-format
+@@ -2628,16 +2628,16 @@ msgstr ""
+ "Esta aplicação do Snap não é compatível com as áreas isoladas de segurança e "
+ "terá acesso total a este computador. Deseja instalá-la à mesma?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: Não é possível consultar o 'atomupd' para obter actualizações do "
+-"SteamOS..."
++"Holo: Não é possível consultar o 'atomupd' para obter actualizações do "
++"Holo..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/pt_BR/libdiscover.po b/po/pt_BR/libdiscover.po
+index 177e1dd00..045f4e288 100644
+--- a/po/pt_BR/libdiscover.po
++++ b/po/pt_BR/libdiscover.po
+@@ -2604,16 +2604,16 @@ msgstr ""
+ "Este aplicativo Snap não é compatível com sandbox de segurança e terá acesso "
+ "completo a este computador. Instalá-lo mesmo assim?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: Não foi possível consultar o atomupd por atualizações do SteamOS..."
++"Holo: Não foi possível consultar o atomupd por atualizações do Holo..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/ro/libdiscover.po b/po/ro/libdiscover.po
+index 79902fa24..26a054cc2 100644
+--- a/po/ro/libdiscover.po
++++ b/po/ro/libdiscover.po
+@@ -2620,15 +2620,15 @@ msgstr ""
+ "Această aplicație Snap nu e compatibilă cu îngrădirea de securitate și va "
+ "avea acces deplin la acest calculator. O instalați oricum?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: Nu se poate interoga atomupd pentru actualizări SteamOS…"
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Nu se poate interoga atomupd pentru actualizări Holo…"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/ru/libdiscover.po b/po/ru/libdiscover.po
+index b9c8e11e8..b6e344dbf 100644
+--- a/po/ru/libdiscover.po
++++ b/po/ru/libdiscover.po
+@@ -2628,16 +2628,16 @@ msgstr ""
+ "Приложения в формате Snap не поддерживают изолирование, что означает, что "
+ "они получают полный доступ к системе. Продолжить установку?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+-"SteamOS: Не удалось получить данные о наличии обновлений SteamOS от atomupd…"
++"Holo: Не удалось получить данные о наличии обновлений Holo от atomupd…"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/sa/libdiscover.po b/po/sa/libdiscover.po
+index 4cf4adef1..8021f7800 100644
+--- a/po/sa/libdiscover.po
++++ b/po/sa/libdiscover.po
+@@ -2549,15 +2549,15 @@ msgstr ""
+ "इदं स्नैप् अनुप्रयोगं सुरक्षाकट्टापूर्णितम् इत्यनेन सह सङ्गतं नास्ति तथा च अस्मिन् सङ्गणके "
+ "पूर्णप्रवेशः भविष्यति । तथापि संस्थापयन्तु?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: SteamOS अद्यतनस्य कृते atomupd इत्यस्य प्रश्नं कर्तुं असमर्थः..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Holo अद्यतनस्य कृते atomupd इत्यस्य प्रश्नं कर्तुं असमर्थः..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/sk/libdiscover.po b/po/sk/libdiscover.po
+index ce3fa97fa..a35032fea 100644
+--- a/po/sk/libdiscover.po
++++ b/po/sk/libdiscover.po
+@@ -2617,15 +2617,15 @@ msgstr ""
+ "Táto aplikácia Snap nie je kompatibilná so sandbox zabezpečením a bude mať "
+ "úplný prístup k tomuto počítaču. Nainštalovať ju napriek tomu?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: Nemožno sa spýtať atomupd na aktualizácie SteamOS..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Nemožno sa spýtať atomupd na aktualizácie Holo..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/sl/libdiscover.po b/po/sl/libdiscover.po
+index c0b182ae7..a661f5110 100644
+--- a/po/sl/libdiscover.po
++++ b/po/sl/libdiscover.po
+@@ -2602,15 +2602,15 @@ msgstr ""
+ "Ta program Snap ni združljiv z varnostnim peskovnikom in bo imel polni "
+ "dostop do tega računalnika. Naj ga kljub temu namestim?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: Ni mogoča poizvedba na atomupd za posodobitve SteamOS …"
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Ni mogoča poizvedba na atomupd za posodobitve Holo …"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/sr/libdiscover.po b/po/sr/libdiscover.po
+index 55083d371..f32012eb3 100644
+--- a/po/sr/libdiscover.po
++++ b/po/sr/libdiscover.po
+@@ -2678,14 +2678,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/sr@ijekavian/libdiscover.po b/po/sr@ijekavian/libdiscover.po
+index ffbf36e96..0f5f3a537 100644
+--- a/po/sr@ijekavian/libdiscover.po
++++ b/po/sr@ijekavian/libdiscover.po
+@@ -2678,14 +2678,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/sr@ijekavianlatin/libdiscover.po b/po/sr@ijekavianlatin/libdiscover.po
+index bb0c15861..44d221047 100644
+--- a/po/sr@ijekavianlatin/libdiscover.po
++++ b/po/sr@ijekavianlatin/libdiscover.po
+@@ -2679,14 +2679,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/sr@latin/libdiscover.po b/po/sr@latin/libdiscover.po
+index 2f489b5b9..98882f50a 100644
+--- a/po/sr@latin/libdiscover.po
++++ b/po/sr@latin/libdiscover.po
+@@ -2679,14 +2679,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/sv/libdiscover.po b/po/sv/libdiscover.po
+index 9903ef4be..71686a439 100644
+--- a/po/sv/libdiscover.po
++++ b/po/sv/libdiscover.po
+@@ -2583,15 +2583,15 @@ msgstr ""
+ "Det här låsningsprogrammet är inte kompatibelt med säkerhetsisolering och "
+ "har fullständig åtkomst av datorn. Installera det ändå?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: Kan inte fråga atomupd för uppdateringar av SteamOS..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Kan inte fråga atomupd för uppdateringar av Holo..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/ta/libdiscover.po b/po/ta/libdiscover.po
+index 417496f41..09e0a5438 100644
+--- a/po/ta/libdiscover.po
++++ b/po/ta/libdiscover.po
+@@ -2537,14 +2537,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/tg/libdiscover.po b/po/tg/libdiscover.po
+index 072f6f57a..9a6f78826 100644
+--- a/po/tg/libdiscover.po
++++ b/po/tg/libdiscover.po
+@@ -2510,14 +2510,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/tr/libdiscover.po b/po/tr/libdiscover.po
+index fbe860599..1cb25c9cb 100644
+--- a/po/tr/libdiscover.po
++++ b/po/tr/libdiscover.po
+@@ -2591,15 +2591,15 @@ msgstr ""
+ "Bu Snap uygulaması güvenlik yalıtımı ile uyumlu değildir ve bu bilgisayarda "
+ "tam erişime sahip olacaktır. Yine de kurulsun mu?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: SteamOS güncellemeleri için atomupd ile iletişim kurulamıyor…"
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: Holo güncellemeleri için atomupd ile iletişim kurulamıyor…"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/ug/libdiscover.po b/po/ug/libdiscover.po
+index 16841068c..f5c5e9509 100644
+--- a/po/ug/libdiscover.po
++++ b/po/ug/libdiscover.po
+@@ -2694,14 +2694,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/uk/libdiscover.po b/po/uk/libdiscover.po
+index 7e01e7525..41daee329 100644
+--- a/po/uk/libdiscover.po
++++ b/po/uk/libdiscover.po
+@@ -2623,15 +2623,15 @@ msgstr ""
+ "Ця програма Snap є несумісною із безпечною ізоляцією у «пісочниці», вона "
+ "матиме повний доступ до системи цього комп'ютера. Встановити її попри це?"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS: не вдалося опитати atomupd щодо оновлень SteamOS…"
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo: не вдалося опитати atomupd щодо оновлень Holo…"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/vi/libdiscover.po b/po/vi/libdiscover.po
+index 56173f92b..2084e96ad 100644
+--- a/po/vi/libdiscover.po
++++ b/po/vi/libdiscover.po
+@@ -2673,14 +2673,14 @@ msgid ""
+ "have full access to this computer. Install it anyway?"
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
+ msgstr ""
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
++msgid "Holo"
+ msgstr ""
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+diff --git a/po/zh_CN/libdiscover.po b/po/zh_CN/libdiscover.po
+index d15f4cb6b..9dd4bba7c 100644
+--- a/po/zh_CN/libdiscover.po
++++ b/po/zh_CN/libdiscover.po
+@@ -2515,15 +2515,15 @@ msgid ""
+ msgstr ""
+ "此 Snap 应用程序不兼容安全沙箱，它将获取本机的完整访问权限。仍然要安装它吗？"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS：无法查询用于 SteamOS 更新的 atomupd..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo：无法查询用于 Holo 更新的 atomupd..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+diff --git a/po/zh_TW/libdiscover.po b/po/zh_TW/libdiscover.po
+index 2968565e2..e11584489 100644
+--- a/po/zh_TW/libdiscover.po
++++ b/po/zh_TW/libdiscover.po
+@@ -2509,15 +2509,15 @@ msgstr ""
+ "本 Snap 應用程式不相容於安全性沙盒，所以能取得本機的完整存取權，依然繼續安"
+ "裝？"
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSBackend.cpp:94
++#: libdiscover/backends/HoloBackend/HoloBackend.cpp:94
+ #, kde-format
+-msgid "SteamOS: Unable to query atomupd for SteamOS Updates..."
+-msgstr "SteamOS：無法向 atomupd 查詢 SteamOS 更新..."
++msgid "Holo: Unable to query atomupd for Holo Updates..."
++msgstr "Holo：無法向 atomupd 查詢 Holo 更新..."
+ 
+-#: libdiscover/backends/SteamOSBackend/SteamOSResource.cpp:16
++#: libdiscover/backends/HoloBackend/HoloResource.cpp:16
+ #, kde-format
+-msgid "SteamOS"
+-msgstr "SteamOS"
++msgid "Holo"
++msgstr "Holo"
+ 
+ #: libdiscover/DiscoverBackendsFactory.cpp:121
+ #, kde-format
+-- 
+2.50.1
+
