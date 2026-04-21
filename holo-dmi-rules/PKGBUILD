@@ -10,14 +10,14 @@
 #  or (at your option) any later version.
 
 pkgname='holo-dmi-rules'
-pkgver=1.0
-pkgrel=2
+pkgver=1.1
+pkgrel=1
 pkgdesc="Holo tmpfiles.d rules for accessing DMI info"
 arch=('any')
 license=('LGPL2.1')
 depends=()
 source=('dmi-product-serial.conf')
-sha256sums=('a7d2e7787029136ecb4b3bf391873fdc82440edcfd2dcf74f7924cd377fca26b')
+sha256sums=('5896b4569a2cc1354b6e9316b2a35899b315d2f710420f1ca6e68c2d1db0f054')
 
 package() {
   # Loosen the product_serial node to 440 / root:wheel, rather than 400 / root:root to allow the physical users to read
