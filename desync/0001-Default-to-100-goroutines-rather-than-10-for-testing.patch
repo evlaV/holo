@@ -1,0 +1,26 @@
+From 0309e8f7433899d865e98e8148bf398064ad3b4d Mon Sep 17 00:00:00 2001
+From: John Schoenick <johns@valvesoftware.com>
+Date: Tue, 21 Apr 2026 13:53:36 -0700
+Subject: [PATCH 1/1] Default to 100 goroutines rather than 10 for testing
+
+Really this should be dynamic
+---
+ cmd/desync/options.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cmd/desync/options.go b/cmd/desync/options.go
+index 7e70e79..922a2ce 100644
+--- a/cmd/desync/options.go
++++ b/cmd/desync/options.go
+@@ -62,7 +62,7 @@ func (o cmdStoreOptions) validate() error {
+ 
+ // Add common store option flags to a command flagset.
+ func addStoreOptions(o *cmdStoreOptions, f *pflag.FlagSet) {
+-	f.IntVarP(&o.n, "concurrency", "n", 10, "number of concurrent goroutines")
++	f.IntVarP(&o.n, "concurrency", "n", 100, "number of concurrent goroutines")
+ 	f.StringVar(&o.clientCert, "client-cert", "", "path to client certificate for TLS authentication")
+ 	f.StringVar(&o.clientKey, "client-key", "", "path to client key for TLS authentication")
+ 	f.StringVar(&o.caCert, "ca-cert", "", "trust authorities in this file, instead of OS trust store")
+-- 
+2.53.0
+
