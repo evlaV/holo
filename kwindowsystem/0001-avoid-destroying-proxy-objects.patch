@@ -1,0 +1,309 @@
+From 560f930273b21608893a9b19bbb61db90d727794 Mon Sep 17 00:00:00 2001
+From: Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+Date: Mon, 19 Jan 2026 11:48:26 +0200
+Subject: [PATCH] platforms/wayland: Avoid destroying proxy objects when QPA is
+ gone
+
+wl_display_disconnect() will not delete alive wl_proxy objects but the
+latter will contain dangling display pointers.
+
+There is not a lot that we can work with. So far, guarding against null
+app objects is the best that we've got.
+
+BUG: 487660
+
+Co-authored-by: Kai Uwe Broulik <kde@privat.broulik.de>
+---
+ .../wayland/{surfacehelper.h => helpers.h}      | 17 +++++++++++++++++
+ src/platforms/wayland/shm.cpp                   |  7 +++++--
+ .../wayland/waylandxdgactivationv1.cpp          |  4 ++--
+ src/platforms/wayland/waylandxdgdialogv1.cpp    |  7 +++----
+ src/platforms/wayland/waylandxdgforeignv2.cpp   | 11 +++++------
+ .../wayland/waylandxdgtopleveltagv1.cpp         |  5 ++---
+ src/platforms/wayland/windoweffects.cpp         | 14 ++++++++++----
+ src/platforms/wayland/windowshadow.cpp          | 13 ++++++++++---
+ src/platforms/wayland/windowsystem.cpp          |  2 +-
+ 9 files changed, 55 insertions(+), 25 deletions(-)
+ rename src/platforms/wayland/{surfacehelper.h => helpers.h} (68%)
+
+diff --git a/src/platforms/wayland/surfacehelper.h b/src/platforms/wayland/helpers.h
+similarity index 68%
+rename from src/platforms/wayland/surfacehelper.h
+rename to src/platforms/wayland/helpers.h
+index 3cc22e45..d5f4e820 100644
+--- a/src/platforms/wayland/surfacehelper.h
++++ b/src/platforms/wayland/helpers.h
+@@ -53,3 +53,20 @@ inline xdg_toplevel *xdgToplevelForWindow(QWindow *window)
+ 
+     return reinterpret_cast<xdg_toplevel *>(native->nativeResourceForWindow(QByteArrayLiteral("xdg_toplevel"), window));
+ }
++
++/*!
++ * \internal
++ *
++ * Some objects are children of the application object and therefore they are deleted after the QPA.
++ *
++ * The problem is that the wl_display object will be gone after the QPA is shut down. This can make the
++ * app crash when it attempts to clean up its proxy objects. The wl_proxy memory won't be released by
++ * wl_display_disconnect(), but wl_proxy objects will contain dangling display pointers.
++ *
++ * We need something better, but as of now, there is not a lot to work with. If you know that an object
++ * will live as long as the app, you may need to use this function before calling the destructor request.
++ */
++inline bool isQpaAlive()
++{
++    return qGuiApp;
++}
+diff --git a/src/platforms/wayland/shm.cpp b/src/platforms/wayland/shm.cpp
+index 340d8c26..beafa94c 100644
+--- a/src/platforms/wayland/shm.cpp
++++ b/src/platforms/wayland/shm.cpp
+@@ -6,6 +6,7 @@
+ */
+ 
+ #include "shm.h"
++#include "helpers.h"
+ 
+ #include <QGuiApplication>
+ #include <QImage>
+@@ -25,7 +26,9 @@ ShmBuffer::ShmBuffer(::wl_buffer *buffer)
+ 
+ ShmBuffer::~ShmBuffer()
+ {
+-    destroy();
++    if (isQpaAlive()) {
++        destroy();
++    }
+ }
+ 
+ Shm::Shm(QObject *parent)
+@@ -48,7 +51,7 @@ Shm *Shm::instance()
+ 
+ Shm::~Shm() noexcept
+ {
+-    if (isActive()) {
++    if (isQpaAlive() && isActive()) {
+         wl_shm_destroy(object());
+     }
+ }
+diff --git a/src/platforms/wayland/waylandxdgactivationv1.cpp b/src/platforms/wayland/waylandxdgactivationv1.cpp
+index 47481d92..5ae4d285 100644
+--- a/src/platforms/wayland/waylandxdgactivationv1.cpp
++++ b/src/platforms/wayland/waylandxdgactivationv1.cpp
+@@ -4,8 +4,8 @@
+     SPDX-License-Identifier: LGPL-2.0-or-later
+ */
+ 
++#include "helpers.h"
+ #include "waylandxdgactivationv1_p.h"
+-#include <QGuiApplication>
+ 
+ WaylandXdgActivationV1::WaylandXdgActivationV1()
+     : QWaylandClientExtensionTemplate<WaylandXdgActivationV1>(1)
+@@ -15,7 +15,7 @@ WaylandXdgActivationV1::WaylandXdgActivationV1()
+ 
+ WaylandXdgActivationV1::~WaylandXdgActivationV1()
+ {
+-    if (qGuiApp && isActive()) {
++    if (isQpaAlive() && isActive()) {
+         destroy();
+     }
+ }
+diff --git a/src/platforms/wayland/waylandxdgdialogv1.cpp b/src/platforms/wayland/waylandxdgdialogv1.cpp
+index 828786ab..aa4f6fda 100644
+--- a/src/platforms/wayland/waylandxdgdialogv1.cpp
++++ b/src/platforms/wayland/waylandxdgdialogv1.cpp
+@@ -4,10 +4,9 @@
+     SPDX-License-Identifier: LGPL-2.0-or-later
+ */
+ 
++#include "helpers.h"
+ #include "waylandxdgdialogv1_p.h"
+ 
+-#include <QGuiApplication>
+-
+ WaylandXdgDialogV1::WaylandXdgDialogV1(::xdg_dialog_v1 *object)
+     : QObject()
+     , QtWayland::xdg_dialog_v1(object)
+@@ -16,7 +15,7 @@ WaylandXdgDialogV1::WaylandXdgDialogV1(::xdg_dialog_v1 *object)
+ 
+ WaylandXdgDialogV1::~WaylandXdgDialogV1()
+ {
+-    if (qGuiApp) {
++    if (isQpaAlive()) {
+         destroy();
+     }
+ }
+@@ -29,7 +28,7 @@ WaylandXdgDialogWmV1::WaylandXdgDialogWmV1()
+ 
+ WaylandXdgDialogWmV1::~WaylandXdgDialogWmV1()
+ {
+-    if (qGuiApp && isActive()) {
++    if (isQpaAlive() && isActive()) {
+         destroy();
+     }
+ }
+diff --git a/src/platforms/wayland/waylandxdgforeignv2.cpp b/src/platforms/wayland/waylandxdgforeignv2.cpp
+index 9c6e6223..a34b1e65 100644
+--- a/src/platforms/wayland/waylandxdgforeignv2.cpp
++++ b/src/platforms/wayland/waylandxdgforeignv2.cpp
+@@ -4,10 +4,9 @@
+     SPDX-License-Identifier: LGPL-2.0-or-later
+ */
+ 
++#include "helpers.h"
+ #include "waylandxdgforeignv2_p.h"
+ 
+-#include <QGuiApplication>
+-
+ WaylandXdgForeignExportedV2::WaylandXdgForeignExportedV2(::zxdg_exported_v2 *object)
+     : QObject()
+     , QtWayland::zxdg_exported_v2(object)
+@@ -16,7 +15,7 @@ WaylandXdgForeignExportedV2::WaylandXdgForeignExportedV2(::zxdg_exported_v2 *obj
+ 
+ WaylandXdgForeignExportedV2::~WaylandXdgForeignExportedV2()
+ {
+-    if (qGuiApp) {
++    if (isQpaAlive()) {
+         destroy();
+     }
+ }
+@@ -40,7 +39,7 @@ WaylandXdgForeignExporterV2::WaylandXdgForeignExporterV2()
+ 
+ WaylandXdgForeignExporterV2::~WaylandXdgForeignExporterV2()
+ {
+-    if (qGuiApp && isActive()) {
++    if (isQpaAlive() && isActive()) {
+         destroy();
+     }
+ }
+@@ -65,7 +64,7 @@ WaylandXdgForeignImportedV2::WaylandXdgForeignImportedV2(const QString &handle,
+ 
+ WaylandXdgForeignImportedV2::~WaylandXdgForeignImportedV2()
+ {
+-    if (qGuiApp) {
++    if (isQpaAlive()) {
+         destroy();
+     }
+ }
+@@ -88,7 +87,7 @@ WaylandXdgForeignImporterV2::WaylandXdgForeignImporterV2()
+ 
+ WaylandXdgForeignImporterV2::~WaylandXdgForeignImporterV2()
+ {
+-    if (qGuiApp && isActive()) {
++    if (isQpaAlive() && isActive()) {
+         destroy();
+     }
+ }
+diff --git a/src/platforms/wayland/windoweffects.cpp b/src/platforms/wayland/windoweffects.cpp
+index aaecb2b9..c5a79db7 100644
+--- a/src/platforms/wayland/windoweffects.cpp
++++ b/src/platforms/wayland/windoweffects.cpp
+@@ -20,7 +20,7 @@
+ #include "qwayland-contrast.h"
+ #include "qwayland-slide.h"
+ 
+-#include "surfacehelper.h"
++#include "helpers.h"
+ 
+ #include <wayland-client-protocol.h>
+ 
+@@ -61,7 +61,9 @@ public:
+ 
+     ~Blur() override
+     {
+-        release();
++        if (isQpaAlive()) {
++            release();
++        }
+     }
+ };
+ 
+@@ -85,7 +87,9 @@ public:
+ 
+     ~Contrast() override
+     {
+-        release();
++        if (isQpaAlive()) {
++            release();
++        }
+     }
+ };
+ 
+@@ -109,7 +113,9 @@ public:
+ 
+     ~Slide() override
+     {
+-        release();
++        if (isQpaAlive()) {
++            release();
++        }
+     }
+ };
+ 
+diff --git a/src/platforms/wayland/windowshadow.cpp b/src/platforms/wayland/windowshadow.cpp
+index 3c2c2896..830dd0b5 100644
+--- a/src/platforms/wayland/windowshadow.cpp
++++ b/src/platforms/wayland/windowshadow.cpp
+@@ -6,9 +6,9 @@
+ */
+ 
+ #include "windowshadow.h"
++#include "helpers.h"
+ #include "logging.h"
+ #include "shm.h"
+-#include "surfacehelper.h"
+ 
+ #include <qwayland-shadow.h>
+ 
+@@ -38,7 +38,7 @@ class ShadowManager : public QWaylandClientExtensionTemplate<ShadowManager>, pub
+ public:
+     ~ShadowManager()
+     {
+-        if (isActive()) {
++        if (isQpaAlive() && isActive()) {
+             destroy();
+         }
+     }
+@@ -53,9 +53,12 @@ class Shadow : public QtWayland::org_kde_kwin_shadow
+ {
+ public:
+     using QtWayland::org_kde_kwin_shadow::org_kde_kwin_shadow;
++
+     ~Shadow()
+     {
+-        destroy();
++        if (isQpaAlive()) {
++            destroy();
++        }
+     }
+ };
+ 
+@@ -188,6 +191,10 @@ void WindowShadow::internalDestroy()
+         return;
+     }
+ 
++    if (!isQpaAlive()) {
++        return;
++    }
++
+     // Only call surfaceForWindow and unset the surface if the native window is alive.
+     // Otherwise window->create() might be called when the window is being destroyed, leading to a crash.
+     if (window && window->nativeInterface<QNativeInterface::Private::QWaylandWindow>() && ShadowManager::instance()->isActive()) {
+diff --git a/src/platforms/wayland/windowsystem.cpp b/src/platforms/wayland/windowsystem.cpp
+index 014b5357..1c52b840 100644
+--- a/src/platforms/wayland/windowsystem.cpp
++++ b/src/platforms/wayland/windowsystem.cpp
+@@ -5,8 +5,8 @@
+     SPDX-License-Identifier: LGPL-2.1-only OR LGPL-3.0-only OR LicenseRef-KDE-Accepted-LGPL
+ */
+ #include "windowsystem.h"
++#include "helpers.h"
+ #include "logging.h"
+-#include "surfacehelper.h"
+ #include "waylandxdgactivationv1_p.h"
+ #include "waylandxdgdialogv1_p.h"
+ #include "waylandxdgforeignv2_p.h"
+-- 
+GitLab
+
