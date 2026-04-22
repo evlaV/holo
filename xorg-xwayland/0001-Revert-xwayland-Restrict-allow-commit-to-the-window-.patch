@@ -17,10 +17,10 @@ diff --git a/hw/xwayland/xwayland-screen.c b/hw/xwayland/xwayland-screen.c
 index 822e55bf3..b5d800c95 100644
 --- a/hw/xwayland/xwayland-screen.c
 +++ b/hw/xwayland/xwayland-screen.c
-@@ -181,33 +181,12 @@ xwl_property_callback(CallbackListPtr *pcbl, void *closure,
-         xwl_window_update_property(xwl_window, rec);
+@@ -182,32 +182,11 @@ xwl_property_callback(CallbackListPtr *pcbl, void *closure,
  }
  
+ #ifdef XACE
 -#define readOnlyPropertyAccessMask (DixReadAccess |\
 -                                    DixGetAttrAccess |\
 -                                    DixListPropAccess |\
@@ -45,12 +45,11 @@ index 822e55bf3..b5d800c95 100644
 -            rec->status = BadAccess;
 -    }
  }
- 
--#undef readOnlyPropertyAccessMask
 -
+-#undef readOnlyPropertyAccessMask
+ #endif /* XACE */
+ 
  static void
- xwl_root_window_finalized_callback(CallbackListPtr *pcbl,
-                                    void *closure,
 -- 
 2.47.1
 
