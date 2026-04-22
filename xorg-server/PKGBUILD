@@ -3,8 +3,8 @@
 
 pkgbase=xorg-server
 pkgname=('xorg-server' 'xorg-server-xephyr' 'xorg-server-xvfb' 'xorg-server-xnest'
-         'xorg-server-common' 'xorg-server-devel')
-pkgver=21.1.19
+         'xorg-server-common' 'xorg-server-devel' 'xorg-server-src')
+pkgver=21.1.22
 pkgrel=1.1 # Rebuild for Holo
 arch=('x86_64')
 license=('LicenseRef-Adobe-Display-PostScript'
@@ -39,7 +39,7 @@ validpgpkeys=('3C2C43D9447D5938EF4551EBE23B7E70B467F0BF'  # Peter Hutterer (Who-
               '67DC86F2623FC5FD4BB5225D14706DBE1E4B4540'  # Olivier Fourdan <fourdan@xfce.org>
               'FD0004A26EADFE43A4C3F249C6F7AE200374452D'  # Povilas Kanapickas <povilas@radix.lt>
               '3BB639E56F861FA2E86505690FDD682D974CA72A') # Matt Turner <mattst88@gmail.com>
-sha512sums=('8278d1c951da4e6abe8acddb0a2408a8dd1756e0f8c9c32cd1c5b507befdc43d456fde3d88af6ed6f4373686be7dc7336d86bb3d1eb34acdcc25465a3e4c664e'
+sha512sums=('81644a6a95b387fdd8e5582100d63cf4efbe6353e6a6b9bdd6435555018f6bae9318fb3f67c5a2f574b9b4b997917c077027162f37fc26f94b0745d6f531fba6'
             '672375cb5028ba9cda286e317d17bd8c9a9039483e7f79c21f223fd08ba07655729e9f59a082f4b8f5d8de45a77a9e9affce1002fb8c6657e26ef1a490654e49'
             'de5e2cb3c6825e6cf1f07ca0d52423e17f34d70ec7935e9dd24be5fb9883bf1e03b50ff584931bd3b41095c510ab2aa44d2573fd5feaebdcb59363b65607ff22')
 
@@ -54,6 +54,13 @@ build() {
   export CFLAGS=${CFLAGS/-fno-plt}
   export CXXFLAGS=${CXXFLAGS/-fno-plt}
   export LDFLAGS=${LDFLAGS/-Wl,-z,now}
+
+  # save tree for source package after prepare() may have applied patches
+  tar czf ${pkgbase}-${pkgver}.tar.gz \
+    --exclude='.git*' \
+    --exclude=.appveyor.yml \
+    --exclude=.travis.yml \
+    ${pkgbase}
 
   arch-meson ${pkgbase} build \
     -D ipv6=true \
@@ -192,4 +199,14 @@ package_xorg-server-devel() {
 
   # make sure there are no files left to install
   find fakeinstall -depth -print0 | xargs -0 rmdir
+}
+
+package_xorg-server-src() {
+  pkgdesc="Source files of the X.Org X server"
+
+  install -d "${pkgdir}"/usr/src/
+  cd "${pkgdir}"/usr/src/
+  tar xvf "${srcdir}/${pkgbase}-${pkgver}.tar.gz"
+  chown root:root --recursive ${pkgbase}
+  install -m644 -Dt "${pkgdir}/usr/share/licenses/${pkgname}" "${pkgbase}"/COPYING
 }
