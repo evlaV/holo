@@ -2,14 +2,14 @@
 # Contributor: Jan de Groot <jgc@archlinux.org>
 
 pkgname=gnutls
-pkgver=3.8.10
-pkgrel=1.1 # Holo: This is 3.8.10-1 from Arch rebuilt for Holo with leancrypto disabled
+pkgver=3.8.13
+pkgrel=1.1 # Rebuild for Holo
 pkgdesc="A library which provides a secure layer over a reliable transport layer"
 arch=('x86_64')
 license=('GPL-3.0-or-later AND LGPL-2.1-or-later')
 url="https://www.gnutls.org/"
 options=('!zipman')
-depends=('glibc' 'gcc-libs' 'gmp' 'libtasn1' 'zlib' 'nettle'
+depends=('glibc' 'gmp' 'libtasn1' 'zlib' 'nettle' 'leancrypto' 'gcc-libs'
          'libp11-kit' 'libidn2' 'zstd' 'libidn2.so' 'libunistring' 'brotli')
 makedepends=('tpm2-tss'
             # required for autoreconf when patching
@@ -17,32 +17,26 @@ makedepends=('tpm2-tss'
 checkdepends=('net-tools' 'tpm2-tools')
 optdepends=('tpm2-tss: support for TPM2 wrapped keys')
 backup=(etc/gnutls/config
-        etc/modules-load.d/gnutls.conf)
+        # etc/modules-load.d/gnutls.conf
+)
 source=(https://www.gnupg.org/ftp/gcrypt/gnutls/v3.8/${pkgname}-${pkgver}.tar.xz{,.sig}
-        config
-        gnutls-ktls_disable_keyupdate_test.patch
-        gnutls-3.8.10-tests-ktls.patch
-        1980.patch)
-sha256sums=('db7fab7cce791e7727ebbef2334301c821d79a550ec55c9ef096b610b03eb6b7'
+        config)
+sha256sums=('ffed8ec1bf09c2426d4f14aae377de4753b53e537d685e604e99a8b16ca9c97e'
             'SKIP'
-            '22e614510fe52defe8c233ce3e5ead2205739fd967657ce3176ca121f3c562b5'
-            '8a91cd279bd7c695260f3b00284902ea527426f99be6f766d3c1f4b1bc27c74f'
-            '5010c963a5539d8f8f6e3780791a94beaf969b6d99337ff03ecde57abcd12017'
-            'dafcb500a52657387784fde1b9e9afe54b8633f8861e68d0f1b8bbb27c348c84')
-validpgpkeys=('462225C3B46F34879FC8496CD605848ED7E69871') # "Daiki Ueno <ueno@unixuser.org>"
-#validpgpkeys=('5D46CB0F763405A7053556F47A75A648B3F9220C') # "Zoltan Fridrich <zfridric@redhat.com>"
-
+            '22e614510fe52defe8c233ce3e5ead2205739fd967657ce3176ca121f3c562b5')
+# validpgpkeys=('462225C3B46F34879FC8496CD605848ED7E69871') # "Daiki Ueno <ueno@unixuser.org>"
+# validpgpkeys=('5D46CB0F763405A7053556F47A75A648B3F9220C') # "Zoltan Fridrich <zfridric@redhat.com>"
+validpgpkeys=('E987AB7F7E89667776D05B3BB0E9DD20B29F1432') # Alexander Sosedkin <monk@unboiled.info>
+ 
 prepare() {
   cd ${pkgname}-${pkgver}
-  patch -Np1 -i ../gnutls-ktls_disable_keyupdate_test.patch
-  patch -Np1 -i ../gnutls-3.8.10-tests-ktls.patch
-  patch -Np1 -i ../1980.patch
   autoreconf -vfi
 }
 
 build() {
   cd ${pkgname}-${pkgver}
   ./configure --prefix=/usr \
+    --sysconfdir=/etc \
     --disable-static \
     --with-idn \
     --with-brotli \
@@ -51,7 +45,7 @@ build() {
     --enable-openssl-compatibility \
     --with-default-trust-store-pkcs11="pkcs11:" \
     --enable-ktls \
-    --without-leancrypto # Holo: disable leancrypto (post-quantum cryptography) due to missing dependency
+    --with-leancrypto
   sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
   make
 }
@@ -66,8 +60,8 @@ package() {
   make DESTDIR="${pkgdir}" install
 
   # prepare to load tls module required for ktls
-  install -dm755 "$pkgdir"/etc/modules-load.d
-  echo "#tls" > "$pkgdir"/etc/modules-load.d/gnutls.conf
+  # install -dm755 "$pkgdir"/etc/modules-load.d
+  # echo "#tls" > "$pkgdir"/etc/modules-load.d/gnutls.conf
 
   # disable ktls by default for now
   install -dm755 "$pkgdir"/etc/gnutls
