@@ -38,11 +38,11 @@ Patch-Name: maybe-quiet.patch
  grub-core/boot/i386/pc/boot.S     | 11 +++++++++++
  grub-core/boot/i386/pc/diskboot.S | 26 ++++++++++++++++++++++++++
  grub-core/kern/main.c             | 17 +++++++++++++++++
- grub-core/kern/rescue_reader.c    |  2 ++
+ grub-core/kern/rescue_reader.c    |  6 ++++--
  grub-core/normal/main.c           | 11 +++++++++++
  grub-core/normal/menu.c           | 15 +++++++++++++--
  util/grub.d/10_linux.in           | 17 +++++++++++++----
- 9 files changed, 111 insertions(+), 6 deletions(-)
+ 9 files changed, 113 insertions(+), 8 deletions(-)
 
 diff --git a/config.h.in b/config.h.in
 index 9b1d399..9d6f369 100644
@@ -58,10 +58,10 @@ index 9b1d399..9d6f369 100644
  /* We don't need those.  */
  #define MINILZO_CFG_SKIP_LZO_PTR 1
 diff --git a/configure.ac b/configure.ac
-index f19356e..dcf9f72 100644
+index 31bbe97..6bc49f0 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -2068,6 +2068,17 @@ else
+@@ -2376,6 +2376,17 @@ else
  fi
  AC_SUBST([UBUNTU_RECOVERY])
  
@@ -79,7 +79,7 @@ index f19356e..dcf9f72 100644
  LIBS=""
  
  AC_SUBST([FONT_SOURCE])
-@@ -2343,5 +2354,10 @@ echo "With stack smashing protector: Yes"
+@@ -2657,5 +2668,10 @@ echo "With stack smashing protector: Yes"
  else
  echo "With stack smashing protector: No"
  fi
@@ -203,10 +203,10 @@ index c1addc0..9b6d7a7 100644
  
  notification_step:	.asciz "."
 diff --git a/grub-core/kern/main.c b/grub-core/kern/main.c
-index 731c07c..f21376e 100644
+index 143a232..60eed47 100644
 --- a/grub-core/kern/main.c
 +++ b/grub-core/kern/main.c
-@@ -265,17 +265,27 @@ reclaim_module_space (void)
+@@ -303,6 +303,10 @@ reclaim_module_space (void)
  void __attribute__ ((noreturn))
  grub_main (void)
  {
@@ -214,8 +214,10 @@ index 731c07c..f21376e 100644
 +  struct grub_term_output *term;
 +#endif
 +
-   /* First of all, initialize the machine.  */
-   grub_machine_init ();
+ #ifdef GRUB_STACK_PROTECTOR
+   /*
+    * This call should only be made from a function that does not return because
+@@ -318,12 +322,18 @@ grub_main (void)
  
    grub_boot_time ("After machine init.");
  
@@ -234,7 +236,7 @@ index 731c07c..f21376e 100644
  #endif
  
    /* Init verifiers API. */
-@@ -315,5 +325,12 @@ grub_main (void)
+@@ -366,5 +376,12 @@ grub_main (void)
    grub_boot_time ("After execution of embedded config. Attempt to go to normal mode");
  
    grub_load_normal_mode ();
@@ -248,24 +250,34 @@ index 731c07c..f21376e 100644
    grub_rescue_run ();
  }
 diff --git a/grub-core/kern/rescue_reader.c b/grub-core/kern/rescue_reader.c
-index dcd7d44..a93524e 100644
+index a71ada8..932254a 100644
 --- a/grub-core/kern/rescue_reader.c
 +++ b/grub-core/kern/rescue_reader.c
-@@ -78,7 +78,9 @@ grub_rescue_read_line (char **line, int cont,
+@@ -78,6 +78,10 @@ grub_rescue_read_line (char **line, int cont,
  void __attribute__ ((noreturn))
  grub_rescue_run (void)
  {
 +#if QUIET_BOOT
-   grub_printf ("Entering rescue mode...\n");
++  grub_printf ("Entering rescue mode...\n");
 +#endif
++
+   /* Stall if the CLI has been disabled */
+   if (grub_is_cli_disabled () || grub_is_cli_need_auth ())
+     {
+@@ -91,8 +95,6 @@ grub_rescue_run (void)
+       while (1);
+     }
  
+-  grub_printf ("Entering rescue mode...\n");
+-
    while (1)
      {
+       char *line;
 diff --git a/grub-core/normal/main.c b/grub-core/normal/main.c
-index bd44310..4f10c00 100644
+index de9a3f9..fe3efb4 100644
 --- a/grub-core/normal/main.c
 +++ b/grub-core/normal/main.c
-@@ -408,6 +408,15 @@ static grub_err_t
+@@ -414,6 +414,15 @@ static grub_err_t
  grub_normal_read_line_real (char **line, int cont, int nested)
  {
    const char *prompt;
@@ -281,7 +293,7 @@ index bd44310..4f10c00 100644
  
    if (cont)
      /* TRANSLATORS: it's command line prompt.  */
-@@ -460,7 +469,9 @@ grub_cmdline_run (int nested, int force_auth)
+@@ -470,7 +479,9 @@ grub_cmdline_run (int nested, int force_auth)
        return;
      }
  
@@ -292,10 +304,10 @@ index bd44310..4f10c00 100644
    while (1)
      {
 diff --git a/grub-core/normal/menu.c b/grub-core/normal/menu.c
-index 6a90e09..350ed25 100644
+index b946c83..1b8b91b 100644
 --- a/grub-core/normal/menu.c
 +++ b/grub-core/normal/menu.c
-@@ -816,14 +816,18 @@ run_menu (grub_menu_t menu, int nested, int *auto_boot, int *notify_boot)
+@@ -815,14 +815,18 @@ run_menu (grub_menu_t menu, int nested, int *auto_boot, int *notify_boot)
  static void
  notify_booting (grub_menu_entry_t entry, void *userdata)
  {
@@ -315,7 +327,7 @@ index 6a90e09..350ed25 100644
  }
  
  /* Callback invoked when a default menu entry executed because of a timeout
-@@ -872,6 +876,9 @@ show_menu (grub_menu_t menu, int nested, int autobooted)
+@@ -871,6 +875,9 @@ show_menu (grub_menu_t menu, int nested, int autobooted)
        grub_menu_entry_t e;
        int auto_boot;
        int notify_boot;
@@ -325,21 +337,21 @@ index 6a90e09..350ed25 100644
  
        boot_entry = run_menu (menu, nested, &auto_boot, &notify_boot);
        if (boot_entry < 0)
-@@ -881,7 +888,11 @@ show_menu (grub_menu_t menu, int nested, int autobooted)
-       if (! e)
- 	continue; /* Menu is empty.  */
- 
--      grub_cls ();
+@@ -885,7 +892,11 @@ show_menu (grub_menu_t menu, int nested, int autobooted)
+ 					 &execution_callback, &notify_boot);
+       else
+ 	{
+-	  grub_cls ();
 +#if QUIET_BOOT
-+      /* Only clear the screen if we drew the menu in the first place.  */
-+      if (initial_timeout != 0)
++          /* Only clear the screen if we drew the menu in the first place.  */
++          if (initial_timeout != 0)
 +#endif
-+	grub_cls ();
- 
-       if (auto_boot)
- 	grub_menu_execute_with_fallback (menu, e, autobooted,
++	    grub_cls ();
+ 	  grub_menu_execute_entry (e, 0);
+ 	}
+       if (autobooted)
 diff --git a/util/grub.d/10_linux.in b/util/grub.d/10_linux.in
-index b0860b2..887355d 100644
+index 556b8ab..d954e88 100644
 --- a/util/grub.d/10_linux.in
 +++ b/util/grub.d/10_linux.in
 @@ -21,6 +21,7 @@ prefix="@prefix@"
@@ -350,7 +362,7 @@ index b0860b2..887355d 100644
  
  . "$pkgdatadir/grub-mkconfig_lib"
  
-@@ -159,20 +160,28 @@ linux_entry ()
+@@ -154,20 +155,28 @@ linux_entry ()
      fi
      printf '%s\n' "${prepare_boot_cache}" | sed "s/^/$submenu_indentation/"
    fi

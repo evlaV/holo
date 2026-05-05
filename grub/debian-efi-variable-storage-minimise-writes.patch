@@ -59,10 +59,10 @@ Patch-Name: efi-variable-storage-minimise-writes.patch
  create mode 100644 grub-core/osdep/unix/efivar.c
 
 diff --git a/INSTALL b/INSTALL
-index 8d9207c..276bf86 100644
+index 7ac1c7c..8ca96a0 100644
 --- a/INSTALL
 +++ b/INSTALL
-@@ -28,6 +28,11 @@ configuring the GRUB.
+@@ -29,6 +29,11 @@ configuring the GRUB.
  * Other standard GNU/Unix tools
  * a libc with large file support (e.g. glibc 2.1 or later)
  
@@ -75,10 +75,10 @@ index 8d9207c..276bf86 100644
  
  * libdevmapper 1.02.34 or later (recommended)
 diff --git a/Makefile.util.def b/Makefile.util.def
-index 970a003..2d5b1d9 100644
+index ecee548..c251ba6 100644
 --- a/Makefile.util.def
 +++ b/Makefile.util.def
-@@ -579,6 +579,8 @@ program = {
+@@ -610,6 +610,8 @@ program = {
    common = grub-core/osdep/compress.c;
    extra_dist = grub-core/osdep/unix/compress.c;
    extra_dist = grub-core/osdep/basic/compress.c;
@@ -87,7 +87,7 @@ index 970a003..2d5b1d9 100644
    common = util/editenv.c;
    common = grub-core/osdep/blocklist.c;
    common = grub-core/osdep/config.c;
-@@ -592,12 +594,15 @@ program = {
+@@ -623,12 +625,15 @@ program = {
    common = grub-core/kern/emu/argp_common.c;
    common = grub-core/osdep/init.c;
  
@@ -95,15 +95,15 @@ index 970a003..2d5b1d9 100644
 +
    ldadd = '$(LIBLZMA)';
    ldadd = libgrubmods.a;
-   ldadd = libgrubgcry.a;
    ldadd = libgrubkern.a;
+   ldadd = libgrubgcry.a;
    ldadd = grub-core/lib/gnulib/libgnu.a;
    ldadd = '$(LIBINTL) $(LIBDEVMAPPER) $(LIBUTIL) $(LIBZFS) $(LIBNVPAIR) $(LIBGEOM)';
 +  ldadd = '$(EFIVAR_LIBS)';
  
    condition = COND_HAVE_EXEC;
  };
-@@ -626,6 +631,8 @@ program = {
+@@ -657,6 +662,8 @@ program = {
    extra_dist = grub-core/osdep/basic/no_platform.c;
    extra_dist = grub-core/osdep/unix/platform.c;
    common = grub-core/osdep/compress.c;
@@ -112,7 +112,7 @@ index 970a003..2d5b1d9 100644
    common = util/editenv.c;
    common = grub-core/osdep/blocklist.c;
    common = grub-core/osdep/config.c;
-@@ -639,12 +646,15 @@ program = {
+@@ -670,12 +677,15 @@ program = {
    common = grub-core/kern/emu/argp_common.c;
    common = grub-core/osdep/init.c;
  
@@ -120,15 +120,15 @@ index 970a003..2d5b1d9 100644
 +
    ldadd = '$(LIBLZMA)';
    ldadd = libgrubmods.a;
-   ldadd = libgrubgcry.a;
    ldadd = libgrubkern.a;
+   ldadd = libgrubgcry.a;
    ldadd = grub-core/lib/gnulib/libgnu.a;
    ldadd = '$(LIBINTL) $(LIBDEVMAPPER) $(LIBUTIL) $(LIBZFS) $(LIBNVPAIR) $(LIBGEOM)';
 +  ldadd = '$(EFIVAR_LIBS)';
  };
  
  program = {
-@@ -666,6 +676,8 @@ program = {
+@@ -697,6 +707,8 @@ program = {
    common = grub-core/osdep/platform.c;
    common = grub-core/osdep/platform_unix.c;
    common = grub-core/osdep/compress.c;
@@ -137,7 +137,7 @@ index 970a003..2d5b1d9 100644
    common = util/editenv.c;
    common = grub-core/osdep/blocklist.c;
    common = grub-core/osdep/config.c;
-@@ -678,12 +690,15 @@ program = {
+@@ -709,12 +721,15 @@ program = {
    common = grub-core/kern/emu/argp_common.c;
    common = grub-core/osdep/init.c;
  
@@ -145,15 +145,15 @@ index 970a003..2d5b1d9 100644
 +
    ldadd = '$(LIBLZMA)';
    ldadd = libgrubmods.a;
-   ldadd = libgrubgcry.a;
    ldadd = libgrubkern.a;
+   ldadd = libgrubgcry.a;
    ldadd = grub-core/lib/gnulib/libgnu.a;
    ldadd = '$(LIBINTL) $(LIBDEVMAPPER) $(LIBUTIL) $(LIBZFS) $(LIBNVPAIR) $(LIBGEOM)';
 +  ldadd = '$(EFIVAR_LIBS)';
  };
  
  program = {
-@@ -705,6 +720,8 @@ program = {
+@@ -736,6 +751,8 @@ program = {
    common = grub-core/osdep/platform.c;
    common = grub-core/osdep/platform_unix.c;
    common = grub-core/osdep/compress.c;
@@ -162,7 +162,7 @@ index 970a003..2d5b1d9 100644
    common = util/editenv.c;
    common = grub-core/osdep/blocklist.c;
    common = grub-core/osdep/config.c;
-@@ -714,12 +731,15 @@ program = {
+@@ -745,12 +762,15 @@ program = {
    common = grub-core/kern/emu/argp_common.c;
    common = grub-core/osdep/init.c;
  
@@ -170,8 +170,8 @@ index 970a003..2d5b1d9 100644
 +
    ldadd = '$(LIBLZMA)';
    ldadd = libgrubmods.a;
-   ldadd = libgrubgcry.a;
    ldadd = libgrubkern.a;
+   ldadd = libgrubgcry.a;
    ldadd = grub-core/lib/gnulib/libgnu.a;
    ldadd = '$(LIBINTL) $(LIBDEVMAPPER) $(LIBUTIL) $(LIBZFS) $(LIBNVPAIR) $(LIBGEOM)';
 +  ldadd = '$(EFIVAR_LIBS)';
@@ -179,10 +179,10 @@ index 970a003..2d5b1d9 100644
  
  script = {
 diff --git a/configure.ac b/configure.ac
-index 7f43651..db46f6f 100644
+index 0f3580e..f6265c0 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -461,6 +461,18 @@ AC_CHECK_HEADER([util.h], [
+@@ -462,6 +462,18 @@ AC_CHECK_HEADER([util.h], [
  ])
  AC_SUBST([LIBUTIL])
  
@@ -855,10 +855,10 @@ index 035a99f..302446b 100644
  
  void
 diff --git a/include/grub/util/install.h b/include/grub/util/install.h
-index ca102b4..af929aa 100644
+index a8d8579..5401d22 100644
 --- a/include/grub/util/install.h
 +++ b/include/grub/util/install.h
-@@ -227,6 +227,11 @@ grub_install_get_default_x86_platform (void);
+@@ -237,6 +237,11 @@ grub_install_get_default_x86_platform (void);
  const char *
  grub_install_get_default_powerpc_machtype (void);
  
@@ -871,10 +871,10 @@ index ca102b4..af929aa 100644
  grub_install_register_efi (grub_device_t efidir_grub_dev,
  			   const char *efifile_path,
 diff --git a/util/grub-install.c b/util/grub-install.c
-index ddce04c..c36a286 100644
+index e15611c..2f5031c 100644
 --- a/util/grub-install.c
 +++ b/util/grub-install.c
-@@ -2006,7 +2006,7 @@ main (int argc, char *argv[])
+@@ -1988,7 +1988,7 @@ main (int argc, char *argv[])
  					       "\\System\\Library\\CoreServices",
  					       efi_distributor);
  	      if (ret)
@@ -883,7 +883,7 @@ index ddce04c..c36a286 100644
  				 strerror (ret));
  	    }
  
-@@ -2054,7 +2054,7 @@ main (int argc, char *argv[])
+@@ -2036,7 +2036,7 @@ main (int argc, char *argv[])
  	  ret = grub_install_register_efi (efidir_grub_dev,
  					   efifile_path, efi_distributor);
  	  if (ret)

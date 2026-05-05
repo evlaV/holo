@@ -1,0 +1,25 @@
+From da3794c18f87cab3b30a73c27edf959cbf949b41 Mon Sep 17 00:00:00 2001
+From: Vivek Das Mohapatra <vivek@collabora.com>
+Date: Tue, 31 Mar 2026 17:44:20 +0000
+Subject: [PATCH] misc gnulib compatibility updates
+
+---
+ grub-core/osdep/unix/sleep.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/grub-core/osdep/unix/sleep.c b/grub-core/osdep/unix/sleep.c
+index 5b00a38cd..e12c07879 100644
+--- a/grub-core/osdep/unix/sleep.c
++++ b/grub-core/osdep/unix/sleep.c
+@@ -16,6 +16,8 @@
+  *  along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
+  */
+ 
++#include <config-util.h>
++#include <config.h>
+ #include <time.h>
+ #include <grub/time.h>
+ 
+-- 
+2.50.1
+

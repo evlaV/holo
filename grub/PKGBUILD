@@ -3,514 +3,330 @@
 # Contributor: Ronald van Haren <ronald.archlinux.org>
 # Contributor: Keshav Amburay <(the ddoott ridikulus ddoott rat) (aatt) (gemmaeiil) (ddoott) (ccoomm)>
 
-## "1" to enable IA32-EFI build in Arch x86_64, "0" to disable
-_IA32_EFI_IN_ARCH_X64="0"
-
-## "1" to enable EMU build, "0" to disable
-_GRUB_EMU_BUILD="0"
-
-[[ "${CARCH}" == 'x86_64' ]] && _EFI_ARCH='x86_64'
-[[ "${CARCH}" == 'i686' ]] && _EFI_ARCH='i386'
-
-[[ "${CARCH}" == 'x86_64' ]] && _EMU_ARCH='x86_64'
-[[ "${CARCH}" == 'i686' ]] && _EMU_ARCH='i386'
-
-pkgname='grub'
+pkgname=grub
 pkgdesc='GNU GRand Unified Bootloader (2)'
 epoch=2
-_tag='03e6ea18f6f834f177cad017279bedbb0a3de594' # git rev-parse grub-${_pkgver}
-_gnulib_commit='cfdbd92718d6d4989bfe885448063d7863aa69dc' # git rev-parse origin/stable-202407
-_pkgver=2.13
-_unifont_ver='15.1.05'
+_pkgver=2.14
+_unifont_ver=17.0.04
 pkgver=${_pkgver/-/}
-pkgrel=3.2
-url='https://www.gnu.org/software/grub/'
+pkgrel=1.2
+url='https://gnu-grub.freedesktop.org/'
 arch=('x86_64')
 license=('GPL-3.0-or-later')
-backup=('etc/default/grub'
-        'etc/grub.d/40_custom')
-install="${pkgname}.install"
-options=('!makeflags')
-
-conflicts=('grub-common' 'grub-bios' 'grub-emu' "grub-efi-${_EFI_ARCH}" 'grub-legacy')
-replaces=('grub-common' 'grub-bios' 'grub-emu' "grub-efi-${_EFI_ARCH}")
-provides=('grub-common' 'grub-bios' 'grub-emu' "grub-efi-${_EFI_ARCH}")
-
-makedepends=('git' 'rsync' 'xz' 'freetype2' 'ttf-dejavu' 'python>=3.13' 'python<3.14' 'autogen'
-             'texinfo' 'help2man' 'gettext' 'device-mapper' 'fuse3')
-depends=('sh' 'xz' 'gettext' 'device-mapper')
-optdepends=('freetype2: For grub-mkfont usage'
-            'fuse3: For grub-mount usage'
-            'dosfstools: For grub-mkrescue FAT FS and EFI support'
-            'lzop: For grub-mkrescue LZO support'
-            'efibootmgr: For grub-install EFI support'
-            'libisoburn: Provides xorriso for generating grub rescue iso using grub-mkrescue'
-            'os-prober: To detect other OSes when generating grub.cfg in BIOS systems'
-            'mtools: For grub-mkrescue FAT FS support')
-
-if [[ "${_GRUB_EMU_BUILD}" == "1" ]]; then
-    makedepends+=('libusbx' 'sdl')
-    optdepends+=('libusbx: For grub-emu USB support'
-                 'sdl: For grub-emu SDL support')
-fi
-
-validpgpkeys=('E53D497F3FA42AD8C9B4D1E835A93B74E82E4209'  # Vladimir 'phcoder' Serbinenko <phcoder@gmail.com>
-              'BE5C23209ACDDACEB20DB0A28C8189F1988C2166'  # Daniel Kiper <dkiper@net-space.pl>
-              '95D2E9AB8740D8046387FD151A09227B1F435A33') # Paul Hardy <unifoundry@unifoundry.com>
-
-# this is for tracking patches from elsewhere (debian, arch, etc)
-# that we should not be using. It's not standard pkgbuild but it
-# lets us catch patches if someone adds them back in:
-declare -A excluded_patches=(
-    ['arch-0003-support-dropins-for-default-configuration.patch']='Arch: subset of debian-default-grub-d.patch'
-    ['debian-olpc-prefix-hack.patch']='OpenBoot/OFW: ieee1275 support hack - not required'
-    ['debian-grub-legacy-0-based-partitions.patch']='GRUB legacy support - obsolete'
-    ['debian-disable-floppies.patch']='Ignores floppies: we do not need to as they do not exist'
-    ['debian-gfxpayload-keep-default.patch']='Suppresses the ‘keep’ graphics default - not needed'
-    ['debian-mkconfig-ubuntu-distributor.patch']='Ubuntu: Distribution specific label changes'
-    ['debian-install-stage2-confusion.patch']='GRUB legacy support - obsolete'
-    ['debian-install-efi-fallback.patch']='Fallback to non-EFI boot: Not supported by x86 SteamOS'
-    ['debian-mkconfig-ubuntu-recovery.patch']='Ubuntu: recovery mode support - not needed'
-    ['debian-install-locale-langpack.patch']='Ubuntu: langpack support - not needed'
-    ['debian-install-efi-adjust-distributor.patch']='Cosmetic kubuntu and devuan labels - not needed'
-    ['debian-quick-boot.patch']='Quick Boot: not useful on EFI as there is no keydown detection'
-    ['debian-quick-boot-lvm.patch']='Quick Boot: not useful on EFI as there is no keydown detection'
-    ['debian-gfxpayload-dynamic.patch']='Legacy: boot gfxpayload=keep support - not needed'
-    ['debian-vt-handoff.patch']='Legacy: VT handoff for flicker free boot - not needed'
-    ['debian-probe-fusionio.patch']='FusionIO disc support - obsolete'
-    ['debian-ignore-grub_func_test-failures.patch']='Disable a video mode test - not needed'
-    ['debian-mkconfig-recovery-title.patch']='Text for recovery boot entries - not needed'
-    ['debian-skip-grub_cmd_set_date.patch']='Disables a test - not needed'
-    ['debian-pc-verifiers-module.patch']='Disables verifiers on grub-pc - not a supported platform for SteamOS'
-    ['debian-revert-term-ns8250-spcr.patch']='Legacy: diables serial auto detection on grub-pc - not a supported platform for SteamOS'
-    ['debian-install-powerpc-machtypes.patch']='PowerPC: NVRAM quirks - not needed'
-    ['debian-ieee1275-clear-reset.patch']='PowerPC: OFW text mode quirk - not needed'
-    ['debian-ppc64el-disable-vsx.patch']='PowerPC PPC64: (Power7 and Power8) - not needed'
-    ['debian-grub-install-pvxen-paths.patch']='Xen: boot path support - not needed'
-    ['debian-insmod-xzio-and-lzopio-on-xen.patch']='Xen: xzio and lzio support - not needed'
-    ['debian-zpool-full-device-name.patch']='ZFS initramfs support - not needed'
-    ['debian-bootp-new-net_bootp6-command.patch']='bootp6: network booting - not needed'
-    ['debian-bootp-process-dhcpack-http-boot.patch']='bootp fix: network booting - not needed'
-    ['debian-uefi-secure-boot-cryptomount.patch']='secureboot + full disk encryption support - not needed'
-    ['debian-xen-no-xsm-policy-in-non-xsm-options.patch']='Xen: build system quirk workaround'
-    ['debian-recovery-dis_ucode_ldr.patch']='Failsafe: ignore microcode loader in recovery option - SteamOS does not have a recovery option'
-    ['debian-hwmatch-only-on-grub-pc-platform.patch']='Legacy: i386 only hardware blacklist'
-    ['debian-install-signed.patch']='Secureboot: Install signed images - not supported by SteamOS'
-    ['debian-grub-install-removable-shim.patch']='Secureboot: install signed shim - not supported by SteamOS'
+backup=(
+  etc/default/grub
+  etc/grub.d/40_custom
 )
+install="${pkgname}.install"
+conflicts=(
+  grub-bios
+  grub-common
+  grub-efi-x86_64
+  grub-emu
+  grub-legacy
+)
+replaces=(
+  grub-common
+  grub-bios
+  grub-emu
+  grub-efi-x86_64
+)
+provides=(
+  grub-bios
+  grub-common
+  grub-efi-x86_64
+  grub-emu
+)
+makedepends=(
+  autogen
+  autoconf-archive
+  device-mapper
+  freetype2
+  fuse3
+  gettext
+  git
+  help2man
+  python
+  rsync
+  texinfo
+  ttf-dejavu
+  wget
+  xz
+)
+depends=(
+  device-mapper
+  gettext
+  sh
+  xz
+)
+optdepends=(
+  'dosfstools: For grub-mkrescue FAT FS and EFI support'
+  'efibootmgr: For grub-install EFI support'
+  'freetype2: For grub-mkfont usage'
+  'fuse3: For grub-mount usage'
+  'libisoburn: Provides xorriso for generating grub rescue iso using grub-mkrescue'
+  'libusb: For grub-emu USB support'
+  'lzop: For grub-mkrescue LZO support'
+  'mtools: For grub-mkrescue FAT FS support'
+  'os-prober: To detect other OSes when generating grub.cfg in BIOS systems'
+  'sdl: For grub-emu SDL support'
+)
+validpgpkeys=(
+  'E53D497F3FA42AD8C9B4D1E835A93B74E82E4209'  # Vladimir 'phcoder' Serbinenko <phcoder@gmail.com>
+  'BE5C23209ACDDACEB20DB0A28C8189F1988C2166'  # Daniel Kiper <dkiper@net-space.pl>
+  '95D2E9AB8740D8046387FD151A09227B1F435A33') # Paul Hardy <unifoundry@unifoundry.com>
+
 # Arch patch '0003-support-dropins-for-default-configuration.patch' excluded
 # as it is a subset of the debian patch 'debian-default-grub-d.patch'
-source=("git+https://git.savannah.gnu.org/git/grub.git#tag=${_tag}?signed"
-        "git+https://git.savannah.gnu.org/git/gnulib.git#commit=${_gnulib_commit}"
-        "https://ftp.gnu.org/gnu/unifont/unifont-${_unifont_ver}/unifont-${_unifont_ver}.bdf.gz"{,.sig}
-        'arch-0001-00_header-add-GRUB_COLOR_-variables.patch'
-        'arch-0002-10_linux-detect-archlinux-initramfs.patch'
-        'debian-core-in-fs.patch'
-        'debian-mkconfig-loopback.patch'
-        'debian-restore-mkdevicemap.patch'
-        'debian-gettext-quiet.patch'
-        'debian-mkconfig-nonexistent-loopback.patch'
-        'debian-default-grub-d.patch'
-        'debian-blacklist-1440x900x32.patch'
-        'debian-maybe-quiet.patch'
-        'debian-bash-completion-drop-have-checks.patch'
-        'debian-at_keyboard-module-init.patch'
-        'debian-efi-variable-storage-minimise-writes.patch'
-        'debian-debug_verifiers.patch'
-        'debian-mkimage-fix-section-sizes.patch'
-        'debian-987008-lvrename-boot-fail.patch'
-        'debian-grub_os-prober.patch'
-        'debian-zstd-require-8-byte-buffer.patch'
-        'debian-fat-fix-listing-the-root-directory.patch'
-        'debian-efivar-check-that-efivarfs-is-writeable.patch'
-        'debian-fdt-add-debug-output-to-devicetree-command.patch'
-        'debian-fdt-device-tree-fixup-protocol.patch'
-        'debian-grub-install-extra-removable.patch'
-        'steamos-0001-SteamOS-stage-II-bootloader-implemented-as-a-grub-mo.patch'
-        'steamos-0002-Reduce-eagerness-of-grub-install-to-remove-other-boo.patch'
-        'steamos-0003-Patch-grub-install-to-support-a-custom-grub-mkimage.patch'
-        'steamos-0006-10_linux-always-hide-the-Loading-messages-in-quiet-m.patch'
-        'steamos-0008-Use-SteamOS-specific-kernel-command-line-settings-if.patch'
-        'steamos-0009-Disable-EFI-1.0-UGA-Support.patch'
-        'steamos-0010-Defer-theme-loading-until-we-know-we-need-it.patch'
+source=(
+  "git+https://gitlab.freedesktop.org/gnu-grub/grub.git#tag=grub-${_pkgver}?signed"
+  "git+https://git.savannah.gnu.org/git/gnulib.git"
+  # This is used to grab the .mo files from the distributed tarball
+  # It is not used in the main package build.
+  "https://ftp.gnu.org/gnu/${pkgname}/${pkgname}-${pkgver}.tar.xz"{,.sig}
+  "https://ftp.gnu.org/gnu/unifont/unifont-${_unifont_ver}/unifont-${_unifont_ver}.bdf.gz"{,.sig}
+  'arch-0001-00_header-add-GRUB_COLOR_-variables.patch'
+  'arch-0002-10_linux-detect-archlinux-initramfs.patch'
+  'debian-core-in-fs.patch'
+  'debian-restore-mkdevicemap.patch'
+  'debian-gettext-quiet.patch'
+  'debian-default-grub-d.patch'
+  'debian-maybe-quiet.patch'
+  'debian-at_keyboard-module-init.patch'
+  'debian-efi-variable-storage-minimise-writes.patch'
+  'debian-debug_verifiers.patch'
+  'debian-mkimage-fix-section-sizes.patch'
+  'debian-Only-show-os-prober-disable-warning-if-installed.patch'
+  'debian-zstd-require-8-byte-buffer.patch'
+  'debian-fat-fix-listing-the-root-directory.patch'
+  'debian-efivar-check-that-efivarfs-is-writeable.patch'
+  'debian-fdt-add-debug-output-to-devicetree-command.patch'
+  'debian-fdt-device-tree-fixup-protocol.patch'
+  'debian-grub-install-extra-removable.patch'
+  'debian-Revert-configure-Print-a-more-helpful-error-if-autoconf-a.patch'
+  'steamos-0001-SteamOS-stage-II-bootloader-implemented-as-a-grub-mo.patch'
+  'steamos-0002-Reduce-eagerness-of-grub-install-to-remove-other-boo.patch'
+  'steamos-0003-Patch-grub-install-to-support-a-custom-grub-mkimage.patch'
+  'steamos-0006-10_linux-always-hide-the-Loading-messages-in-quiet-m.patch'
+  'steamos-0008-Use-SteamOS-specific-kernel-command-line-settings-if.patch'
+  'steamos-0009-Disable-EFI-1.0-UGA-Support.patch'
+  'steamos-0010-Defer-theme-loading-until-we-know-we-need-it.patch'
+  'steamos-0011-search_part_uuid-allow-search-by-part-uuid.patch'
+  'steamos-0013-misc-gnulib-compatibility-updates.patch'
 
-        # Holo: Fix rebuild of grub in latest SteamOS 3.8
-        # Backport of https://lists.gnu.org/archive/html/grub-devel/2025-08/msg00161.html
-        # Addresses https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1772
-        'steamos-0001-po-Update-Translations-to-Build-with-Gettext-0.26.patch'
-
-        'build-tweaks-1.patch'
-        'build-tweaks-2.diff' # applied via bootstrap by build-tweaks-1.patch
-        'grub.default')
-
-# unifont-15.1.05.bdf.gz
-# 8ea5b5a14d71e3353d1fea373f5d88d198ad1e285cedd8294655926ee11fd91d
-sha256sums=('304d5c0d506d3aaab496bdcbfc325b89fc83348aeb9e69d7b6a928f4051bedb2'
-            '1d27b67a8b1a1888b6a9c65188b5f58a655549d2eabc9944b9fd74f8d58a2919'
-            '8ea5b5a14d71e3353d1fea373f5d88d198ad1e285cedd8294655926ee11fd91d'
-            'SKIP'
-            'f63ab8e6d340052d5248f93aaf856a3c7ae910eedef6ceaf653802408ebab573'
-            '8488aec30a93e8fe66c23ef8c23aefda39c38389530e9e73ba3fbcc8315d244d'
-            '9dfd44b21a2aa3bf1e16036cda753baa325b64c8c1ebc2ddfa0ce138b00b1e92'
-            '070f87c281a99a0be14910bfd953684e951f16f6dc14b9597032a6153db58e66'
-            '3fac7b90aee01637def80e5de3f70fbe3a0647a67f5ebc6f2eaef5738223cfd1'
-            'e2c846cb7bc7f59d7786112ee94285710ee318cc67139c46dc100035376575a1'
-            'ee6521ef5c2b0b93b435dad2b13107710753e8d71339babeae92743b3ca88f1a'
-            '19b58743baf889c80b72bc691fa58113517f8eb47dea830095747d93e506d533'
-            'ca30ff7d77be2b89622ae94fbf4b5f28a04fb0b0433ef13270fec5b44fdf76b0'
-            '6e575cec0e095ada41390742ab468ad5cfb8e7f36b6015da07c7a6ec2097c592'
-            '1963f5f5303e99c6e74ce8d89541c0b180a12830f181ab8c432f53d5fca75e6c'
-            'cf500cd47d4d49c08988d59880e991b2a84f8df842141dcff539fee3d764e348'
-            '4fe12f176b1a7fe883ed228412a45e879b1e3847a8dbb922d7028b73f6bcc205'
-            '724d9d6fa3052242385946aae19c45a729c3844122ce784eba08e04496097d27'
-            '26f670ac83a7587d015563897962bd5721534c2a015e67c939c92c5314ad7f40'
-            '50747adf074ef0b5d63b616bb68524eb30adde6467902b1899d8a0445395836e'
-            'a043e3f7f4833cbd3ece6e29d2c9dcedd7ecc31a9adfb69cb964858c373480dc'
-            'a78363e16d192de4cdde43ff3366613fc18870e4a6b29724a7d6aac59cecf805'
-            'd928cedb7bd6b404fbf71b5052628462f6b2d6b893f3b2918ecb17f133057c13'
-            '8bdcde4e42d5860c0bedba21901ea83f49ace602d8011377e38506192c95e7cd'
-            '658bd3474f84fbbfe675da93e2e05b6d156658c92a2d604b52d6a0b23223c71b'
-            '6e8c873eae8988cb99fd6b3de0857c0ec4db0ed2fd90c6d0054a3f88361c013c'
-            '02eb5080d99bebd6843b172367813ab7968508e48894f241c409703cf05aeff2'
-            '9a3895e774535d95eebb3f32b1b7411c4618fd25f6d7f7efac6ca871c28604b6'
-            '4dc26722812df2a261f9e27632bcacdb5899d49b7270a66dd67f270b6eba05e1'
-            'ccd8ba6646a298f015707d6cbf5f20db418569a1878617224f2946d2dbb503fc'
-            'cca890f4be9a2c58fc290b488b4ef9eeb490066726297e4fda5ec87215d9e7a9'
-            'cf078325cbd14fbe01c59632e1bc41188b55748ae355a3c8d1198ebff09cab90'
-            'b44f10d3f30a0bc0aff94617cce0570593d408b09e3cc5f05d7d97a4888169b0'
-            'f80fd0837be9edcb77cd0e346357218cc39dda325ef932fa888eabad8570ffc7'
-            'c8e3bfcbd2b410065f3bdf642169983501cc3e2a5148ed41141bd29e361acfbc'
-            '2cfb4c61f1724e496fafc7224bdf4218012f4dc612f267055ea2c140522a0505'
-            '7caac232189069e46cd3dd68e615c68712625d287cdbce34fe9169b51b0070ea'
-            '7a8e55d517de423bbe0f1e16d1c43e9cf1a6600b8169764000e23e547a7b6989')
-
-patch_allowed () {
-    local patch_name="${1:-}"
-    local msg="${excluded_patches[$patch_name]:-}"
-
-    if [ -n "$msg" ]
-    then
-        echo "Patch $patch_name rejected: ${msg:-Reason not recorded}" >&2
-        return 1
-    fi
-
-    return 0
-}
-
-filter_patchlist () {
-    local -i n=0
-    local -a _src=()
-    local -a _sum=()
-
-    while [ $n -lt ${#source[@]} ]
-    do
-        case ${source[$n]} in
-            debian-*.patch|arch-*.patch|steamos-*.patch|build-*.patch)
-                if patch_allowed ${source[$n]}
-                then
-                    _src+=(${source[$n]})
-                    _sum+=(${sha256sums[$n]})
-                fi
-                ;;
-            *.patch)
-                echo "ERROR: Unexpcted patch name ${source[$n]}" >&2
-                echo "  Patches must be arch- steamos- debian- or build-" >&2
-                exit 1
-                ;;
-            *)
-                _src+=(${source[$n]})
-                _sum+=(${sha256sums[$n]})
-                ;;
-        esac
-        n=$((n + 1))
-    done
-
-    source=("${_src[@]}")
-    sha256sums=("${_sum[@]}")
-}
-
-filter_patchlist
+  # Holo: We have added support enabling searching for partition UUIDs. This patch
+  # modifies grub to create configuration utilising this functionality.
+  # Addresses: https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/1994
+  # Not yet upstreamed
+  'steamos-0014-grub-Integrate-partition-UUID-support-into-grub-scri.patch'
+  'grub.default'
+)
+b2sums=('45cfac7487264e323522e58b87dd1bf70c5c5c87feaf3f70e20e4c484de94be8369bd011ab53ba72959ec9bc9c9159b3327e4965c9ae5a795b20a29fef9eacd1'
+        'SKIP'
+        '724bb430d8824bec39e6a025cf354a780b79260684c7c4e3d28beb08c8bee10d082a089fcb799f8f5eb6e83abcf8675fb7c5f5ddf443c5c0e61d6f180ee341af'
+        'SKIP'
+        'e4b46c108efdeb462bdc41bdd26cdacfa1b43b0eb144cbeb99b54d8f8c67eb87ceedcd69df2801136cd6e496dbf9ab9782649cfe69ad73c66ede64da50e4adc8'
+        'SKIP'
+        'dab133e47a748c5d3061453de04f8008aac52a6794042025781b714ceb3e14ee6864137a247eb8b3f9f890ff418ee12995cf0f97db4d1f1edcf895df223bb2a5'
+        'b4cd9ac976a579eca19d54c0b31c8d6324525fe5a0b9f5405deb63845367ac1adaa80ece4c166dfd5304608c41aa44b4f64efe235c03f437523b993be06e06e3'
+        '7e898d1ea6ff4d171cc949d981420983e7a0f8953fd25dd2ac6864792cf146ef6ef4e304fde742d4c8686697c19628b8a5dc13ce6b13a5b2fa56bbc83cf65b61'
+        '542af361d6aec8d3233274a961bb4b887f9ea04c1d140701f1304e31baa2cea9b8c233b18dd19b97d62b81683eb6d19dad8ed336491da2e23487f9110d3c998f'
+        '45e699fc80f88047e9c81bf65bf3f5d15345aa4de169cea5f6805d4a5657caaddacfee2bdcbefe40757ba42fbbf66bda0f446172f48c560633d591c2140ef884'
+        'a2a11ae62b403fbb84a040eaedd1bd1be49f4c55863a92ba0f29efe35378cb653fdafba6756d40304fb54e20f9a8171031e8c3d56bd61a8551657e743eb8e5c2'
+        '5f6fd054f4537865b9d2b0ba43e9ccfbfa27121c4b46d512541d0e8e66bc1e6ec5d76b18d83747548dc6327876f56ad4e12d1e733b8b7e8bc76b041d0bf13925'
+        'ee27f5d7c377a9080a7fa57413a91e5855b618108ed93981b8b2454cdc1e458c1022a4d3c48f5f61386f700a2d896b623fd3f0d04ed6966c3298f5ccc53ac2f6'
+        'b06ff5cd33e3616213fc87f18db8ab525fbedf6984bec096d21a4c98f233f10bcd7d0db16ba17a8f61a0d5d02cf17c2381d98edcd657f1e15105b8718593b709'
+        'c691c8384dea61ff155401da3cd4263abf86180459234aa7b129997bd25c56c035bc1b9b3c40f0be795c0dbf2d444d6beafa553215e576156774daab40d42ff7'
+        'af809c650760f656e35c2e3e632cffee1ab04069b442593bb1fbd6125d936148da4d4829bd99a61d20a113900dea841aad562942bada18d72b026a24af710988'
+        'cf55d9579dcb80a27998891dda72445fd46e215ca2b57e692b628c13b45c013b71d39a631b571208c4d168b7bc64dd85405c6b2e5a77db3fef4dc2759ac52467'
+        '0f14762b38a2e709ab6c4fc53baec925f012e04f4eeba79705e5130aa8a98d3c0096c4d993e7c239abda8eb25df3e4a4d58da2e9a68eb9174e3f3cca97ed96b6'
+        '645f8df94b9a95777016f4bed7958978c41d641567125b777cf2d90877f40f040d8d3d59d3b2879f1589802758e4bd51f9a0bbb164f38e3b0452cc44bfe127e4'
+        '94339d86abbe106152334a86a5baeb4d02e0d925ecb0e08a7a379a477054424f9c5aaba6b1ab1f2dd5da3de60e99d91f1e41e6902f990b3585581e373cdfe21a'
+        'e0323abffc98d7d83ce879bfd92b6c8560e31b36e74676a37a8113df953167ad71a3c0c5f401098975bcbfe7f9f5d55ea5278ac99296511081ee49d161360b62'
+        'fea347c7b6b359f033dda59da711cc1c1456b36bd070e82f299e3ae2234242b558f6f818ba847310c1cf73ab5f3ac3aa16130d2ff745fc21835a46c8a28f308b'
+        '8a981a2c9efda9732f3c1e17662342affffee60da6eb2d049cbc2fb9704d7fcfe13c61375896f87c4ac511e4c821cc987581a7b1a5a9bb12c8e9707bd59352a7'
+        '631e53043a2b9c4f83c344657e81ec6286d8e8c9584598329fbc2c2064d5e50420e3588d95f085774d1c342eb223b0813a6cc378de48079b360f2602352e6385'
+        '9d92b69c573c0b9ffae682c4d224f3b94964f5b8ebc7dfa7ef27fc325df5b3a17305c1e36c765b1b1168570ee971d3a62c547442eff7c668e2e25a091db16e60'
+        '80c2dc19748b80d22f24cd171074602b3deb8aa8b87cdccfcea1386c584f087d041611588e09d2388ce2efdbd4fe4f1a98b6b044a5631bbd597063694102ade1'
+        '53043fcc803d68e640dd562519545fb555d7e96f9d09baa57ab6698825c076ab248dc0f77f896fcb4c5212773c99b95bbdc5058b4453cccfac1bf2d3745c61a2'
+        'bfe6c5b9d7012605bdcb8f019d9d16f3446513023c7bc5d8f63e473a2951e9dd63cd9318a064f0fac1bbc5b509a917e6085c14745aae1a2e7c08899424382851'
+        '26f0b23318484e4331e1d1cea27a16064573cb6ffcdcf1bbfe1be9e338468f7bbc4576bd7038e8846ca4198271aef2dc9acb095001f53751d0604dc0b62a636b'
+        'e1e22bdbf32cb953d3b22ffac3486cf6b91c8d92bc0a4675b4ae4f93f30c5ba8ad91180bf206651147dfa9f147ed7a30764cb8448a01c9f746a6182616e68bae'
+        '7c5c5e818fba9603ad3f32d44b523bbd7dfb65be0e0fb7c3d93e986899e1f2306712199b72c178b2c73791e2262067f0473852dece4b24d74c791e12af133529'
+        '4b96b9bcf2591180015422803f9b05628061b6a8b387270e5967411afb579e9b8033dc1bdae134fd811dbe647f54369de7e0ce880d709936bec4756edfc9a168'
+        '8d1c724c09b3f0093f93fab62d4f39dec740e49727ccd97221d29619b10bc1698bfa5a75a54b96bb95d07552ae6d31cb456e70001572ca6aa4d87540a3a2b09d'
+        'fc6f52bca700d38bd2ddc346dcc7f56cd93db136e9498b829422f9ec0b311f86681cfaa019b1819ff0ac274986c17a1a060ddf5b5b38908f219f3c6d3f221c1b'
+        'ad5dff58c3f871fa208ac15766d4696cbd0a6a92eb95dc12fefcd1963c8f857cf183e8191d4504b5885337b8fd5655cfa25b463e2246ca07578de9d92a888ede')
 
 _backports=(
 )
 
-_configure_options=(
-	PACKAGE_VERSION="${epoch}:${pkgver}-${pkgrel}"
-	FREETYPE="pkg-config freetype2"
-	BUILD_FREETYPE="pkg-config freetype2"
-	--enable-mm-debug
-	--enable-nls
-	--enable-device-mapper
-	--enable-cache-stats
-	--enable-grub-mkfont
-	--enable-grub-mount
-	--prefix="/usr"
-	--bindir="/usr/bin"
-	--sbindir="/usr/bin"
-	--mandir="/usr/share/man"
-	--infodir="/usr/share/info"
-	--datarootdir="/usr/share"
-	--sysconfdir="/etc"
-	--program-prefix=""
-	--with-bootdir="/boot"
-	--with-grubdir="grub"
-	--disable-silent-rules
-	# SteamOS: #T21734: quiet-boot is imported from debian (via patch)
-	# but disabled by default so enable manually.
-        # quick-boot was imported the same way but is no longer necessary
-	--enable-quiet-boot
-	--disable-werror
+_reverts=(
 )
 
-patch_ident () {
-    local _input="$1"
-    local _ident=
-
-    _ident=$(grep '^Subject:' ../"$_input")
-    _ident=${_ident#Subject: }
-
-    echo "${_ident:-$_input}"
-}
-
 prepare() {
-	cd "${srcdir}/grub/"
+  cd "${srcdir}/grub/"
 
-	echo "Apply backports..."
-	local _c
-	for _c in "${_backports[@]}"; do
-		git log --oneline -1 "${_c}"
-		git cherry-pick -n "${_c}"
-	done
+  echo "Apply backports..."
+  local _c _l
+  for _c in "${_backports[@]}"; do
+    if [[ "${_c}" == *..* ]]; then _l='--reverse'; else _l='--max-count=1'; fi
+    git log --oneline "${_l}" "${_c}"
+    git cherry-pick --mainline 1 --no-commit "${_c}"
+  done
 
-	echo "Patches from debian..."
-        local _p
-        for _p in "${source[@]}"; do
-            case $_p in
-                debian-*.patch)
-                    echo "Applying: ""$(patch_ident $_p)"
-                    patch -Np1 -i ../"$_p"
-                    ;;
-            esac
-        done
+  echo "Apply reverts..."
+  local _c _l
+  for _c in "${_reverts[@]}"; do
+    if [[ "${_c}" == *..* ]]; then _l='--reverse'; else _l='--max-count=1'; fi
+    git log --oneline "${_l}" "${_c}"
+    git revert --mainline 1 --no-commit "${_c}"
+  done
 
-	echo "Patches from Arch..."
-        for _p in "${source[@]}"; do
-            case $_p in
-                arch-*.patch)
-                    echo "Applying: ""$(patch_ident $_p)"
-                    patch -Np1 -i ../"$_p"
-                    ;;
-            esac
-        done
+  echo "Patches from debian..."
+  local _p
+  for _p in "${source[@]}"; do
+      case $_p in
+          debian-*.patch)
+              echo "Applying: $_p"
+              patch -Np1 -i ../"$_p"
+              ;;
+      esac
+  done
 
-        echo "Patches from SteamOS..."
-        for _p in "${source[@]}"; do
-            case $_p in
-                steamos-*.patch)
-                    echo "Applying: ""$(patch_ident $_p)"
-                    patch -Np1 -i ../"$_p"
-                    ;;
-            esac
-        done
+  echo "Patches from Arch..."
+  for _p in "${source[@]}"; do
+      case $_p in
+          arch-*.patch)
+              echo "Applying: $_p"
+              patch -Np1 -i ../"$_p"
+              ;;
+      esac
+  done
 
-        echo "Build system fixes (fewer warnings)..."
-        patch -Np1 -i "${srcdir}/build-tweaks-1.patch"
+  echo "Patches from SteamOS..."
+  for _p in "${source[@]}"; do
+      case $_p in
+          steamos-*.patch)
+              echo "Applying: $_p"
+              patch -Np1 -i ../"$_p"
+              ;;
+      esac
+  done
 
-	echo "Fix DejaVuSans.ttf location so that grub-mkfont can create *.pf2 files for starfield theme..."
-	sed 's|/usr/share/fonts/dejavu|/usr/share/fonts/dejavu /usr/share/fonts/TTF|g' -i "configure.ac"
+  echo "Fix DejaVuSans.ttf location so that grub-mkfont can create *.pf2 files for starfield theme..."
+  sed 's|/usr/share/fonts/dejavu|/usr/share/fonts/dejavu /usr/share/fonts/TTF|g' -i "configure.ac"
 
-	echo "Fix mkinitcpio 'rw' FS#36275..."
-	sed 's| ro | rw |g' -i "util/grub.d/10_linux.in"
+  echo "Fix mkinitcpio 'rw' FS#36275..."
+  sed 's| ro | rw |g' -i "util/grub.d/10_linux.in"
 
-	echo "Fix OS naming FS#33393..."
-	sed 's|GNU/Linux|Linux|' -i "util/grub.d/10_linux.in"
+  echo "Fix OS naming FS#33393..."
+  sed 's|GNU/Linux|Linux|' -i "util/grub.d/10_linux.in"
 
-	echo "Pull in latest language files..."
-	./linguas.sh
+  echo "Avoid problem with unifont during compile of grub..."
+  # http://savannah.gnu.org/bugs/?40330 and https://bugs.archlinux.org/task/37847
+  gzip -cd "${srcdir}/unifont-${_unifont_ver}.bdf.gz" > "unifont.bdf"
 
-	echo "Avoid problem with unifont during compile of grub..."
-	# http://savannah.gnu.org/bugs/?40330 and https://bugs.archlinux.org/task/37847
-	gzip -cd "${srcdir}/unifont-${_unifont_ver}.bdf.gz" > "unifont.bdf"
+  echo "Run bootstrap..."
+  ./bootstrap \
+    --gnulib-srcdir="${srcdir}/gnulib" \
+    --skip-po
 
-	echo "Run bootstrap..."
-	./bootstrap \
-		--gnulib-srcdir="${srcdir}/gnulib/" \
-		--no-git
-
-	echo "Make translations reproducible..."
-	sed -i '1i /^PO-Revision-Date:/ d' po/*.sed
+  echo "Make translations reproducible..."
+  sed -i '1i /^PO-Revision-Date:/ d' po/*.sed
 }
 
-_build_grub-common_and_bios() {
-	echo "Set ARCH dependent variables for bios build..."
-	if [[ "${CARCH}" == 'x86_64' ]]; then
-		_EFIEMU="--enable-efiemu"
-	else
-		_EFIEMU="--disable-efiemu"
-	fi
+_configure_options=(
+  --prefix="/usr"
+  --bindir="/usr/bin"
+  --sbindir="/usr/bin"
+  --mandir="/usr/share/man"
+  --infodir="/usr/share/info"
+  --datarootdir="/usr/share"
+  --sysconfdir="/etc"
+  --program-prefix=""
+  --with-bootdir="/boot"
+  --with-grubdir="grub"
+  --enable-mm-debug
+  --enable-nls
+  --enable-device-mapper
+  --enable-cache-stats
+  --enable-grub-mkfont
+  --enable-grub-mount
+  --disable-silent-rules
 
-	echo "Copy the source for building the bios part..."
-	cp -r "${srcdir}/grub/" "${srcdir}/grub-bios/"
-	cd "${srcdir}/grub-bios/"
+  # SteamOS: #T21734: quiet-boot is imported from debian (via patch)
+  # but disabled by default so enable manually. quick-boot was
+  # imported the same way but is no longer necessary
+  --enable-quiet-boot
 
-	echo "Unset all compiler FLAGS for bios build..."
-	unset CFLAGS
-	unset CPPFLAGS
-	unset CXXFLAGS
-	unset LDFLAGS
-	unset MAKEFLAGS
+  --disable-werror
+)
 
-	echo "Run ./configure for bios build..."
-	./configure \
-		--with-platform="pc" \
-		--target="i386" \
-		"${_EFIEMU}" \
-		--enable-boot-time \
-		"${_configure_options[@]}"
-
-	if [ ! -z "${SOURCE_DATE_EPOCH}" ]; then
-		echo "Make info pages reproducible..."
-		touch -d "@${SOURCE_DATE_EPOCH}" $(find -name '*.texi')
-	fi
-
-	echo "Run make for bios build..."
-	make
-}
-
-_build_grub-efi() {
-	echo "Copy the source for building the ${_EFI_ARCH} efi part..."
-	cp -r "${srcdir}/grub/" "${srcdir}/grub-efi-${_EFI_ARCH}/"
-	cd "${srcdir}/grub-efi-${_EFI_ARCH}/"
-
-	echo "Unset all compiler FLAGS for ${_EFI_ARCH} efi build..."
-	unset CFLAGS
-	unset CPPFLAGS
-	unset CXXFLAGS
-	unset LDFLAGS
-	unset MAKEFLAGS
-
-	echo "Run ./configure for ${_EFI_ARCH} efi build..."
-	./configure \
-		--with-platform="efi" \
-		--target="${_EFI_ARCH}" \
-		--disable-efiemu \
-		--enable-boot-time \
-		"${_configure_options[@]}"
-
-	echo "Run make for ${_EFI_ARCH} efi build..."
-	make
-}
-
-_build_grub-emu() {
-	echo "Copy the source for building the emu part..."
-	cp -r "${srcdir}/grub/" "${srcdir}/grub-emu/"
-	cd "${srcdir}/grub-emu/"
-
-	echo "Unset all compiler FLAGS for emu build..."
-	unset CFLAGS
-	unset CPPFLAGS
-	unset CXXFLAGS
-	unset LDFLAGS
-	unset MAKEFLAGS
-
-	echo "Run ./configure for emu build..."
-	./configure \
-		--with-platform="emu" \
-		--target="${_EMU_ARCH}" \
-		--enable-grub-emu-usb=no \
-		--enable-grub-emu-sdl=no \
-		--disable-grub-emu-pci \
-		"${_configure_options[@]}"
-
-	echo "Run make for emu build..."
-	make
-}
+_platform=(
+  x86_64-efi
+)
 
 build() {
-	cd "${srcdir}/grub/"
+  for i in ${_platform[@]}; do
+    echo "Unset CFLAGS for build..."
+    unset CFLAGS
+    cp -r "${srcdir}/grub" "${srcdir}/grub-${i}"
+    cd "${srcdir}/grub-${i}"
+    echo "Run ./configure for ${i} build..."
+    [[ "${i}" == "i386-pc" ]] && _configure_options+=(--enable-efiemu --with-platform="pc" --target="i386")
+    [[ "${i}" == "i386-efi" ]] && _configure_options+=(--disable-efiemu --with-platform="efi" --target="i386")
+    [[ "${i}" == "x86_64-efi" ]] && _configure_options+=(--with-platform="efi" --target="x86_64")
+    ./configure PACKAGE_VERSION="${epoch}:${pkgver}-${pkgrel}" \
+                ${_configure_options[@]}
+    if [[ "${i}" == "x86_64-efi" ]]; then
+      echo "Build language and doc files only for most common variant..."
+      # language directory does not like -j option, build it first with -j1
+      make -j1 po/
+    else
+      sed -i -e 's#po docs##' Makefile
+    fi
+    echo "Run make for ${i} build..."
+    make
+    if [ ! -z "${SOURCE_DATE_EPOCH}" ]; then
+      echo "Make info pages reproducible..."
+      touch -d "@${SOURCE_DATE_EPOCH}" $(find -name '*.texi')
+    fi
+  done
 
-	#echo "Build grub bios stuff..."
-	#_build_grub-common_and_bios
-
-	echo "Build grub ${_EFI_ARCH} efi stuff..."
-	_build_grub-efi
-
-	if [[ "${CARCH}" == "x86_64" ]] && [[ "${_IA32_EFI_IN_ARCH_X64}" == "1" ]]; then
-		echo "Build grub i386 efi stuff..."
-		_EFI_ARCH="i386" _build_grub-efi
-	fi
-
-	if [[ "${_GRUB_EMU_BUILD}" == "1" ]]; then
-		echo "Build grub emu stuff..."
-		_build_grub-emu
-	fi
-}
-
-_package_grub-common_and_bios() {
-	cd "${srcdir}/grub-bios/"
-
-	echo "Run make install for bios build..."
-	make DESTDIR="${pkgdir}/" bashcompletiondir="/usr/share/bash-completion/completions" install
-
-	echo "Remove gdb debugging related files for bios build..."
-	rm -f "${pkgdir}/usr/lib/grub/i386-pc"/*.module || true
-	rm -f "${pkgdir}/usr/lib/grub/i386-pc"/*.image || true
-	rm -f "${pkgdir}/usr/lib/grub/i386-pc"/{kernel.exec,gdb_grub,gmodule.pl} || true
-}
-
-_package_grub-efi() {
-	cd "${srcdir}/grub-efi-${_EFI_ARCH}/"
-
-	echo "Run make install for ${_EFI_ARCH} efi build..."
-	make DESTDIR="${pkgdir}/" bashcompletiondir="/usr/share/bash-completion/completions" install
-
-	echo "Remove gdb debugging related files for ${_EFI_ARCH} efi build..."
-	rm -f "${pkgdir}/usr/lib/grub/${_EFI_ARCH}-efi"/*.module || true
-	rm -f "${pkgdir}/usr/lib/grub/${_EFI_ARCH}-efi"/*.image || true
-	rm -f "${pkgdir}/usr/lib/grub/${_EFI_ARCH}-efi"/{kernel.exec,gdb_grub,gmodule.pl} || true
-
-	_sbat_file="${pkgdir}/usr/share/grub/sbat.csv"
-	touch "${_sbat_file}"
-	echo "sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md" >> "${_sbat_file}"
-	echo "grub,1,Free Software Foundation,grub,${_pkgver},https//www.gnu.org/software/grub/" >> "${_sbat_file}"
-	echo "grub.arch,1,Arch Linux,grub,${_pkgver},https://archlinux.org/packages/core/x86_64/grub/" >> "${_sbat_file}"
-
-	echo "Install /etc/default/grub (used by grub-mkconfig)..."
-	install -D -m0644 "${srcdir}/grub.default" "${pkgdir}/etc/default/grub"
-}
-
-_package_grub-emu() {
-	cd "${srcdir}/grub-emu/"
-
-	echo "Run make install for emu build..."
-	make DESTDIR="${pkgdir}/" bashcompletiondir="/usr/share/bash-completion/completions" install
-
-	echo "Remove gdb debugging related files for emu build..."
-	rm -f "${pkgdir}/usr/lib/grub/${_EMU_ARCH}-emu"/*.module || true
-	rm -f "${pkgdir}/usr/lib/grub/${_EMU_ARCH}-emu"/*.image || true
-	rm -f "${pkgdir}/usr/lib/grub/${_EMU_ARCH}-emu"/{kernel.exec,gdb_grub,gmodule.pl} || true
+  # Generate grub mo files from dist tarball
+  cd "${srcdir}/${pkgname}-${pkgver}/po"
+  for po in *.po; do
+    msgfmt "${po}" -o "${po%.po}.mo"
+  done
 }
 
 package() {
-	cd "${srcdir}/grub/"
+  for i in ${_platform[@]}; do
+    cd "${srcdir}/grub-${i}"
+    echo "Run make install for ${i} build..."
+    make DESTDIR="${pkgdir}/" bashcompletiondir="/usr/share/bash-completion/completions" install
+    echo "Remove gdb debugging related files for ${i}..."
+    rm -f "${pkgdir}/usr/lib/grub/${i}"/*.module
+    rm -f "${pkgdir}/usr/lib/grub/${i}"/*.image
+    rm -f "${pkgdir}/usr/lib/grub/${i}"/{kernel.exec,gdb_grub,gmodule.pl}
+  done
+  echo "Install /etc/default/grub (used by grub-mkconfig)..."
+  install -D -m0644 "${srcdir}/grub.default" "${pkgdir}/etc/default/grub"
 
-	echo "Package grub ${_EFI_ARCH} efi stuff..."
-	_package_grub-efi
+  # Holo: We're not SB enabled, so we don't need this
+  #sed -e "s/%PKGVER%/${epoch}:${pkgver}-${pkgrel}/" < "${srcdir}/sbat.csv" > "${pkgdir}/usr/share/grub/sbat.csv"
 
-	if [[ "${CARCH}" == "x86_64" ]] && [[ "${_IA32_EFI_IN_ARCH_X64}" == "1" ]]; then
-		echo "Package grub i386 efi stuff..."
-		_EFI_ARCH="i386" _package_grub-efi
-	fi
+  # Install grub mo files from dist tarball
+  cd "${srcdir}/${pkgname}-${pkgver}/po"
+  for mo in *.mo; do
+    install -D -m0644 "${mo}" "${pkgdir}/usr/share/locale/${mo%.mo}/LC_MESSAGES/${pkgname}.mo"
+  done
 
-	if [[ "${_GRUB_EMU_BUILD}" == "1" ]]; then
-		echo "Package grub emu stuff..."
-		_package_grub-emu
-	fi
-
-	#echo "Package grub bios stuff..."
-	#_package_grub-common_and_bios
-
-	echo "Move grub binaries to libdir..."
-	mv "${pkgdir}/usr/bin/grub-install" "${pkgdir}/usr/lib/grub/grub-install"
-	mv "${pkgdir}/usr/bin/grub-mkimage" "${pkgdir}/usr/lib/grub/grub-mkimage"
+  # Holo: We have wrappers for grub-install and grub-mkimage, which we link to
+  # from the stock tool locations. These wrappers need to use the stock tools,
+  # so move these into the lib directory.
+  echo "Move grub binaries to libdir..."
+  mv "${pkgdir}/usr/bin/grub-install" "${pkgdir}/usr/lib/grub/grub-install"
+  mv "${pkgdir}/usr/bin/grub-mkimage" "${pkgdir}/usr/lib/grub/grub-mkimage"
 }

@@ -12,10 +12,10 @@ Patch-Name: gettext-quiet.patch
  1 file changed, 5 insertions(+)
 
 diff --git a/grub-core/gettext/gettext.c b/grub-core/gettext/gettext.c
-index 7a1c14e..7422f89 100644
+index edebed9..cf4c75e 100644
 --- a/grub-core/gettext/gettext.c
 +++ b/grub-core/gettext/gettext.c
-@@ -427,6 +427,11 @@ grub_gettext_init_ext (struct grub_gettext_context *ctx,
+@@ -432,6 +432,11 @@ grub_gettext_init_ext (struct grub_gettext_context *ctx,
    if (locale[0] == 'e' && locale[1] == 'n'
        && (locale[2] == '\0' || locale[2] == '_'))
      grub_errno = err = GRUB_ERR_NONE;

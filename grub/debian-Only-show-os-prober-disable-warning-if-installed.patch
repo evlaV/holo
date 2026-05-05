@@ -1,13 +1,15 @@
 From: GRUB Maintainers <pkg-grub-devel@alioth-lists.debian.net>
 Date: Mon, 19 Jun 2023 17:23:25 +0200
-Subject: grub_os-prober
+Subject: Only show os-prober disable warning if installed
 
+It isn't very useful to see this message when os-prober is not
+even available.
 ---
  util/grub.d/30_os-prober.in | 8 ++++----
  1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/util/grub.d/30_os-prober.in b/util/grub.d/30_os-prober.in
-index c690783..62b259d 100644
+index b4885f8..ea9004b 100644
 --- a/util/grub.d/30_os-prober.in
 +++ b/util/grub.d/30_os-prober.in
 @@ -40,13 +40,13 @@ EOF

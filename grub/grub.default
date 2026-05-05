@@ -92,3 +92,13 @@ GRUB_THEME="/usr/share/grub/themes/breeze/theme.txt"
 # functionality install os-prober and uncomment to detect and include other
 # operating systems.
 #GRUB_DISABLE_OS_PROBER=false
+
+# Holo: Force legacy behaviour of loading all_video module. If left unset, grub
+# will attempt to load the efi_uga module, which we explicitly don't build.
+GRUB_FORCE_EFI_ALL_VIDEO=1
+
+# Holo: We have added support for identifying grub by partition UUID, but
+# default to the legacy mechanism of using filesystem UUIDs. Disable use of the
+# filesystem UUIDs which will cause the mechanism to switch to using partition
+# UUIDs, unless that is also disabled.
+GRUB_DISABLE_UUID=true

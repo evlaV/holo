@@ -1,0 +1,49 @@
+From 428e77bacd4b1331a9fd346e22b4e960d3dfe965 Mon Sep 17 00:00:00 2001
+From: Martyn Welch <martyn.welch@collabora.com>
+Date: Thu, 2 Apr 2026 16:00:23 +0100
+Subject: [PATCH] grub: Integrate partition UUID support into grub scripting
+    
+We have added support for searching for partition UUIDs to grub. We need
+this functionality to be integrated into the grub scripts so that grub
+config gets generated that will request grub use this functionality.
+
+Signed-off-by: Martyn Welch <martyn.welch@collabora.com>
+---
+ util/grub-mkconfig_lib.in | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/util/grub-mkconfig_lib.in b/util/grub-mkconfig_lib.in
+index 08953287c..4090529f2 100644
+--- a/util/grub-mkconfig_lib.in
++++ b/util/grub-mkconfig_lib.in
+@@ -167,6 +167,18 @@ prepare_grub_to_access_device ()
+     else
+       echo "search --no-floppy --fs-uuid --set=root ${fs_uuid}"
+     fi
++  elif [ "x${GRUB_DISABLE_PARTUUID}" != "xtrue" ] && part_uuid="`"${grub_probe}" --device $@ --target=partuuid 2> /dev/null`" ; then
++    hints="`"${grub_probe}" --device $@ --target=hints_string 2> /dev/null`" || hints=
++    echo "insmod search_part_uuid"
++    if [ "x$hints" != x ]; then
++      echo "if [ x\$feature_platform_search_hint = xy ]; then"
++      echo "  search --no-floppy --part-uuid --set=root ${hints} ${part_uuid}"
++      echo "else"
++      echo "  search --no-floppy --part-uuid --set=root ${part_uuid}"
++      echo "fi"
++    else
++      echo "search --no-floppy --part-uuid --set=root ${part_uuid}"
++    fi
+   fi
+   IFS="$old_ifs"
+ }
+@@ -179,6 +191,8 @@ grub_get_device_id ()
+   device="$1"
+   if [ "x${GRUB_DISABLE_UUID}" != "xtrue" ] && fs_uuid="`"${grub_probe}" --device ${device} --target=fs_uuid 2> /dev/null`" ; then
+     echo "$fs_uuid";
++  elif [ "x${GRUB_DISABLE_PARTUUID}" != "xtrue" ] && part_uuid="`"${grub_probe}" --device ${device} --target=partuuid 2> /dev/null`" ; then
++    echo "$part_uuid";
+   else
+     echo $device |sed 's, ,_,g'
+   fi
+-- 
+2.53.0
+

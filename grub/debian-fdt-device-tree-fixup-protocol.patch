@@ -1,6 +1,6 @@
 From: Heinrich Schuchardt <xypron.glpk@gmx.de>
 Date: Fri, 29 Jan 2021 07:36:42 +0100
-Subject: [PATCH] efi: EFI Device Tree Fixup Protocol
+Subject: efi: EFI Device Tree Fixup Protocol
 
 Device-trees are used to convey information about hardware to the operating
 system. Some of the properties are only known at boot time. (One example of
@@ -31,10 +31,10 @@ Signed-off-by: Julian Andres Klode <julian.klode@canonical.com>
  2 files changed, 59 insertions(+)
 
 diff --git a/grub-core/loader/efi/fdt.c b/grub-core/loader/efi/fdt.c
-index 510958d..9fc5a4d 100644
+index b4a0447..948ef7e 100644
 --- a/grub-core/loader/efi/fdt.c
 +++ b/grub-core/loader/efi/fdt.c
-@@ -29,6 +29,7 @@
+@@ -32,6 +32,7 @@
  
  static void *loaded_fdt;
  static void *fdt;
@@ -42,9 +42,9 @@ index 510958d..9fc5a4d 100644
  
  #define FDT_ADDR_CELLS_STRING "#address-cells"
  #define FDT_SIZE_CELLS_STRING "#size-cells"
-@@ -36,6 +37,41 @@ static void *fdt;
-                              sizeof (FDT_ADDR_CELLS_STRING) + \
-                              sizeof (FDT_SIZE_CELLS_STRING))
+@@ -46,6 +47,41 @@ static const struct grub_arg_option options_fdtdump[] = {
+   {0, 0, 0, 0, 0, 0}
+ };
  
 +static void *
 +grub_fdt_fixup (void *blob)
@@ -84,7 +84,7 @@ index 510958d..9fc5a4d 100644
  void *
  grub_fdt_load (grub_size_t additional_size)
  {
-@@ -160,6 +196,7 @@ out:
+@@ -170,6 +206,7 @@ out:
    if (blob)
      {
        grub_dprintf ("fdt", "Device-tree %s loaded\n", argv[0]);
@@ -93,7 +93,7 @@ index 510958d..9fc5a4d 100644
  	loaded_fdt = blob;
        else
 diff --git a/include/grub/efi/api.h b/include/grub/efi/api.h
-index ae02e6d..a89bf3d 100644
+index e298a91..fa5c79b 100644
 --- a/include/grub/efi/api.h
 +++ b/include/grub/efi/api.h
 @@ -354,6 +354,11 @@
@@ -108,7 +108,7 @@ index ae02e6d..a89bf3d 100644
  #define GRUB_EFI_VENDOR_APPLE_GUID \
    { 0x2B0585EB, 0xD8B8, 0x49A9,	\
      { 0x8B, 0x8C, 0xE2, 0x1B, 0x01, 0xAE, 0xF2, 0xB7 } \
-@@ -1914,6 +1919,13 @@ enum
+@@ -1934,6 +1939,13 @@ enum
      GRUB_EFI_SIMPLE_NETWORK_RECEIVE_PROMISCUOUS_MULTICAST = 0x10,
    };
  
@@ -122,7 +122,7 @@ index ae02e6d..a89bf3d 100644
  struct grub_efi_simple_network
  {
    grub_uint64_t revision;
-@@ -1996,6 +2008,16 @@ struct grub_efi_block_io
+@@ -2016,6 +2028,16 @@ struct grub_efi_block_io
  };
  typedef struct grub_efi_block_io grub_efi_block_io_t;
  
