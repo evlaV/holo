@@ -1,7 +1,7 @@
 # Maintainer: Pierre-Loup A. Griffais (pgriffais@valvesoftware.com)
 
 pkgname=fremont-hw-support
-_srctag=fremont-20251217.1
+_srctag=fremont-20260210.1
 _srcver=${_srctag#fremont-}
 pkgver=${_srcver//-/.}
 pkgrel=3
@@ -13,7 +13,7 @@ depends=()
 optdepends=()
 makedepends=('rsync' 'git' 'openssh')
 source=("git+https://github.com/evlav/fremont-hw-support.git#tag=$_srctag")
-sha512sums=('227ce6e5fb1a721ba37afcca5195514093489e7c5711a46b4f443e68ed4965f2cc11669927f90d2bb7b3ffd12e3c597da42926614c11dec59aa419a536f2908a')
+sha512sums=('731cd9e9352b6bf3196d522161be81ae1d21b5194ef6b138154741203842dc8f89c3723d015795ca98b6964983edcc3bb5bb9305cc7787096c3996dd2cb20bb3')
 
 package() {
   rsync -a "$srcdir"/fremont-hw-support/* "$pkgdir"
