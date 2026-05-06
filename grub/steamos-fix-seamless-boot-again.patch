@@ -1,0 +1,13 @@
+diff --git a/grub-core/term/efi/console.c b/grub-core/term/efi/console.c
+index 37c4e5113..cc5e0ade1 100644
+--- a/grub-core/term/efi/console.c
++++ b/grub-core/term/efi/console.c
+@@ -435,7 +435,7 @@ grub_console_cls (struct grub_term_output *term __attribute__ ((unused)))
+   grub_efi_simple_text_output_interface_t *o;
+   grub_efi_int32_t orig_attr;
+ 
+-  if (grub_prepare_for_text_output (term) != GRUB_ERR_NONE)
++  if (grub_efi_is_finished || text_mode != GRUB_TEXT_MODE_AVAILABLE)
+     return;
+ 
+   o = grub_efi_system_table->con_out;
