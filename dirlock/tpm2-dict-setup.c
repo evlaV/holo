@@ -29,7 +29,6 @@ int main(int argc, char *argv[])
     ESYS_CONTEXT *esys_ctx = NULL;
     TPMS_CAPABILITY_DATA *cap = NULL;
     const TPMS_TAGGED_PROPERTY *props;
-    UINT32 pt_permanent = 0;
     UINT32 max_tries, recovery_time, lockout_recovery = 1000;
     int ret;
     size_t i;
@@ -97,7 +96,7 @@ int main(int argc, char *argv[])
     for (i = 0; i < cap->data.tpmProperties.count; i++) {
         /* We cannot do anything if lockoutAuth is set (i.e. if the
            dictionary attack lockout mechanism is password protected) */
-        if (props[i].property == TPM2_PT_PERMANENT && pt_permanent & TPMA_PERMANENT_LOCKOUTAUTHSET) {
+        if (props[i].property == TPM2_PT_PERMANENT && props[i].value & TPMA_PERMANENT_LOCKOUTAUTHSET) {
             ret = TPM2_RC_AUTH_MISSING;
             goto out;
         }

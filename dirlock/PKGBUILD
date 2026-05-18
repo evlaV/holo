@@ -3,7 +3,7 @@
 pkgname=dirlock
 _commit=177064e06a3c473f70f9eaedcf239bd4024606aa
 pkgver=0.0.1.214.177064e
-pkgrel=2
+pkgrel=3
 pkgdesc='Tool for managing encrypted directories'
 url='https://github.com/evlav/dirlock/'
 arch=('x86_64')
@@ -17,6 +17,7 @@ source=("git+https://github.com/evlav/$pkgname.git#commit=$_commit"
         'tmpfiles.conf'
         'udev.rules'
         'tpm2-dict-setup.c'
+        'pam-autologin.patch'
         'addr2line-0.24.2.tar.gz::https://crates.io/api/v1/crates/addr2line/0.24.2/download'
         'adler2-2.0.1.tar.gz::https://crates.io/api/v1/crates/adler2/2.0.1/download'
         'aes-0.8.4.tar.gz::https://crates.io/api/v1/crates/aes/0.8.4/download'
@@ -321,6 +322,7 @@ makedepends=('git'
              'holo-rust-packaging-tools')
 license=('BSD-3-Clause')
 sha256sums=('SKIP'
+            'SKIP'
             'SKIP'
             'SKIP'
             'SKIP'
@@ -636,6 +638,8 @@ prepare() {
   holo-vendor-rust-sources -o vendored -L "$pkgname/Cargo.lock" *.tar.gz
 
   cd "$pkgname"
+
+  patch -p1 < ../pam-autologin.patch
 
   mkdir -pv .cargo
 
