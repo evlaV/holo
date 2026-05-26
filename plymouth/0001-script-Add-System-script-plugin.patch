@@ -1,0 +1,231 @@
+From 8d5cb830570aa3fa257cd9a93d163854c86b85a2 Mon Sep 17 00:00:00 2001
+From: Robert Beckett <bob.beckett@collabora.com>
+Date: Wed, 20 May 2026 18:48:33 +0100
+Subject: [PATCH] script: Add System script plugin
+
+Allow these scripts to get the system vendor and product-id.
+This allows theme decsions based on the product it is running
+on without having to hard code different themes.
+
+Signed-off-by: Robert Beckett <bob.beckett@collabora.com>
+---
+ src/plugins/splash/script/Makefile.am      |   4 +-
+ src/plugins/splash/script/plugin.c         |   3 +
+ src/plugins/splash/script/script-lib-sys.c | 117 +++++++++++++++++++++
+ src/plugins/splash/script/script-lib-sys.h |  37 +++++++
+ 4 files changed, 160 insertions(+), 1 deletion(-)
+ create mode 100644 src/plugins/splash/script/script-lib-sys.c
+ create mode 100644 src/plugins/splash/script/script-lib-sys.h
+
+diff --git a/src/plugins/splash/script/Makefile.am b/src/plugins/splash/script/Makefile.am
+index ce46df63ecc1..e19fd1897a7e 100644
+--- a/src/plugins/splash/script/Makefile.am
++++ b/src/plugins/splash/script/Makefile.am
+@@ -49,7 +49,9 @@ script_la_SOURCES = $(srcdir)/plugin.c                                        \
+                     $(srcdir)/script-lib-math.script                          \
+                     $(srcdir)/script-lib-string.c                             \
+                     $(srcdir)/script-lib-string.h                             \
+-                    $(srcdir)/script-lib-string.script
++                    $(srcdir)/script-lib-string.script                        \
++                    $(srcdir)/script-lib-sys.c                                \
++                    $(srcdir)/script-lib-sys.h
+ 
+ MAINTAINERCLEANFILES = Makefile.in
+ CLEANFILES = *.script.h
+diff --git a/src/plugins/splash/script/plugin.c b/src/plugins/splash/script/plugin.c
+index 4edfe7f4ad92..0f004d4bf2b9 100644
+--- a/src/plugins/splash/script/plugin.c
++++ b/src/plugins/splash/script/plugin.c
+@@ -62,6 +62,7 @@
+ #include "script-lib-plymouth.h"
+ #include "script-lib-math.h"
+ #include "script-lib-string.h"
++#include "script-lib-sys.h"
+ 
+ #include <linux/kd.h>
+ 
+@@ -88,6 +89,7 @@ struct _ply_boot_splash_plugin
+         script_lib_plymouth_data_t *script_plymouth_lib;
+         script_lib_math_data_t     *script_math_lib;
+         script_lib_string_data_t   *script_string_lib;
++        script_lib_sys_data_t      *script_sys_lib;
+ 
+         uint32_t                    is_animating : 1;
+ };
+@@ -277,6 +279,7 @@ start_script_animation (ply_boot_splash_plugin_t *plugin)
+                                                                  FRAMES_PER_SECOND);
+         plugin->script_math_lib = script_lib_math_setup (plugin->script_state);
+         plugin->script_string_lib = script_lib_string_setup (plugin->script_state);
++        plugin->script_sys_lib = script_lib_sys_setup (plugin->script_state);
+ 
+         ply_trace ("executing script file");
+         script_return_t ret = script_execute (plugin->script_state,
+diff --git a/src/plugins/splash/script/script-lib-sys.c b/src/plugins/splash/script/script-lib-sys.c
+new file mode 100644
+index 000000000000..f05aa68443a1
+--- /dev/null
++++ b/src/plugins/splash/script/script-lib-sys.c
+@@ -0,0 +1,117 @@
++/* script-lib-plymouth.c - script library for interacting with plymouth
++ *
++ * Copyright (C) 2026 Robert Beckett <bob.beckett@collabora.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2, or (at your option)
++ * any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
++ * 02111-1307, USA.
++ *
++ * Written by: Robert Beckett <bob.beckett@collabora.com>
++ */
++
++#include "config.h"
++
++#include "ply-boot-splash-plugin.h"
++#include "ply-utils.h"
++#include "script.h"
++#include "script-parse.h"
++#include "script-execute.h"
++#include "script-object.h"
++#include "script-lib-sys.h"
++#include <assert.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <fcntl.h>
++#include <stdlib.h>
++#include <string.h>
++#include <errno.h>
++
++
++static char *sys_get_dmi_string(const char *path)
++{
++        char buf[128];
++        int fd;
++        ssize_t n;
++
++        fd = open(path, O_RDONLY);
++        if (fd < 0)
++                return NULL;
++
++        n = read(fd, buf, sizeof(buf));
++        close(fd);
++        if (n <= 0)
++                return NULL;
++
++        buf[n] = '\0';
++        if (n > 0 && buf[n - 1] == '\n')
++                buf[n - 1] = '\0';
++
++        return strdup(buf);
++}
++
++static void sys_data_init(script_lib_sys_data_t *data)
++{
++        data->Vendor = sys_get_dmi_string("/sys/class/dmi/id/sys_vendor");
++        data->ProductName = sys_get_dmi_string("/sys/class/dmi/id/product_name");
++}
++
++static script_return_t sys_get_vendor(script_state_t *state, void *user_data)
++{
++        script_lib_sys_data_t *data = user_data;
++
++        return script_return_obj(script_obj_new_string(data->Vendor));
++}
++
++static script_return_t sys_get_product_name(script_state_t *state, void *user_data)
++{
++        script_lib_sys_data_t *data = user_data;
++
++        return script_return_obj(script_obj_new_string(data->ProductName));
++}
++
++script_lib_sys_data_t *script_lib_sys_setup (script_state_t *state)
++{
++        script_lib_sys_data_t *data = malloc (sizeof(script_lib_sys_data_t));
++        if (!data)
++                return NULL;
++        sys_data_init(data);
++
++        script_obj_t *sys_hash = script_obj_hash_get_element (state->global, "System");
++
++
++        script_add_native_function (sys_hash,
++                                    "GetVendor",
++                                    sys_get_vendor,
++                                    data,
++                                    NULL);
++        script_add_native_function (sys_hash,
++                                    "GetProductName",
++                                    sys_get_product_name,
++                                    data,
++                                    NULL);
++        script_obj_unref (sys_hash);
++
++        return data;
++}
++
++
++void script_lib_sys_destroy (script_lib_sys_data_t *data)
++{
++        if (data->Vendor)
++                free ((void*)data->Vendor);
++        if (data->ProductName)
++                free ((void*)data->ProductName);
++        free (data);
++}
++
+diff --git a/src/plugins/splash/script/script-lib-sys.h b/src/plugins/splash/script/script-lib-sys.h
+new file mode 100644
+index 000000000000..722ee67aaf4e
+--- /dev/null
++++ b/src/plugins/splash/script/script-lib-sys.h
+@@ -0,0 +1,37 @@
++/* script-lib-sys.h - system script functions library
++ *
++ * Copyright (C) 2026 Robert Beckett <bob.beckett@collabora.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2, or (at your option)
++ * any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
++ * 02111-1307, USA.
++ *
++ * Written by: Robert Beckett <bob.beckett@collabora.com>
++ */
++#ifndef SCRIPT_LIB_SYS_H
++#define SCRIPT_LIB_SYS_H
++
++#include "script.h"
++
++typedef struct
++{
++        const char *Vendor;
++        const char *ProductName;
++} script_lib_sys_data_t;
++
++script_lib_sys_data_t *script_lib_sys_setup (script_state_t *state);
++void script_lib_sys_destroy (script_lib_sys_data_t *data);
++
++#endif /* SCRIPT_LIB_SYS_H */
++
+-- 
+2.47.1
+
