@@ -145,6 +145,13 @@ run 'pactl list sources'
 run 'pactl list sink-inputs'
 run 'pactl list source-outputs'
 
+# Bluetooth connected devices and RSSI info
+run 'hcitool con | grep -oP '[0-9A-F:]{17}' | \
+  while read addr; do \
+    name=$(hcitool name "$addr" | tr -d '\n'); \
+    echo -n "$addr: $name: "; hcitool  rssi "$addr"; \
+  done'
+
 # Battery / power info
 run 'upower -d'
 
