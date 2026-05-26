@@ -3,7 +3,7 @@
 pkgname=dirlock
 _commit=177064e06a3c473f70f9eaedcf239bd4024606aa
 pkgver=0.0.1.214.177064e
-pkgrel=3
+pkgrel=4
 pkgdesc='Tool for managing encrypted directories'
 url='https://github.com/evlav/dirlock/'
 arch=('x86_64')
@@ -662,9 +662,6 @@ build () {
 }
 
 package() {
-  # Runtime dependency
-  depends+=('qt6-virtualkeyboard')
-
   cd "$srcdir/$pkgname"
 
   # Data dir

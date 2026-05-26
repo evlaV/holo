@@ -21,9 +21,6 @@ if eval dirlock status -b ~"${user}" 2>&1 | grep -qw locked ; then
 
     # If the home directory is locked disable autologin in SDDM
     cat > "$SDDM_DIRLOCK_CONF" <<-EOF
-	[General]
-	InputMethod=qtvirtualkeyboard
-
 	[Autologin]
 	User=
 
