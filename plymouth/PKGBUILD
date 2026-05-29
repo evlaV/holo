@@ -6,7 +6,7 @@
 
 pkgname=plymouth
 pkgver=22.02.122
-pkgrel=7.2
+pkgrel=7.3
 pkgdesc='Graphical boot splash screen'
 arch=('x86_64')
 url='https://www.freedesktop.org/wiki/Software/Plymouth/'
@@ -49,6 +49,7 @@ source=("https://www.freedesktop.org/software/$pkgname/releases/$pkgname-$pkgver
         '0015-drm-implement-drm-head-scraping.patch'                      # SteamOS: Ibid
         '0016-script-add-scrape_display-special-image.patch'              # SteamOS: Ibid
         '0020-Suppress-unimportant-unused-result-warnings-in-ply_b.patch' # SteamOS: plymouth build flags & arch defaults clash
+        '0001-script-Add-System-script-plugin.patch'                      # SteamOS: Allow themes to make product decisions
 )
 
 sha256sums=('100551442221033ce868c447ad6c74d831d209c18ae232b98ae0207e34eadaeb'
@@ -68,7 +69,8 @@ sha256sums=('100551442221033ce868c447ad6c74d831d209c18ae232b98ae0207e34eadaeb'
             'd823030159231db1c9992359b62fe9db42657953c3294f07562169c2226766e0'
             'f5fda6cef4e054bac8e880d8c7f64311d3f747ae063d0399c14335434194bd91'
             '3409d1efc64cd9e20a9941de6a7cbde3623c193f9137b507118515c40739d2b3'
-            'ab1cca2bb02897d8915e936b5e8f449d55b7bf4217128ff36e23ea2296c984de')
+            'ab1cca2bb02897d8915e936b5e8f449d55b7bf4217128ff36e23ea2296c984de'
+            '6ab2fbf2f8d28f59cb3320d673df47b2d5d8495a7fcf40807ed0b03bbf385e04')
 
 prepare() {
   cd "$pkgname-$pkgver"
