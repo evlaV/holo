@@ -1,0 +1,36 @@
+From 20beec6b2abc67fbc8bf42e4ed5fc18696cf9e2c Mon Sep 17 00:00:00 2001
+From: Arjen Hiemstra <ahiemstra@heimr.nl>
+Date: Thu, 4 Jun 2026 14:01:09 +0200
+Subject: [PATCH] Skip authentication checks for Steam in the screencast portal
+
+This allows Steam to use the portal for streaming without needing a
+permission prompt on desktop. It will allow Steam to stream all
+screens.
+---
+ src/screencast.cpp | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/src/screencast.cpp b/src/screencast.cpp
+index e54dc406..586dc6ec 100644
+--- a/src/screencast.cpp
++++ b/src/screencast.cpp
+@@ -356,6 +356,16 @@ void ScreenCastPortal::Start(const QDBusObjectPath &handle,
+         }
+     }
+ 
++    // If steam is trying to stream and we don't have any valid restore data,
++    // allow streaming all screens.
++    if (app_id == u"steam" && !valid) {
++        OutputsModel model(OutputsModel::WorkspaceIncluded, this);
++        for (int i = 0, c = model.rowCount(); i < c; ++i) {
++            selectedOutputs << model.outputAt(i);
++        }
++        valid = true;
++    }
++
+     if (valid) {
+         std::tie(replyResponse, replyResults) = continueStartAfterDialog(session, selectedOutputs, selectedRegion, selectedWindows, true);
+         return;
+-- 
+2.54.0
+
