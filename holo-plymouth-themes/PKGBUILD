@@ -1,7 +1,7 @@
 # Maintainer: Vivek Das Mohapatra <vivek@collabora.com>
 
 pkgname=holo-plymouth-themes
-_tag=v0.5
+_tag=v0.6
 pkgver=${_tag#v}
 pkgrel=1
 arch=('any')
@@ -10,7 +10,7 @@ pkgdesc='Boot splash theme with optional progress bar, title, and messages'
 license=('GPL-2.0-or-later') # same as plymouth, without which this is useless
 makedepends=(git rsync)
 source=("$pkgname::git+https://github.com/evlav/${pkgname}#tag=${_tag}")
-b2sums=('b1180838af1645e00e07090d14326d71f6fe7bd8b70b5beebd24b1984361aa81e21fcbdef1bd34efc9c66e33a4debd6b154ca55616d7ae99a267054896583e10')
+b2sums=('421f642e29b78bb4e2c3cdff66a1c775b4c957d9293f2904ec3030c6ab8118335016350b7d7cca253c710b09f20c1dbb43cc6389b0df6c17d6ecdc9baf53cf2b')
 
 build() {
     true
