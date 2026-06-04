@@ -1,0 +1,35 @@
+From 630795cef7f9d43e189da49a6ee6cee47c323cc7 Mon Sep 17 00:00:00 2001
+From: "Derek J. Clark" <derekjohn.clark@gmail.com>
+Date: Wed, 3 Jun 2026 15:08:22 -0700
+Subject: [PATCH] (hwdb) Update MSI Claw Entries - Add support for MSI Claw A8
+ BZ2EM. - Switch to using rn vice pn as MSI uses a unique pn for variants of
+ the   same model. This prevents needing to update this file when a low volume
+   variant is released (I.E. Polar White AI 8+).
+
+---
+ hwdb.d/60-keyboard.hwdb | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/hwdb.d/60-keyboard.hwdb b/hwdb.d/60-keyboard.hwdb
+index 610127a6b1..7004c0543a 100644
+--- a/hwdb.d/60-keyboard.hwdb
++++ b/hwdb.d/60-keyboard.hwdb
+@@ -1665,10 +1665,11 @@ evdev:atkbd:dmi:bvn*:bvr*:bd*:svnMicro-Star*:pn*Modern*:*
+  KEYBOARD_KEY_97=unknown                                # Lid close
+  KEYBOARD_KEY_98=unknown                                # Lid open
+ 
+-# MSI Claw A1M, MSI Claw 7 AI+ A2VM, MSI Claw 8 AI+ A2VM
+-evdev:name:AT Translated Set 2 keyboard:dmi:*:svnMicro-StarInternationalCo.,Ltd.:pnClawA1M:*
+-evdev:name:AT Translated Set 2 keyboard:dmi:*:svnMicro-StarInternationalCo.,Ltd.:pnClaw7AI+A2VM:*
+-evdev:name:AT Translated Set 2 keyboard:dmi:*:svnMicro-StarInternationalCo.,Ltd.:pnClaw8AI+A2VM:*
++# MSI Claw A1M, MSI Claw 7 AI+ A2VM, MSI Claw 8 AI+ A2VM, MSI Claw A8 BZ2EM
++evdev:name:AT Translated Set 2 keyboard:dmi:*:svnMicro-StarInternationalCo.,Ltd.:rnMS-1T41:*
++evdev:name:AT Translated Set 2 keyboard:dmi:*:svnMicro-StarInternationalCo.,Ltd.:rnMS-1T42:*
++evdev:name:AT Translated Set 2 keyboard:dmi:*:svnMicro-StarInternationalCo.,Ltd.:rnMS-1T52:*
++evdev:name:AT Translated Set 2 keyboard:dmi:*:svnMicro-StarInternationalCo.,Ltd.:rnMS-1T8K:*
+  KEYBOARD_KEY_b9=f15                                   # Right Face Button
+  KEYBOARD_KEY_ba=f16                                   # Left Face Button
+ 
+-- 
+2.53.0
+
