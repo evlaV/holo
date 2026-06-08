@@ -1,0 +1,186 @@
+From f0f0c8e02df0f778e0a19eb903d75af5a7b1d1ef Mon Sep 17 00:00:00 2001
+From: David Edmundson <kde@davidedmundson.co.uk>
+Date: Fri, 22 May 2026 14:17:08 +0100
+Subject: [PATCH] CEC Support
+
+Add support for the special new features in pulseaduio-qt for CEC
+support
+---
+ applet/ListItemBase.qml            | 34 ++++++++++++++++++++
+ src/kcm/ui/DeviceListItem.qml      |  1 +
+ src/kcm/ui/StreamListItem.qml      |  2 +-
+ src/kded/audioshortcutsservice.cpp | 51 +++++++++++++++++++++++-------
+ 4 files changed, 75 insertions(+), 13 deletions(-)
+
+diff --git a/applet/ListItemBase.qml b/applet/ListItemBase.qml
+index 18bead40..0fe132ec 100644
+--- a/applet/ListItemBase.qml
++++ b/applet/ListItemBase.qml
+@@ -212,8 +212,42 @@ PC3.ItemDelegate {
+                 }
+             }
+ 
++            RowLayout {
++                visible: !item.model.VolumeWritable
++                uniformCellSizes: true
++                PC3.Button {
++                    Layout.fillWidth: true
++                    text: i18n("Volume Down")
++                    icon.name: "audio-volume-low-symbolic"
++                    icon.width: Kirigami.Units.iconSizes.medium
++                    icon.height: Kirigami.Units.iconSizes.medium
++                    onClicked: item.model.PulseObject.volumeDown();
++                    display: PC3.AbstractButton.TextUnderIcon
++
++                }
++                PC3.Button {
++                    Layout.fillWidth: true
++                    text: i18n("Volume Up")
++                    display: PC3.AbstractButton.TextUnderIcon
++                    icon.width: Kirigami.Units.iconSizes.medium
++                    icon.height: Kirigami.Units.iconSizes.medium
++                    icon.name: "audio-volume-high-symbolic"
++                    onClicked: item.model.PulseObject.volumeUp();
++                }
++                PC3.Button {
++                    Layout.fillWidth: true
++                    text: i18n("Toggle Mute")
++                    display: PC3.AbstractButton.TextUnderIcon
++                    icon.width: Kirigami.Units.iconSizes.medium
++                    icon.height: Kirigami.Units.iconSizes.medium
++                    icon.name: "audio-volume-muted"
++                    onClicked: item.model.PulseObject.toggleMute();
++                }
++            }
++
+             RowLayout {
+                 spacing: Kirigami.Units.smallSpacing
++                visible: item.model.VolumeWritable
+ 
+                 SmallToolButton {
+                     id: muteButton
+diff --git a/src/kcm/ui/DeviceListItem.qml b/src/kcm/ui/DeviceListItem.qml
+index c569c287..39bd81c9 100644
+--- a/src/kcm/ui/DeviceListItem.qml
++++ b/src/kcm/ui/DeviceListItem.qml
+@@ -184,6 +184,7 @@ ColumnLayout {
+             muted: Muted
+             onCheckedChanged: Muted = checked
+             toolTipText: !currentPort ? Description : currentPort.description
++            enabled: delegate.pulseObject.muteWritable
+         }
+ 
+         GridLayout {
+diff --git a/src/kcm/ui/StreamListItem.qml b/src/kcm/ui/StreamListItem.qml
+index 57c3d006..7cb9bf70 100644
+--- a/src/kcm/ui/StreamListItem.qml
++++ b/src/kcm/ui/StreamListItem.qml
+@@ -87,6 +87,7 @@ ColumnLayout {
+             }
+ 
+             RowLayout {
++                visible: HasVolume
+                 MuteButton {
+                     Layout.alignment: Qt.AlignTop
+                     muted: Muted
+@@ -97,7 +98,6 @@ ColumnLayout {
+                 VolumeSlider {
+                     id: volumeSlider
+                     Layout.alignment: Qt.AlignVCenter
+-                    visible:  HasVolume
+                 }
+             }
+         }
+diff --git a/src/kded/audioshortcutsservice.cpp b/src/kded/audioshortcutsservice.cpp
+index b6f98894..327988a6 100644
+--- a/src/kded/audioshortcutsservice.cpp
++++ b/src/kded/audioshortcutsservice.cpp
+@@ -80,9 +80,14 @@ AudioShortcutsService::AudioShortcutsService(QObject *parent, const QList<QVaria
+         if (!sink) {
+             return;
+         }
+-        int percent = changeVolumePercent(sink, m_globalConfig->volumeStep());
+-        showVolume(percent);
+-        playFeedback(-1);
++        if (sink->isVolumeWritable()) {
++            int percent = changeVolumePercent(sink, m_globalConfig->volumeStep());
++            showVolume(percent);
++            playFeedback(-1);
++        } else {
++            m_osdDBusInterface->showText("audio-volume-high", i18n("Volume Up"));
++            sink->volumeUp();
++        }
+     });
+ 
+     QAction *volumeDownAction = new QAction(this);
+@@ -95,9 +100,14 @@ AudioShortcutsService::AudioShortcutsService(QObject *parent, const QList<QVaria
+         if (!sink) {
+             return;
+         }
+-        int percent = changeVolumePercent(sink, -m_globalConfig->volumeStep());
+-        showVolume(percent);
+-        playFeedback(-1);
++        if (sink->isVolumeWritable()) {
++            int percent = changeVolumePercent(sink, -m_globalConfig->volumeStep());
++            showVolume(percent);
++            playFeedback(-1);
++        } else {
++            m_osdDBusInterface->showText("audio-volume-low", i18n("Volume Down"));
++            sink->volumeDown();
++        }
+     });
+ 
+     QAction *volumeUpSmallAction = new QAction(this);
+@@ -110,9 +120,14 @@ AudioShortcutsService::AudioShortcutsService(QObject *parent, const QList<QVaria
+         if (!sink) {
+             return;
+         }
+-        int percent = changeVolumePercent(sink, 1);
+-        showVolume(percent);
+-        playFeedback(-1);
++        if (sink->isVolumeWritable()) {
++            int percent = changeVolumePercent(sink, 1);
++            showVolume(percent);
++            playFeedback(-1);
++        } else {
++            m_osdDBusInterface->showText("audio-volume-high", i18n("Volume Up"));
++            sink->volumeDown();
++        }
+     });
+ 
+     QAction *volumeDownSmallAction = new QAction(this);
+@@ -125,9 +140,14 @@ AudioShortcutsService::AudioShortcutsService(QObject *parent, const QList<QVaria
+         if (!sink) {
+             return;
+         }
+-        int percent = changeVolumePercent(sink, -1);
+-        showVolume(percent);
+-        playFeedback(-1);
++        if (sink->isVolumeWritable()) {
++            int percent = changeVolumePercent(sink, -1);
++            showVolume(percent);
++            playFeedback(-1);
++        } else {
++            m_osdDBusInterface->showText("audio-volume-low", i18n("Volume Down"));
++            sink->volumeDown();
++        }
+     });
+ 
+     QAction *volumeUpMicAction = new QAction(this);
+@@ -164,6 +184,13 @@ AudioShortcutsService::AudioShortcutsService(QObject *parent, const QList<QVaria
+     muteAction->setText(i18n("Mute"));
+     muteAction->setShortcut(Qt::Key_VolumeMute);
+     connect(muteAction, &QAction::triggered, this, [this]() {
++        auto sink = m_preferredDevice.sink();
++        if (sink && !sink->isMuteWritable()) {
++            m_osdDBusInterface->showText("audio-volume-muted", i18n("Toggle Mute"));
++            sink->toggleMute();
++            return;
++        }
++
+         if (m_globalConfig->globalMute()) {
+             disableGlobalMute();
+         } else {
+-- 
+2.53.0
+

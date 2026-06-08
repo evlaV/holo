@@ -1,0 +1,58 @@
+# Maintainer:Antonio Rojas <arojas@archlinux.org>
+
+pkgname=plasma-pa
+pkgver=6.4.3
+_dirver=$(echo $pkgver | cut -d. -f1-3)
+pkgrel=2
+pkgdesc='Plasma applet for audio volume management using PulseAudio'
+arch=(x86_64)
+url='https://kde.org/plasma-desktop/'
+license=(LGPL-2.0-or-later)
+depends=(gcc-libs
+         glib2
+         glibc
+         kcmutils
+         kconfig
+         kcoreaddons
+         kdbusaddons
+         kdeclarative
+         kglobalaccel
+         ki18n
+         kirigami
+         kitemmodels
+         kstatusnotifieritem
+         ksvg
+         libcanberra
+         libplasma
+         libpulse
+         plasma-workspace
+         pulse-native-provider
+         pulseaudio-qt
+         qt6-base
+         qt6-declarative)
+makedepends=(extra-cmake-modules
+             kdoctools)
+groups=(plasma)
+source=(https://download.kde.org/stable/plasma/$_dirver/$pkgname-$pkgver.tar.xz{,.sig}
+        0001-CEC-Support.patch)
+sha256sums=('6b0e3d3ab469cf86fc18d211fcbf41251aa33a3014a32b77ec41905fd2fa4e21'
+            'SKIP'
+            '5404c16114cd174b9c5eab8cd83c710c8d14a53253d235ef736378fd6ce95fce')
+validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>
+              '0AAC775BB6437A8D9AF7A3ACFE0784117FBCE11D'  # Bhushan Shah <bshah@kde.org>
+              'D07BD8662C56CB291B316EB2F5675605C74E02CF'  # David Edmundson <davidedmundson@kde.org>
+              '1FA881591C26B276D7A5518EEAAF29B42A678C20') # Marco Martin <notmart@gmail.com>
+
+prepare() {
+  patch -d $pkgname-$pkgver -Np1 -i ../0001-CEC-Support.patch
+}
+
+build() {
+  cmake -B build  -S $pkgname-$pkgver \
+    -DBUILD_TESTING=OFF
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+}
