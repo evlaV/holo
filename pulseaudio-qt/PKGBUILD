@@ -1,7 +1,7 @@
 # Maintainer:Antonio Rojas <arojas@archlinux.org>
 
 pkgname=pulseaudio-qt
-pkgver=1.6.1
+pkgver=1.7.0
 pkgrel=2
 pkgdesc='Qt bindings for libpulse'
 arch=(x86_64)
@@ -18,7 +18,7 @@ makedepends=(doxygen
              qt6-tools)
 source=(https://download.kde.org/stable/$pkgname/$pkgname-$pkgver.tar.xz{,.sig}
         0001-Expose-CEC-controls-and-properties.patch)
-sha256sums=('f21bf30f2ff3e670d2046f966069dc23f5e653ff56bacdb8920c1374264cbc1e'
+sha256sums=('6a18db76dd2bcc3df7d9a9379c025295817264baa1f2ed8caaac7da44e04e931'
             'SKIP'
             '77e632be5764bb12866eedffd6e8df281480e6e35b335829bbe646d863c4014b')
 validpgpkeys=(2D1D5B0588357787DE9EE225EC94D18F7F05997E  # Jonathan Riddell <jr@jriddell.org>
