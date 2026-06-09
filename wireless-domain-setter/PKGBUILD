@@ -1,0 +1,25 @@
+# Maintainer: Elliot Saba <sabae@valvesoftware.com>
+
+pkgname='wireless-domain-setter'
+pkgver=1.0
+pkgrel=1
+pkgdesc='Copy wireless regulatory domain from self-managed devices to global kernel domain'
+arch=('any')
+license=('MIT')
+url='https://github.com/evlav/holo'
+source=(
+  'wireless-domain-setter'
+  'wireless-domain-setter.service'
+)
+sha256sums=('4b137e7e2d2db9e9e3c6f7463fbe718627670b6511e6a556037903b58c815908'
+            'ffd317da07b6fb3a904c6877d809318d07392fb9386ca7c8976d2b7d69f685c9')
+depends=(
+  'bash'
+)
+
+package() {
+  install -TDm0755 wireless-domain-setter "${pkgdir}"/usr/lib/steamos/wireless-domain-setter
+  install -TDm0644 wireless-domain-setter.service "${pkgdir}"/usr/lib/systemd/system/wireless-domain-setter.service
+  mkdir -pv "${pkgdir}"/usr/lib/systemd/system/multi-user.target.wants
+  ln -s ../wireless-domain-setter.service "${pkgdir}"/usr/lib/systemd/system/multi-user.target.wants/
+}
