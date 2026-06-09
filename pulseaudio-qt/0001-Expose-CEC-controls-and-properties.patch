@@ -1,0 +1,205 @@
+From e5e89cca9951210b7b866e3a2d4ccccb0eba0da1 Mon Sep 17 00:00:00 2001
+From: David Edmundson <kde@davidedmundson.co.uk>
+Date: Fri, 22 May 2026 12:01:59 +0100
+Subject: [PATCH] Expose CEC controls and properties
+
+This currently exports on a VolumeObject:
+ - volumeWritable
+ - muteWritable
+
+A device gains methods to increase/decrease/toggleMute
+---
+ src/sink.cpp         | 46 ++++++++++++++++++++++++++++++++++++++++++++
+ src/sink.h           |  7 +++++++
+ src/volumeobject.cpp |  5 +++++
+ src/volumeobject.h   |  3 +++
+ src/volumeobject_p.h | 26 +++++++++++++++++++++++++
+ 5 files changed, 87 insertions(+)
+
+diff --git a/src/sink.cpp b/src/sink.cpp
+index 1cfe854..329db62 100644
+--- a/src/sink.cpp
++++ b/src/sink.cpp
+@@ -4,11 +4,15 @@
+     SPDX-License-Identifier: LGPL-2.1-only OR LGPL-3.0-only OR LicenseRef-KDE-Accepted-LGPL
+ */
+ 
++#include <pulse/introspect.h>
++
+ #include "sink.h"
+ #include "sink_p.h"
+ 
+ #include "context.h"
+ #include "context_p.h"
++#include "debug.h"
++#include "operation.h"
+ #include "server.h"
+ #include "sinkinput.h"
+ 
+@@ -33,6 +37,48 @@ Sink::~Sink()
+ {
+ }
+ 
++void Sink::volumeUp()
++{
++    if (!Context::instance()->context()) {
++        return;
++    }
++
++    const QString recipientName = QStringLiteral("/sink/%1/volume-control").arg(name());
++    const QByteArray recipientNameData = recipientName.toUtf8();
++    if (!PAOperation(
++            pa_context_send_message_to_object(Context::instance()->context(), recipientNameData.constData(), "volume-up", nullptr, nullptr, nullptr))) {
++        qCWarning(PULSEAUDIOQT) << "pa_context_send_message_to_object failed for" << recipientName << "volume-up";
++    }
++}
++
++void Sink::volumeDown()
++{
++    if (!Context::instance()->context()) {
++        return;
++    }
++
++    const QString recipientName = QStringLiteral("/sink/%1/volume-control").arg(name());
++    const QByteArray recipientNameData = recipientName.toUtf8();
++    if (!PAOperation(
++            pa_context_send_message_to_object(Context::instance()->context(), recipientNameData.constData(), "volume-down", nullptr, nullptr, nullptr))) {
++        qCWarning(PULSEAUDIOQT) << "pa_context_send_message_to_object failed for" << recipientName << "volume-down";
++    }
++}
++
++void Sink::toggleMute()
++{
++    if (!Context::instance()->context()) {
++        return;
++    }
++
++    const QString recipientName = QStringLiteral("/sink/%1/volume-control").arg(name());
++    const QByteArray recipientNameData = recipientName.toUtf8();
++    if (!PAOperation(
++            pa_context_send_message_to_object(Context::instance()->context(), recipientNameData.constData(), "mute-toggle", nullptr, nullptr, nullptr))) {
++        qCWarning(PULSEAUDIOQT) << "pa_context_send_message_to_object failed for" << recipientName << "mute-toggle";
++    }
++}
++
+ void SinkPrivate::update(const pa_sink_info *info)
+ {
+     q->Device::d->updateDevice(info);
+diff --git a/src/sink.h b/src/sink.h
+index 77c82a2..ae9d1f9 100644
+--- a/src/sink.h
++++ b/src/sink.h
+@@ -23,6 +23,13 @@ class PULSEAUDIOQT_EXPORT Sink : public Device
+ public:
+     ~Sink() override;
+ 
++    /**
++     * These are fallback values for when volume is not read/writable
++     */
++    Q_INVOKABLE void volumeUp();
++    Q_INVOKABLE void volumeDown();
++    Q_INVOKABLE void toggleMute();
++
+     void setVolume(qint64 volume) override;
+ 
+     void setMuted(bool muted) override;
+diff --git a/src/volumeobject.cpp b/src/volumeobject.cpp
+index c0a40fa..16faced 100644
+--- a/src/volumeobject.cpp
++++ b/src/volumeobject.cpp
+@@ -47,6 +47,11 @@ bool VolumeObject::isVolumeWritable() const
+     return d->m_volumeWritable;
+ }
+ 
++bool VolumeObject::isMuteWritable() const
++{
++    return d->m_muteWritable;
++}
++
+ QStringList VolumeObject::channels() const
+ {
+     return d->m_channels;
+diff --git a/src/volumeobject.h b/src/volumeobject.h
+index c5d8518..3379978 100644
+--- a/src/volumeobject.h
++++ b/src/volumeobject.h
+@@ -20,6 +20,7 @@ class PULSEAUDIOQT_EXPORT VolumeObject : public IndexedPulseObject
+     Q_PROPERTY(qint64 volume READ volume WRITE setVolume NOTIFY volumeChanged)
+     Q_PROPERTY(bool muted READ isMuted WRITE setMuted NOTIFY mutedChanged)
+     Q_PROPERTY(bool volumeWritable READ isVolumeWritable NOTIFY isVolumeWritableChanged)
++    Q_PROPERTY(bool muteWritable READ isMuteWritable NOTIFY isMuteWritableChanged)
+     Q_PROPERTY(QStringList channels READ channels NOTIFY channelsChanged)
+     Q_PROPERTY(QList<qint64> channelVolumes READ channelVolumes WRITE setChannelVolumes NOTIFY channelVolumesChanged)
+     Q_PROPERTY(QStringList rawChannels READ rawChannels NOTIFY rawChannelsChanged)
+@@ -50,6 +51,7 @@ public:
+     virtual void setMuted(bool muted) = 0;
+ 
+     bool isVolumeWritable() const;
++    bool isMuteWritable() const;
+ 
+     QStringList channels() const;
+     QStringList rawChannels() const;
+@@ -61,6 +63,7 @@ Q_SIGNALS:
+     void volumeChanged();
+     void mutedChanged();
+     void isVolumeWritableChanged();
++    void isMuteWritableChanged();
+     void channelsChanged();
+     void rawChannelsChanged();
+     void channelVolumesChanged();
+diff --git a/src/volumeobject_p.h b/src/volumeobject_p.h
+index 97725bf..ad84b84 100644
+--- a/src/volumeobject_p.h
++++ b/src/volumeobject_p.h
+@@ -6,6 +6,7 @@
+ #ifndef VOLUMEOBJECT_P_H
+ #define VOLUMEOBJECT_P_H
+ 
++#include <pulse/proplist.h>
+ #include <pulse/volume.h>
+ 
+ #include "indexedpulseobject_p.h"
+@@ -23,6 +24,7 @@ public:
+     pa_cvolume m_volume;
+     bool m_muted = true;
+     bool m_volumeWritable = true;
++    bool m_muteWritable = true;
+     QStringList m_channels;
+     QStringList m_rawChannels;
+ 
+@@ -31,8 +33,32 @@ public:
+     template<typename PAInfo>
+     void updateVolumeObject(PAInfo *info)
+     {
++        const auto readBoolProplistValue = [](const char *value, bool defaultValue) {
++            const QString stringValue = QString::fromUtf8(value).trimmed().toLower();
++            if (stringValue == QLatin1String("true") || stringValue == QLatin1String("1")) {
++                return true;
++            } else if (stringValue == QLatin1String("false") || stringValue == QLatin1String("0")) {
++                return false;
++            }
++
++            return defaultValue;
++        };
++
+         q->IndexedPulseObject::d->updatePulseObject(info);
+         q->PulseObject::d->updateProperties(info);
++
++        const bool volumeWritable = readBoolProplistValue(pa_proplist_gets(info->proplist, "device.volume.write-volume-value"), true);
++        if (m_volumeWritable != volumeWritable) {
++            m_volumeWritable = volumeWritable;
++            Q_EMIT q->isVolumeWritableChanged();
++        }
++
++        const bool muteWritable = readBoolProplistValue(pa_proplist_gets(info->proplist, "device.volume.write-mute-value"), true);
++        if (m_muteWritable != muteWritable) {
++            m_muteWritable = muteWritable;
++            Q_EMIT q->isMuteWritableChanged();
++        }
++
+         if (m_muted != info->mute) {
+             m_muted = info->mute;
+             Q_EMIT q->mutedChanged();
+-- 
+2.53.0
+
