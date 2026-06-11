@@ -2,7 +2,7 @@
 
 pkgname=cec-audio-control
 pkgver=0.1.0
-pkgrel=5
+pkgrel=6
 pkgdesc='CEC userspace daemon'
 arch=('x86_64')
 url='https://github.com/evlav/cec-audio-control'
@@ -12,7 +12,7 @@ makedepends=('cargo'
              'git'
              'holo-rust-packaging-tools'
              'pkgconf')
-_commit='d21e09c11b28b6048e40f47711ed3d0ca24c928a'
+_commit='37f1f520c78790f3e9406b908e452c217c37788'
 source=("$pkgname-$pkgver::git+https://github.com/evlav/cec-audio-control.git#commit=$_commit"
         'aho-corasick-1.1.4.tar.gz::https://static.crates.io/crates/aho-corasick/1.1.4/download'
         'anstream-1.0.0.tar.gz::https://static.crates.io/crates/anstream/1.0.0/download'
@@ -162,7 +162,7 @@ source=("$pkgname-$pkgver::git+https://github.com/evlav/cec-audio-control.git#co
 makedepends=('cargo'
              'holo-rust-packaging-tools')
 license=('None')
-sha256sums=('10fc6da6f6fce41b34a084ec9b41b120f0804cd87eba005e3986fb21fe3a68a9'
+sha256sums=('bae7e9632dc1872bd09fd5c7934979e4b3dc5ee49a2417589577393bebc4a986'
             'ddd31a130427c27518df266943a5308ed92d4b226cc639f5a8f1002816174301'
             '824a212faf96e9acacdbd09febd34438f8f711fb84e09a8916013cd7815ca28d'
             '940b3a0ca603d1eade50a4846a2afffd5ef57a9feac2c0e2ec2e14f9ead76000'
