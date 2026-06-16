@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -eu
+
+if [[ $EUID -ne 0 ]];
+then
+    exec pkexec --disable-internal-agent "$0" "$@"
+fi
+
+# This script grants cap_sys_nice via file capabilities to vrcompositor-launcher.
+# We check the basename to prevent accidental mis-use, but this is not a real security check.
+ALLOWED_BASENAMES=(
+    vrcompositor-launcher
+)
+if [[ " ${ALLOWED_BASENAMES[*]} " !=  *" $(basename "$(realpath "${1}")") "* ]]; then
+    echo "This script only grants privileges for certain predetermined executables" >&2
+    exit 1
+fi
+
+setcap CAP_SYS_NICE=eip "${1}"
