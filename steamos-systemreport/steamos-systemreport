@@ -93,15 +93,20 @@ run 'ps aux k-rss'
 run 'lspci -tv -nn'
 run 'lsusb -t -v'
 run 'coredumpctl -r --since -10d'
-run 'journalctl --no-pager -b 0'
+run 'journalctl --namespace=+ec-log --no-pager -b 0'
 # NOTE: These journals are from _this_ OS slot.
 # At present, both slots actually put their journals in a shared offload
 # on the /home partition, so this works as a result - but if the offloads
 # are ever split by partition set then this will become inaccurate:
-run 'journalctl --no-pager -b -1'
+run 'journalctl --namespace=+ec-log --no-pager -b -1'
 
 # wake-up information
 super wakeup-info
+
+# EC logs, only if not handled by ec-log service
+if ! systemctl is-enabled --quiet ec-log.service; then
+  super ec-log
+fi
 
 super partitions
 
