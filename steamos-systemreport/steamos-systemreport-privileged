@@ -82,6 +82,11 @@ case ${1:-all} in
     done
     ;;&
 
+  all|ec-log)
+    # Logs from Embedded Controller
+    run '(dd iflag=nonblock if=/sys/kernel/debug/cros_ec/console_log status=none 2>/dev/null || true)'
+    ;;&
+
   all|pacman-check)
     run '(pacman -Qkk 1> /tmp/pacman-check.out 2> /tmp/pacman-check.err)'
     run '(diff -u0 <(unzstd -kc /usr/share/steamos/pacman-check.out.zst) /tmp/pacman-check.out \

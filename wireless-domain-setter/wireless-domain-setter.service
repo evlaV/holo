@@ -1,0 +1,11 @@
+[Unit]
+Description=Copy wireless domain from self-managed phy to global kernel domain
+Requires=network.target
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/steamos/wireless-domain-setter
+
+[Install]
+WantedBy=multi-user.target

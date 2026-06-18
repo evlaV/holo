@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# This script is used to copy the wireless regulatory domain from a self-managed
+# phy (like the qualcomm chipset in Steam Deck and Steam Machine) to the global
+# kernel regulatory domain, which is used by non-self-managed devices (such as
+# the streaming dongle for Steam Frame).  By using the result of the self-managed
+# regulatory domain sniffing algorithm we are able to mimic the same functionality
+# across all wireless devices plugged into the machine.
+
+function get_domains()
+{
+    ANCHOR="${1}"
+    # Explanation:
+    #   /^${ANCHOR}/      - Match lines that start with `${ANCHOR}` (global, phy, etc....)
+    #  { n; ... }         - Read the next line and replace it with the command after the semicolon
+    #  s/..../\1/         - Substitite the pattern in `...` with the first capture group
+    #  [^ ]+ ([^ ]+):.*   - Grab the second whitespace-delimited word as the first capture group
+    #  T;                 - Branch if substitution didn't match (e.g. don't print non-matching lines)
+    #  p;                 - Print if it did
+    iw reg get | sed -rn "/^${ANCHOR}/ { n; s/[^ ]+ ([^ ]+):.*/\1/; T; p; }"
+}
+
+function filter_valid_domains()
+{
+    # Reject worldwide domain `00` and special `na` domain:
+    grep -v '^00$' | grep -v '^na$'
+}
+
+# Do nothing if the global domain is already set to something else
+GLOBAL_DOMAIN="$(get_domains "global" | head -n1)"
+if [[ -n "$(filter_valid_domains <<<"${GLOBAL_DOMAIN}")" ]]; then
+    echo "Early-exiting as global domain is already set to ${GLOBAL_DOMAIN}"
+    exit 0
+fi
+
+# Do nothing if there are no self-managed phy's
+if [[ -z "$(get_domains "phy")" ]]; then
+    echo "Early-exiting as we found no self-managed phy's"
+    exit 0
+fi
+
+while true; do
+    # Get list of non-00 self-managed phy domains, loop until we have at least one
+    SELF_MANAGED_DOMAINS=( $(get_domains "phy" | filter_valid_domains) )
+    if [[ ${#SELF_MANAGED_DOMAINS[@]} -gt 0 ]]; then
+        break
+    fi
+    sleep 5
+done
+
+echo "Setting global regulatory domain to ${SELF_MANAGED_DOMAINS[0]}"
+iw reg set "${SELF_MANAGED_DOMAINS[0]}"

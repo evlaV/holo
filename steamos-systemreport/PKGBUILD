@@ -1,7 +1,7 @@
 # Author : Clayton Craft <clayton@igalia.com>
 
 pkgname='steamos-systemreport'
-pkgver=0.17
+pkgver=0.18
 pkgrel=1
 pkgdesc='System report collection tool'
 arch=('any')
@@ -12,14 +12,15 @@ source=(
   'steamos-systemreport-privileged'
   'com.steampowered.SteamOS.systemreport.policy'
 )
-sha256sums=('771b0a448aab10f8ba5b9eece3042dab10afecc2b25d1c7b857d673b73056419'
-            '67c12ca1f8ca69128b5a76ecd71f612f6df85664edc3b656eb9266f7450f6229'
+sha256sums=('7b2814a69fe24c26158851c5af971907e7a9058fe920d25394a6294764177515'
+            'ba38397f247c8ae62037291451b9b8e7eeb946a99add7078ebc5f316ccaf203a'
             'b36473e3b77307450e75c59e248dde34d95b69c6c765a425fc30d9e201e23067')
 
 package() {
   depends=(
     'bash'
     'bluez-deprecated-tools'         # hcitool
+    'coreutils'                      # dd
     'rauc'                           # rauc status
     'drm_info'                       # drm_info
     'upower'                         # upower
