@@ -1,0 +1,21 @@
+# Maintainer: Elliot Saba <sabae@valvesoftware.com>
+
+pkgname='holo-grant-cap-sys-nice'
+pkgver=1.0
+pkgrel=1
+pkgdesc='Tool to grant cap_sys_nice to executables'
+arch=('any')
+license=('MIT')
+url='https://github.com/evlav/holo'
+source=(
+  'holo-grant-cap-sys-nice'
+  'org.valve.holo-grant-cap-sys-nice.policy'
+)
+sha256sums=('aa804f6b058b195b34cac3234a4b16da2827ed383f71c38015eeaca8f30316ea'
+            'ab2bbec5b13202feec8f66def8b5e7ba2354f810c56fc1f58a74a7ee7ef343ca')
+depends=('bash' 'libcap')
+
+package() {
+  install -DTm0755 holo-grant-cap-sys-nice "${pkgdir}/usr/bin/holo-polkit-helpers/holo-grant-cap-sys-nice"
+  install -DTm0755 org.valve.holo-grant-cap-sys-nice.policy "${pkgdir}/usr/share/polkit-1/actions/org.valve.holo-grant-cap-sys-nice.policy"
+}
