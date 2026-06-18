@@ -3,7 +3,7 @@
 pkgname=plasma-pa
 pkgver=6.4.3
 _dirver=$(echo $pkgver | cut -d. -f1-3)
-pkgrel=2
+pkgrel=3
 pkgdesc='Plasma applet for audio volume management using PulseAudio'
 arch=(x86_64)
 url='https://kde.org/plasma-desktop/'
@@ -34,10 +34,12 @@ makedepends=(extra-cmake-modules
              kdoctools)
 groups=(plasma)
 source=(https://download.kde.org/stable/plasma/$_dirver/$pkgname-$pkgver.tar.xz{,.sig}
-        0001-CEC-Support.patch)
+        0001-CEC-Support.patch
+        0002-preferreddevice-Always-prefer-the-default-device.patch)
 sha256sums=('6b0e3d3ab469cf86fc18d211fcbf41251aa33a3014a32b77ec41905fd2fa4e21'
             'SKIP'
-            '5404c16114cd174b9c5eab8cd83c710c8d14a53253d235ef736378fd6ce95fce')
+            '5404c16114cd174b9c5eab8cd83c710c8d14a53253d235ef736378fd6ce95fce'
+            '8c66a2251684d1b6aa1ff7eea1939b89ff93f609c913c35bd6f36e3e2ff18963')
 validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>
               '0AAC775BB6437A8D9AF7A3ACFE0784117FBCE11D'  # Bhushan Shah <bshah@kde.org>
               'D07BD8662C56CB291B316EB2F5675605C74E02CF'  # David Edmundson <davidedmundson@kde.org>
@@ -45,6 +47,7 @@ validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell
 
 prepare() {
   patch -d $pkgname-$pkgver -Np1 -i ../0001-CEC-Support.patch
+  patch -d $pkgname-$pkgver -Np1 -i ../0002-preferreddevice-Always-prefer-the-default-device.patch
 }
 
 build() {

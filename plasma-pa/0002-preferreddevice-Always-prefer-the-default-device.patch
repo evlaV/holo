@@ -1,0 +1,122 @@
+From e45e40a9c6f2299ed624910f9fd4360eec12ccaa Mon Sep 17 00:00:00 2001
+From: Oliver Beard <olib141@outlook.com>
+Date: Fri, 12 Dec 2025 23:22:26 +0000
+Subject: [PATCH] preferreddevice: Always prefer the default device
+
+Otherwise, a new default device which is suspended (like bluetooth earphones) is unexpectedly ignored.
+
+The class is changed from a more heavy construction around the default sink/source in pulseaudio-qt to just a simple wrapper. It is still necessary because QML also wants to know the preferred device, otherwise it could be removed entirely.
+---
+ src/preferreddevice.cpp | 63 ++---------------------------------------
+ src/preferreddevice.h   |  1 -
+ 2 files changed, 2 insertions(+), 62 deletions(-)
+
+diff --git a/src/preferreddevice.cpp b/src/preferreddevice.cpp
+index a13ffdb0..f5245885 100644
+--- a/src/preferreddevice.cpp
++++ b/src/preferreddevice.cpp
+@@ -9,65 +9,10 @@
+ #include <PulseAudioQt/Sink>
+ #include <PulseAudioQt/Source>
+ 
+-#include "debug.h"
+-
+-template<typename D>
+-[[nodiscard]] auto findPreferredDevice(QList<D *> devices, D *defaultDevice)
+-{
+-    // Only one device is the preferred one
+-    if (devices.count() == 1) {
+-        return devices.at(0);
+-    }
+-
+-    auto lookForState = [&](PulseAudioQt::Device::State state) {
+-        D *ret = nullptr;
+-        for (const auto &device : devices) {
+-            if (device->state() != state || (device->isVirtualDevice() && !device->isDefault())) {
+-                continue;
+-            }
+-            if (!ret) {
+-                ret = device;
+-            } else if (device == defaultDevice) {
+-                ret = device;
+-                break;
+-            }
+-        }
+-        return ret;
+-    };
+-
+-    D *preferred = nullptr;
+-
+-    // Look for playing sinks + prefer default sink
+-    preferred = lookForState(PulseAudioQt::Device::RunningState);
+-    if (preferred) {
+-        return preferred;
+-    }
+-
+-    // Look for idle sinks + prefer default sink
+-    preferred = lookForState(PulseAudioQt::Device::IdleState);
+-    if (preferred) {
+-        return preferred;
+-    }
+-
+-    // Fallback to default sink
+-    return defaultDevice;
+-}
+-
+ PreferredDevice::PreferredDevice(QObject *parent)
+     : QObject(parent)
+ {
+-    connect(PulseAudioQt::Context::instance(), &PulseAudioQt::Context::sinkAdded, this, [this](PulseAudioQt::Sink *sink) {
+-        connect(sink, &PulseAudioQt::Sink::stateChanged, this, &PreferredDevice::updatePreferredSink, Qt::UniqueConnection);
+-        updatePreferredSink();
+-    });
+-    connect(PulseAudioQt::Context::instance(), &PulseAudioQt::Context::sinkRemoved, this, &PreferredDevice::updatePreferredSink);
+     connect(PulseAudioQt::Context::instance()->server(), &PulseAudioQt::Server::defaultSinkChanged, this, &PreferredDevice::updatePreferredSink);
+-
+-    connect(PulseAudioQt::Context::instance(), &PulseAudioQt::Context::sourceAdded, this, [this](PulseAudioQt::Source *source) {
+-        connect(source, &PulseAudioQt::Source::stateChanged, this, &PreferredDevice::updatePreferredSource, Qt::UniqueConnection);
+-        updatePreferredSource();
+-    });
+-    connect(PulseAudioQt::Context::instance(), &PulseAudioQt::Context::sourceRemoved, this, &PreferredDevice::updatePreferredSource);
+     connect(PulseAudioQt::Context::instance()->server(), &PulseAudioQt::Server::defaultSourceChanged, this, &PreferredDevice::updatePreferredSource);
+ }
+ 
+@@ -83,10 +28,8 @@ PulseAudioQt::Source *PreferredDevice::source() const
+ 
+ void PreferredDevice::updatePreferredSink()
+ {
+-    auto sink = findPreferredDevice(PulseAudioQt::Context::instance()->sinks(), PulseAudioQt::Context::instance()->server()->defaultSink());
+-
++    auto sink = PulseAudioQt::Context::instance()->server()->defaultSink();
+     if (sink != m_sink) {
+-        qCDebug(PLASMAPA) << "Changing preferred sink to" << sink << (sink ? sink->name() : "");
+         m_sink = sink;
+         Q_EMIT sinkChanged();
+     }
+@@ -94,10 +37,8 @@ void PreferredDevice::updatePreferredSink()
+ 
+ void PreferredDevice::updatePreferredSource()
+ {
+-    auto source = findPreferredDevice(PulseAudioQt::Context::instance()->sources(), PulseAudioQt::Context::instance()->server()->defaultSource());
+-
++    auto source = PulseAudioQt::Context::instance()->server()->defaultSource();
+     if (source != m_source) {
+-        qCDebug(PLASMAPA) << "Changing preferred source to" << source << (source ? source->name() : "");
+         m_source = source;
+         Q_EMIT sourceChanged();
+     }
+diff --git a/src/preferreddevice.h b/src/preferreddevice.h
+index 100ed80b..0ca15af8 100644
+--- a/src/preferreddevice.h
++++ b/src/preferreddevice.h
+@@ -26,7 +26,6 @@ Q_SIGNALS:
+ private:
+     void updatePreferredSink();
+     void updatePreferredSource();
+-    [[nodiscard]] PulseAudioQt::Sink *findPreferredSink() const;
+     PulseAudioQt::Sink *m_sink = nullptr;
+     PulseAudioQt::Source *m_source = nullptr;
+ };
+-- 
+2.54.0
+
