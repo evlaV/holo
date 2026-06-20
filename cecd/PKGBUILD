@@ -2,7 +2,7 @@
 
 pkgname=cecd
 pkgver=0.3.0
-pkgrel=1
+pkgrel=1.1
 pkgdesc='CEC userspace daemon'
 arch=('x86_64')
 url='https://github.com/evlav/linux-cec'
