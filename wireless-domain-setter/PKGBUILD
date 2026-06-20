@@ -2,7 +2,7 @@
 
 pkgname='wireless-domain-setter'
 pkgver=1.0
-pkgrel=1
+pkgrel=1.1
 pkgdesc='Copy wireless regulatory domain from self-managed devices to global kernel domain'
 arch=('any')
 license=('MIT')

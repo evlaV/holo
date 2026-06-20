@@ -2,7 +2,7 @@
 
 pkgname='holo-grant-cap-sys-nice'
 pkgver=1.0
-pkgrel=1
+pkgrel=1.1
 pkgdesc='Tool to grant cap_sys_nice to executables'
 arch=('any')
 license=('MIT')
