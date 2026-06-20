@@ -3,7 +3,7 @@
 pkgname=plasma-pa
 pkgver=6.4.3
 _dirver=$(echo $pkgver | cut -d. -f1-3)
-pkgrel=3
+pkgrel=3.01
 pkgdesc='Plasma applet for audio volume management using PulseAudio'
 arch=(x86_64)
 url='https://kde.org/plasma-desktop/'
