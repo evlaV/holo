@@ -1,0 +1,15 @@
+diff --git a/lookandfeel/components/VirtualKeyboardLoader.qml b/lookandfeel/components/VirtualKeyboardLoader.qml
+index 26ac5c1319..ed56bdb427 100644
+--- a/lookandfeel/components/VirtualKeyboardLoader.qml
++++ b/lookandfeel/components/VirtualKeyboardLoader.qml
+@@ -26,9 +26,7 @@ Loader {
+         state = state === "hidden" ? "visible" : "hidden";
+     }
+ 
+-    source: Qt.platform.pluginName.includes("wayland")
+-        ? Qt.resolvedUrl("./VirtualKeyboard_wayland.qml")
+-        : Qt.resolvedUrl("./VirtualKeyboard.qml")
++    source: Qt.resolvedUrl("./VirtualKeyboard.qml")
+ 
+     onKeyboardActiveChanged: {
+         if (keyboardActive) {
