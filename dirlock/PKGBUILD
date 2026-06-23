@@ -3,13 +3,13 @@
 pkgname=dirlock
 _commit=177064e06a3c473f70f9eaedcf239bd4024606aa
 pkgver=0.0.1.214.177064e
-pkgrel=5
+pkgrel=6
 pkgdesc='Tool for managing encrypted directories'
 url='https://github.com/evlav/dirlock/'
 arch=('x86_64')
 options=('!lto') # This breaks the libfido2-sys build
 source=("git+https://github.com/evlav/$pkgname.git#commit=$_commit"
-        'dirlock-sddm-helper'
+        'dirlock-pam-config'
         'dirlock-sddm.service'
         'steamos-enable-dirlock'
         'steamos-encrypt-home'
@@ -680,7 +680,7 @@ package() {
 
   # systemd service (SteamOS integration)
   install -m644 -D ../dirlock-sddm.service "$pkgdir/usr/lib/systemd/system/dirlock-sddm.service"
-  install -m755 -D ../dirlock-sddm-helper "$pkgdir/usr/lib/steamos/dirlock-sddm-helper"
+  install -m755 -D ../dirlock-pam-config "$pkgdir/usr/lib/steamos/dirlock-pam-config"
 
   # tmpfiles.d configuration
   install -m644 -D ../tmpfiles.conf "$pkgdir/usr/lib/tmpfiles.d/dirlock.conf"

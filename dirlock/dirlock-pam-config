@@ -1,0 +1,155 @@
+#!/bin/bash
+#
+# Copyright © 2025-2026 Valve Corporation
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+set -eu
+
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+CYAN="\033[0;36m"
+NC="\033[0m"
+
+# Only print messages to stdout when running from a tty
+[ -t 1 ] && print_messages=yes
+
+tempfile=$(mktemp /tmp/pam.XXXXXX)
+trap 'rm -f $tempfile' INT EXIT
+
+print_action() {
+    [ "${print_messages:-}" = "yes" ] || return 0
+    printf "** ${CYAN}%s${NC}: " "$1"
+}
+
+print_success() {
+    [ "${print_messages:-}" = "yes" ] || return 0
+    printf "${GREEN}%s${NC}\n" "OK"
+}
+
+print_error() {
+    [ "${print_messages:-}" = "yes" ] || return 0
+    printf "${RED}ERROR${NC}: %s\n" "$1"
+}
+
+print_msg() {
+    [ "${print_messages:-}" = "yes" ] || return 0
+    printf "%s\n" "$1"
+}
+
+log_journal() {
+    [ "${print_messages:-}" = "yes" ] && return 0
+    logger -t dirlock-pam-config -p "$1" "$2"
+}
+
+
+# Check if pam_dirlock.so is enabled in the given config file
+pam_file_updated() {
+    local pamfile="/etc/pam.d/$1"
+    shift
+
+    # Succeed only if all entries are present in the file
+    for group in "$@"; do
+        grep -q "^${group}\s.*\spam_dirlock.so" "$pamfile" || return 1
+    done
+}
+
+# Add a pam_dirlock.so entry to the given config file if it's not present already
+update_pam_entry() {
+    local file="$1"
+    local group="$2"
+    local params="$3"
+    local value next
+
+    # Return early if the PAM entry is already there
+    if grep -q "^${group}\s.*\spam_dirlock.so" "$file"; then
+        return 0
+    fi
+
+    if [ "$group" = "session" ]; then
+        sed -f - -i "$file" <<-EOF
+		0,/^-\?session\s/ {
+			/^-\?session\s/i\
+			session    optional                    pam_dirlock.so
+		}
+	EOF
+    elif [ "$params" = "autologin" ]; then
+        sed -f - -i "$file" <<-EOF
+		0,/^-\?auth\s.*required/ {
+			/^-\?auth\s.*required/i\
+			auth        [success=ok user_unknown=ignore module_unknown=ignore default=bad] pam_dirlock.so autologin
+		}
+	EOF
+    else
+        value=$(sed -En "/^-?${group}.*success=[0-9]/{s|.*success=([0-9]).*|\1|;p;q}" "$file")
+        if [ -z "$value" ]; then
+            echo "unexpected contents, refusing to update the file" >&2
+            return 1
+        fi
+        next=$((value + 1))
+
+        sed -f - -i "$file" <<-EOF
+		/^-\?$group\s.*success=$value/ {
+			i\
+			$group       [success=$next user_unknown=ignore module_unknown=ignore default=die]   pam_dirlock.so
+		}
+	EOF
+    fi
+
+    # Check that the file was actually updated
+    grep -q "^${group}\s.*\spam_dirlock.so" "$file"
+}
+
+# Add all necessary pam_dirlock.so entries to the given config file
+update_pam_file() {
+    local exit_code errmsg
+    local pamfile="$1"
+    local params="$2"
+    shift 2
+
+    # Check if the file is already up-to-date and return early if that's the case
+    print_action "Checking if dirlock is enabled in /etc/pam.d/$pamfile"
+    if [ ! -f "/etc/pam.d/$pamfile" ]; then
+        errmsg="/etc/pam.d/$pamfile does not exist"
+        print_error "$errmsg"
+        log_journal err "$errmsg"
+        return 1
+    elif pam_file_updated "$pamfile" "$@"; then
+        print_success
+        log_journal info "dirlock already enabled in /etc/pam.d/$pamfile"
+        return 0
+    else
+        print_msg "NO"
+    fi
+
+    # Add all necessary entries.
+    # Work on a temporary copy to ensure that everything succeeds
+    # before replacing the actual file.
+    print_action "Enabling dirlock in /etc/pam.d/$pamfile"
+    cp "/etc/pam.d/$pamfile" "$tempfile"
+    for group in "$@"; do
+        exit_code=0
+        errmsg=$(update_pam_entry "$tempfile" "$group" "$params" 2>&1) || exit_code=$?
+        if [ "$exit_code" -ne 0 ]; then
+            [ -n "$errmsg" ] || errmsg="failed to update the file"
+            print_error "$errmsg"
+            log_journal err "dirlock NOT enabled in /etc/pam.d/$pamfile: $errmsg"
+            return 1
+        fi
+    done
+    cp "$tempfile" "/etc/pam.d/$pamfile"
+    print_success
+    log_journal notice "dirlock enabled in /etc/pam.d/$pamfile"
+}
+
+# Enable pam_dirlock.so in all PAM config files that need it
+update_pam_config() {
+    local retcode=0
+    update_pam_file system-auth "" auth password session || retcode=1
+    update_pam_file sudo "" auth || retcode=1
+    update_pam_file sddm-autologin autologin auth || retcode=1
+    return $retcode
+}
+
+update_pam_config

@@ -112,7 +112,7 @@ decrypt_home() {
     echo -e "** ${CYAN}Decrypting $user_home (this can take a while)${NC}"
     rm -rf "$tempdir"
     mkdir -p "$tempdir"
-    rsync -aAXH --open-noatime --info=progress2 "$user_home/" "$tempdir/$user_name/"
+    rsync --no-i-r -aAXH --open-noatime --info=progress2 "$user_home/" "$tempdir/$user_name/"
     sync
     exch "$user_home" "$tempdir/$user_name"
     sync

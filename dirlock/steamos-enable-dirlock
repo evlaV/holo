@@ -61,99 +61,6 @@ enable_systemd_service() {
     fi
 }
 
-update_pam_entry() {
-    local pamfile="$1"
-    local group="$2"
-
-    if grep -q "^${group}.*pam_dirlock.so" "$pamfile"; then
-        return 0
-    fi
-
-    if [ "$group" = "session" ]; then
-        sed -f - -i "$pamfile" <<-EOF
-		/^-\?session.*pam_systemd_home.so/ {
-			i\
-			session    optional                    pam_dirlock.so
-		}
-		EOF
-        return 0
-    fi
-
-    local value=$(sed -En "/^-?${group}.*success=[0-9]/{s|.*success=([0-9]).*|\1|;p}" \
-                   "$pamfile" | sort -nr | head -n 1)
-
-    if [ -z "$value" ]; then
-        echo -e "${RED}WARNING${NC}: unexpected contents, refusing to update the file"
-        return 1
-    fi
-
-    local next=$(($value + 1))
-
-    sed -f - -i "$pamfile" <<-EOF
-	/^-\?$group.*success=$value/ {
-		i\
-		$group       [success=$next user_unknown=ignore module_unknown=ignore default=die]   pam_dirlock.so
-	}
-	EOF
-}
-
-update_pam_config() {
-    local retcode=0
-
-    tempfile=$(mktemp /tmp/pam.XXXXXX)
-    trap "rm -f $tempfile" INT EXIT
-
-    echo -en "** ${CYAN}Checking if dirlock is enabled in /etc/pam.d/system-auth${NC}: "
-    if grep -q '^auth\s.*\spam_dirlock.so' /etc/pam.d/system-auth && \
-       grep -q '^password\s.*\spam_dirlock.so' /etc/pam.d/system-auth && \
-       grep -q '^session\s.*\spam_dirlock.so' /etc/pam.d/system-auth; then
-        echo -e "${GREEN}OK${NC}"
-    else
-        echo -e "NO"
-        echo -en "** ${CYAN}Enabling dirlock in /etc/pam.d/system-auth${NC}: "
-        if [ -e "/var/lib/overlays/etc/upper/pam.d/system-auth" ]; then
-            echo -e "${RED}NO${NC}"
-            echo -e "${RED}WARNING${NC}: the file has local changes, refusing to update it."
-            retcode=1
-        else
-            cp /etc/pam.d/system-auth "$tempfile"
-            if update_pam_entry "$tempfile" auth && \
-               update_pam_entry "$tempfile" password && \
-               update_pam_entry "$tempfile" session; then
-                cp "$tempfile" /etc/pam.d/system-auth
-                echo -e "${GREEN}OK${NC}"
-            else
-                echo -e "${RED}ERROR${NC}"
-                retcode=1
-            fi
-        fi
-    fi
-
-
-    echo -en "** ${CYAN}Checking if dirlock is enabled in /etc/pam.d/sudo${NC}: "
-    if grep -q '^auth\s.*\spam_dirlock.so' /etc/pam.d/sudo; then
-        echo -e "${GREEN}OK${NC}"
-    else
-        echo -e "NO"
-        echo -en "** ${CYAN}Enabling dirlock in /etc/pam.d/sudo${NC}: "
-        if [ -e "/var/lib/overlays/etc/upper/pam.d/sudo" ]; then
-            echo -e "${RED}NO${NC}"
-            echo -e "${RED}WARNING${NC}: the file has local changes, refusing to update it."
-            retcode=1
-        else
-            cp /etc/pam.d/sudo "$tempfile"
-            if update_pam_entry "$tempfile" auth; then
-                cp "$tempfile" /etc/pam.d/sudo
-                echo -e "${GREEN}OK${NC}"
-            else
-                echo -e "${RED}ERROR${NC}"
-                retcode=1
-            fi
-        fi
-    fi
-    return $retcode
-}
-
 check_tpm_support() {
     echo -en "** ${CYAN}Checking if a TPM is available and usable${NC}: "
     if dirlock tpm2-test &> /dev/null; then
@@ -209,7 +116,7 @@ enable_fs_encryption
 enable_atomic_update_conf
 enable_systemd_service
 needs_pam_review=0
-if ! update_pam_config; then
+if ! /usr/lib/steamos/dirlock-pam-config; then
     needs_pam_review=1
 fi
 check_tpm_support
@@ -244,5 +151,10 @@ if [ "$needs_pam_review" != "0" ]; then
     echo " - /etc/pam.d/sudo:"
     echo -en "$GREEN"
     echo "auth       [success=3 user_unknown=ignore module_unknown=ignore default=die]   pam_dirlock.so"
+    echo -en "$NC"
+    echo
+    echo " - /etc/pam.d/sddm-autologin:"
+    echo -en "$GREEN"
+    echo "auth       [success=ok user_unknown=ignore module_unknown=ignore default=die]  pam_dirlock.so autologin"
     echo -en "$NC"
 fi

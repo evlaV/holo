@@ -45,6 +45,7 @@ check_encryption_enabled() {
             dirlock status -e "$user_home" &> /dev/null && \
             test -f /etc/atomic-update.conf.d/dirlock.conf && \
             systemctl is-enabled -q dirlock-sddm.service && \
+            grep -q '^auth\s.*\spam_dirlock.so' /etc/pam.d/sddm-autologin && \
             grep -q '^auth\s.*\spam_dirlock.so' /etc/pam.d/system-auth; then
         echo -e "${GREEN}OK${NC}"
     else
@@ -133,7 +134,7 @@ encrypt_home() {
     mkdir -p "$tempdir/enc"
     dirlock encrypt --user "$user_name" --protector-type "$protector" --protector-name "Protector for $user_home" "$tempdir/enc"
     echo -e "** ${CYAN}Encrypting $user_home (this can take a while)${NC}"
-    rsync -aAXH --open-noatime --info=progress2 "$user_home"/ "$tempdir/enc/$user_name/"
+    rsync --no-i-r -aAXH --open-noatime --info=progress2 "$user_home/" "$tempdir/enc/$user_name/"
     mv "$tempdir/enc/$user_name" "$tempdir/$user_name"
     sync
     exch "$user_home" "$tempdir/$user_name"
