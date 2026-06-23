@@ -1,7 +1,7 @@
 # Maintainer: Holo Team
 
 pkgname=steamos-efi
-_srctag=jupiter-20260410.1
+_srctag=jupiter-20260602.1
 pkgver=${_srctag#jupiter-}
 pkgrel=1
 arch=('x86_64')
@@ -11,7 +11,7 @@ license=('GPL2')
 depends=('efibootmgr' 'util-linux' 'coreutils')
 makedepends=('git' 'openssh' 'gnu-efi-libs' 'grub' 'fontconfig' 'noto-fonts')
 source=("git+https://github.com/evlav/${pkgname}.git#tag=$_srctag")
-sha512sums=('edfcad832e50c449a5510e9ff59e04a311cd77cd910cb95a41de98f79b3a1c11aa7314b9f5c9cce5314b548311cb2025d1df2e7044517ffab40cf6c0fdf6cf60')
+sha512sums=('b1c4cbd59d028ace5acea4d9a73311cb00522fdacabb81278bde2c90566fd8f875098e8fe75715da0e1b694fe7aa46ed588295b5a9b028944294bd57867d7f1b')
 
 build() {
 	cd "${pkgname}"

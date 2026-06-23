@@ -2,7 +2,7 @@
 
 pkgname=steamos-atomupd-client
 pkgver=0.20260416.1
-pkgrel=1
+pkgrel=2
 pkgdesc='SteamOS Atomic Update (client) - Atomic update client for SteamOS.'
 arch=('any')
 url='https://store.steampowered.com/steamos/'
@@ -11,7 +11,7 @@ makedepends=('git' 'python-setuptools')
 depends=('python>=3.13' 'python<3.14' 'rauc' 'python-semantic-version')
 optdepends=(
   'desync'
-  'steamos-customizations-jupiter: for holo-alias compatibility symlinks'
+  'steamos-alias: for steamos-alias compatibility symlinks'
 )
 provides=("${pkgname}")
 conflicts=("${pkgname}")
@@ -30,9 +30,6 @@ package () {
 
   install -Dm755 "bin/holo-atomupd-client" "$pkgdir/usr/bin/holo-atomupd-client"
   install -Dm755 "bin/holo-atomupd-mkmanifest" "$pkgdir/usr/bin/holo-atomupd-mkmanifest"
-  # Create temporary symlinks to avoid breaking existing tools that relied on the old naming scheme
-  ln -sf "/usr/bin/holo-alias" "$pkgdir/usr/bin/steamos-atomupd-client"
-  ln -sf "/usr/bin/holo-alias" "$pkgdir/usr/bin/steamos-atomupd-mkmanifest"
 
   install -Dm644 "completions/holo-atomupd-client" "$pkgdir/usr/share/bash-completion/completions/holo-atomupd-client"
   install -Dm644 "completions/holo-atomupd-mkmanifest" "$pkgdir/usr/share/bash-completion/completions/holo-atomupd-mkmanifest"

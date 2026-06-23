@@ -2,7 +2,7 @@
 
 pkgbase='steamos-reset'
 pkgname=('steamos-reset' 'steamos-reset-ui')
-_srctag=jupiter-20260414.1
+_srctag=jupiter-20260602.1
 pkgver=${_srctag#jupiter-}
 pkgrel=1
 arch=('x86_64')
@@ -10,7 +10,7 @@ license=('GPL')
 makedepends=('git' 'qt5-base' 'qt5-quickcontrols2')
 url='https://github.com/evlav/steamos-reset'
 source=("${pkgbase}::git+https://github.com/evlav/steamos-reset#tag=${_srctag}")
-sha256sums=('10e1dbb04dd00a54a07d4613e9e7a62d725ac9bd3cc8416deca8e9c0539ec2e4')
+sha256sums=('1be131a70570f1b9e733596b6ad1bde7497f4b08bceb4973a0a142941de641bf')
 
 _uifiles=(
     usr/share/holo-reset/lighttpd/holo-reset.conf
@@ -32,7 +32,7 @@ build() {
 package_steamos-reset() {
     depends=('curl' 'bash' 'steamos-efi' 'steamos-atomupd-client' 'jq')
     optdepends=(
-        'steamos-customizations-jupiter: for holo-alias compatibility symlinks'
+        'steamos-alias: for steamos-alias compatibility symlinks'
     )
     pkgdesc='Backend and CLI to reset SteamOS to a freshly installed state'
 
