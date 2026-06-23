@@ -1,0 +1,36 @@
+#!/bin/bash
+# This script is now deprecated, please use steamosctl.
+# It exists for Steam client compatibility
+
+set -e
+
+session="${1:-gamescope}"
+
+die() { echo >&2 "!! $*"; exit 1; }
+
+case "$session" in
+  plasma-wayland-persistent)
+    steamosctl set-default-login-mode desktop
+    steamosctl set-default-desktop-session plasma.desktop
+    steamosctl switch-to-desktop-mode
+  ;;
+  plasma-x11-persistent)
+    steamosctl set-default-login-mode desktop
+    steamosctl set-default-desktop-session plasmax11.desktop
+    steamosctl switch-to-desktop-mode
+  ;;
+  plasma)
+    steamosctl switch-to-desktop-mode plasmax11.desktop
+  ;;
+  plasma-wayland)
+    steamosctl switch-to-desktop-mode plasma.desktop
+  ;;
+  gamescope)
+    steamosctl set-default-login-mode game
+    steamosctl switch-to-game-mode
+  ;;
+  *)
+    echo >&2 "!! Unrecognized session '$session'"
+    exit 1
+  ;;
+esac
