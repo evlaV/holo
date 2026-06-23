@@ -1,0 +1,38 @@
+From dbfc76b8df3e32223be47cd66c528b2a9d43b660 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?N=C3=ADcolas=20F=2E=20R=2E=20A=2E=20Prado?=
+ <nfraprado@collabora.com>
+Date: Mon, 8 Jun 2026 11:48:50 -0400
+Subject: [PATCH] sleep: Don't fallback to suspend if hibernate failed with
+ ECANCELED
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+If hibernate in suspend-then-hibernate failed with -ECANCELED, that
+means it was intentionally cancelled, so don't fallback to suspend, let
+the system wake up.
+
+Signed-off-by: Nícolas F. R. A. Prado <nfraprado@collabora.com>
+---
+ src/sleep/sleep.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/sleep/sleep.c b/src/sleep/sleep.c
+index 181bb4ccefc5..4632332cce5f 100644
+--- a/src/sleep/sleep.c
++++ b/src/sleep/sleep.c
+@@ -506,6 +506,11 @@ static int execute_s2h(const SleepConfig *sleep_config) {
+         log_debug("Attempting to hibernate");
+         r = execute(sleep_config, SLEEP_HIBERNATE, NULL);
+         if (r < 0) {
++                if (r == -ECANCELED) {
++                        log_notice("Hibernate intentionally cancelled, won't attempt to suspend.");
++                        return r;
++                }
++
+                 log_notice("Couldn't hibernate, will try to suspend again.");
+ 
+                 r = execute(sleep_config, SLEEP_SUSPEND, "suspend-after-failed-hibernate");
+-- 
+2.53.0
+
