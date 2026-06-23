@@ -118,7 +118,7 @@ super bootconfig
 super storage-health
 
 # WiFi connection info
-run 'iwctl station wlan0 show | grep -E "State|Frequency|RSSI|Mode|MCS|Bitrate"'
+run 'iw dev wlan0 link'
 
 # Network connectivity info
 run 'ip addr'

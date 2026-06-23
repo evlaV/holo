@@ -2,7 +2,7 @@
 
 pkgname='steamos-systemreport'
 pkgver=0.18
-pkgrel=1
+pkgrel=2
 pkgdesc='System report collection tool'
 arch=('any')
 license=('LGPL2.1')
@@ -12,7 +12,7 @@ source=(
   'steamos-systemreport-privileged'
   'com.steampowered.SteamOS.systemreport.policy'
 )
-sha256sums=('7b2814a69fe24c26158851c5af971907e7a9058fe920d25394a6294764177515'
+sha256sums=('99356d78325a266fd0d885f5bca1deabeab2bb7f3a53760645cb4b7878a51289'
             'ba38397f247c8ae62037291451b9b8e7eeb946a99add7078ebc5f316ccaf203a'
             'b36473e3b77307450e75c59e248dde34d95b69c6c765a425fc30d9e201e23067')
 
