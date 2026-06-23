@@ -31,6 +31,10 @@ function parse_disable_dm() {
             name="${BASH_REMATCH[2]}"
             val="${BASH_REMATCH[3]}"
 
+            if [[ "$val" == "X" ]]; then
+                val="1"
+            fi
+
             BITS["$name"]="$bit"
             STATE["$name"]="$val"
         fi
@@ -94,36 +98,82 @@ function set_pd_thresh() {
 }
 
 function print_usage() {
-    echo "Usage:" >&2
-    echo "$0 list" >&2
-    echo "$0 set HW_SCAN [disabled|enabled]" >&2
-    echo "$0 set-pd-thresh -55" >&2
-    echo "$0 reset" >&2
+    local prog_name="$(basename "$0")"
+
+    cat >&2 <<-EOF
+Usage:
+
+    $prog_name list                           - show all parameters for all connected rtw89 phy's
+    $prog_name set-low-latency-mode [on|off]  - Turn on/off low-latency mode
+    $prog_name reset                          - Shorthand for 'set-low-latency-mode off'
+
+To manually set different parameters that are part of low latency mode, use:
+
+    $prog_name set-feature HW_SCAN [on|off]   - default is 'on'
+    $prog_name set-pd-thresh <val>            - default is '0'
+    $prog_name set-powersave [on|off]         - default is 'on'
+    $prog_name set-aggressive-edca [on|off]   - default is 'off'
+EOF
     exit 1
 }
 
 # For each dongle plugged in, set/unset the requested parameters
 for DEBUGFS_DIR in "${RTW89_DEBUGFS_DIRS[@]}"; do
-    echo "-> $(basename "$(dirname "${DEBUGFS_DIR}" )" )"
+    PHY_NAME="$(basename "$(dirname "${DEBUGFS_DIR}" )" )"
+    WLAN_NAME="$(basename "$(compgen -G "$(dirname "${DEBUGFS_DIR}" )/netdev:*")" | cut -d: -f2-)"
 
     # Load the current state
     parse_disable_dm "${DEBUGFS_DIR}/disable_dm"
     
     case "${1:-}" in
+        set-low-latency-mode)
+            if [[ -z "${2:-}" ]]; then
+                print_usage
+            fi
+            case "$(boolify "${2}")" in
+                1)
+                    "$0" set-feature HW_SCAN off
+                    "$0" set-pd-thresh -75
+                    "$0" set-powersave off
+                    "$0" set-aggressive-edca on
+                    ;;
+                0)
+                    "$0" reset
+                    ;;
+            esac
+            ;;
+        set-powersave)
+            if [[ -z "${2:-}" ]]; then
+                print_usage
+            fi
+
+            case "$(boolify "${2}")" in
+                1)
+                    iw dev "${WLAN_NAME}" set power_save on
+                    set_feature "INACTIVE_PS" on
+                    ;;
+                0)
+                    iw dev "${WLAN_NAME}" set power_save off
+                    set_feature "INACTIVE_PS" off
+                    ;;
+            esac
+            print_mask > "${DEBUGFS_DIR}/disable_dm"
+            ;;
         set-pd-thresh)
             if [[ -z "${2:-}" ]]; then
-                print_usage;
+                print_usage
             fi
 
             if [[ "${2}" == 0 ]]; then
+                # packet detection threshold of 0 means default
                 echo "0" >"${DEBUGFS_DIR}/static_pd_th"
             else
-                # Typical value: -55
+                # Typical values we might set: -75, -55.  Dynamic range is from -102 ~ -40
                 echo "1 ${2}" >"${DEBUGFS_DIR}/static_pd_th"
             fi
             ;;
         set-aggressive-edca)
-            # Disabled for now
+            # Disabled for now until we properly reverse-engineer the EDCA bit packing
             exit 0
             case "$(boolify "${2}")" in
                 1)
@@ -140,22 +190,23 @@ for DEBUGFS_DIR in "${RTW89_DEBUGFS_DIRS[@]}"; do
                     ;;
             esac
             ;;
-        set)
+        set-feature)
             set_feature "$2" "$3"
             print_mask > "${DEBUGFS_DIR}/disable_dm"
-            cat "${DEBUGFS_DIR}/disable_dm"
             ;;
         list)
+            echo "-> ${PHY_NAME} (${WLAN_NAME})"
             cat "${DEBUGFS_DIR}/disable_dm"
+            cat "${DEBUGFS_DIR}/static_pd_th" | grep -E 'DIG:|OFDM'
             ;;
         reset)
             echo "0x00" > "${DEBUGFS_DIR}/disable_dm"
             "$0" set-pd-thresh 0
             "$0" set-aggressive-edca disable
+            "$0" set-powersave on
             ;;
         *)
             print_usage
             ;;
     esac
-    echo
 done
