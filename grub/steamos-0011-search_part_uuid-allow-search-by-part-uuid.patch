@@ -1,22 +1,22 @@
-From ca185e4d03af0a326732df37abfe99f0f7690ebd Mon Sep 17 00:00:00 2001
+From 21d521da5824201bd974e5796bbdace7e1c8753a Mon Sep 17 00:00:00 2001
 From: Vivek Das Mohapatra <vivek@collabora.com>
 Date: Wed, 1 Apr 2026 11:41:47 +0000
 Subject: [PATCH] search_part_uuid: allow search by part uuid
 
 ---
- grub-core/Makefile.core.def          |  5 ++
- grub-core/commands/search.c          | 85 ++++++++++++++++++++++++++--
- grub-core/commands/search_partuuid.c |  5 ++
- grub-core/commands/search_wrap.c     | 11 +++-
- include/grub/search.h                |  3 +
- 5 files changed, 101 insertions(+), 8 deletions(-)
+ grub-core/Makefile.core.def          |   5 ++
+ grub-core/commands/search.c          | 100 +++++++++++++++++++++++++--
+ grub-core/commands/search_partuuid.c |   5 ++
+ grub-core/commands/search_wrap.c     |  11 ++-
+ include/grub/search.h                |   3 +
+ 5 files changed, 116 insertions(+), 8 deletions(-)
  create mode 100644 grub-core/commands/search_partuuid.c
 
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index 0cf155128..36e270ae0 100644
+index a5e34cda6..ba9580649 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
-@@ -1136,6 +1136,11 @@ module = {
+@@ -1143,6 +1143,11 @@ module = {
    common = commands/search_uuid.c;
  };
  
@@ -29,7 +29,7 @@ index 0cf155128..36e270ae0 100644
    name = search_label;
    common = commands/search_label.c;
 diff --git a/grub-core/commands/search.c b/grub-core/commands/search.c
-index 49b679e80..dd1aa62b8 100644
+index 49b679e80..4ac09efc0 100644
 --- a/grub-core/commands/search.c
 +++ b/grub-core/commands/search.c
 @@ -30,6 +30,7 @@
@@ -40,7 +40,7 @@ index 49b679e80..dd1aa62b8 100644
  
  GRUB_MOD_LICENSE ("GPLv3+");
  
-@@ -89,6 +90,53 @@ is_unencrypted_disk (grub_disk_t disk)
+@@ -89,6 +90,68 @@ is_unencrypted_disk (grub_disk_t disk)
    return true;
  }
  
@@ -49,7 +49,22 @@ index 49b679e80..dd1aa62b8 100644
 +#define UUID_CHARSIZE 37
 +static grub_err_t part_uuid (grub_device_t dev, char **uuid)
 +{
-+  struct grub_partition *p = dev->disk->partition;
++  struct grub_partition *p;
++
++  if (dev->disk == NULL)
++    {
++      *uuid = NULL;
++      return GRUB_ERR_NONE;
++    }
++
++  if (dev->disk->partition == NULL)
++    {
++      *uuid = NULL;
++      return GRUB_ERR_NONE;
++    }
++
++  p = dev->disk->partition;
++
 +  grub_disk_t disk = grub_disk_open(dev->disk->name);
 +
 +  if (!disk)
@@ -94,7 +109,7 @@ index 49b679e80..dd1aa62b8 100644
  /* Helper for FUNC_NAME.  */
  static int
  iterate_device (const char *name, void *data)
-@@ -141,13 +189,15 @@ iterate_device (const char *name, void *data)
+@@ -141,13 +204,15 @@ iterate_device (const char *name, void *data)
        grub_device_close (dev);
      }
  
@@ -112,7 +127,7 @@ index 49b679e80..dd1aa62b8 100644
      {
        char *buf;
        grub_file_t file;
-@@ -165,6 +215,27 @@ iterate_device (const char *name, void *data)
+@@ -165,6 +230,27 @@ iterate_device (const char *name, void *data)
  	}
        grub_free (buf);
      }
@@ -140,7 +155,7 @@ index 49b679e80..dd1aa62b8 100644
  #else
      {
        /* SEARCH_FS_UUID or SEARCH_LABEL */
-@@ -177,7 +248,7 @@ iterate_device (const char *name, void *data)
+@@ -177,7 +263,7 @@ iterate_device (const char *name, void *data)
  	{
  	  fs = grub_fs_probe (dev);
  
@@ -149,7 +164,7 @@ index 49b679e80..dd1aa62b8 100644
  #define read_fn fs_uuid
  #else
  #define read_fn fs_label
-@@ -386,10 +457,12 @@ grub_cmd_do_search (grub_command_t cmd __attribute__ ((unused)), int argc,
+@@ -386,10 +472,12 @@ grub_cmd_do_search (grub_command_t cmd __attribute__ ((unused)), int argc,
  
  static grub_command_t cmd;
  
@@ -163,7 +178,7 @@ index 49b679e80..dd1aa62b8 100644
  #else
  GRUB_MOD_INIT(search_label)
  #endif
-@@ -400,10 +473,12 @@ GRUB_MOD_INIT(search_label)
+@@ -400,10 +488,12 @@ GRUB_MOD_INIT(search_label)
  			   HELP_MESSAGE);
  }
  
