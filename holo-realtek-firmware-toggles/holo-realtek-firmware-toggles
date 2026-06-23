@@ -1,0 +1,161 @@
+#!/bin/bash
+
+set -eu
+
+if [[ $EUID -ne 0 ]];
+then
+    exec pkexec --disable-internal-agent "$0" "$@"
+fi
+
+# Gett list of `rtw89` directories in `/sys/kernel/debug`.  We store in an array
+# because there can be more then one if someone has plugged more than one dongle in
+mapfile -t RTW89_DEBUGFS_DIRS < <(find /sys/kernel/debug/ieee80211 -name rtw89 -type d)
+
+if [[ "${#RTW89_DEBUGFS_DIRS[@]}" == "0" ]]; then
+    echo "No realtek dongles found, or driver too old!" >&2
+    exit 1
+fi
+
+declare -A BITS
+declare -A STATE
+
+function parse_disable_dm() {
+    local disable_dm_path="${1}"
+    BITS=()
+    STATE=()
+
+    # Parse feature file
+    while IFS= read -r line; do
+        if [[ $line =~ ^\[([0-9]+)\][[:space:]]+([A-Z0-9_]+):[[:space:]]+([OX])$ ]]; then
+            bit="${BASH_REMATCH[1]}"
+            name="${BASH_REMATCH[2]}"
+            val="${BASH_REMATCH[3]}"
+
+            BITS["$name"]="$bit"
+            STATE["$name"]="$val"
+        fi
+    done < "${disable_dm_path}"
+}
+
+function print_mask() {
+    # Build bitmask from file
+    local mask=0
+    for name in "${!BITS[@]}"; do
+        if [[ ${STATE[$name]} == "1" ]]; then
+            # I'm using `2 ** $X` here instead of `2 << $X` because vscode's heredoc highlighting triggers otherwise :(
+            mask=$(( mask | ( 2 ** BITS[$name] ) ))
+        fi
+    done
+    printf "0x%x\n" "$mask"
+}
+
+function boolify() {
+    case "$1" in
+        1|on|true|enable|enabled)
+            echo -n "1"
+            ;;
+        0|off|false|disable|disabled)
+            echo -n "0"
+            ;;
+        *)
+            echo "Unable to convert '${1}' into a boolean!" >&2
+            exit 1
+            ;;
+    esac
+}
+
+# Super confusing to deal in 0/1 due to this being a "disable" file.  Convert from `disabled` -> `1`.
+function boolify_disable() {
+    case "$(boolify "$1")" in
+        1)
+            echo -n "0"
+            ;;
+        0)
+            echo -n "1"
+            ;;
+    esac
+}
+
+function set_feature() {
+    local name="$1"
+    local val="$2"
+
+    if [[ ! -v STATE[$name] ]]; then
+        echo "Unknown feature: $name" >&2
+        return 1
+    fi
+
+    STATE[$name]="$(boolify_disable "$val")"
+}
+
+function set_pd_thresh() {
+    local val="$1"
+    echo "$1" | static_pd_th
+}
+
+function print_usage() {
+    echo "Usage:" >&2
+    echo "$0 list" >&2
+    echo "$0 set HW_SCAN [disabled|enabled]" >&2
+    echo "$0 set-pd-thresh -55" >&2
+    echo "$0 reset" >&2
+    exit 1
+}
+
+# For each dongle plugged in, set/unset the requested parameters
+for DEBUGFS_DIR in "${RTW89_DEBUGFS_DIRS[@]}"; do
+    echo "-> $(basename "$(dirname "${DEBUGFS_DIR}" )" )"
+
+    # Load the current state
+    parse_disable_dm "${DEBUGFS_DIR}/disable_dm"
+    
+    case "${1:-}" in
+        set-pd-thresh)
+            if [[ -z "${2:-}" ]]; then
+                print_usage;
+            fi
+
+            if [[ "${2}" == 0 ]]; then
+                echo "0" >"${DEBUGFS_DIR}/static_pd_th"
+            else
+                # Typical value: -55
+                echo "1 ${2}" >"${DEBUGFS_DIR}/static_pd_th"
+            fi
+            ;;
+        set-aggressive-edca)
+            # Disabled for now
+            exit 0
+            case "$(boolify "${2}")" in
+                1)
+                    echo "c300 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
+                    echo "c304 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
+                    echo "c308 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
+                    echo "c30c 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
+                    ;;
+                0)
+                    echo "c300 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
+                    echo "c304 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
+                    echo "c308 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
+                    echo "c30c 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
+                    ;;
+            esac
+            ;;
+        set)
+            set_feature "$2" "$3"
+            print_mask > "${DEBUGFS_DIR}/disable_dm"
+            cat "${DEBUGFS_DIR}/disable_dm"
+            ;;
+        list)
+            cat "${DEBUGFS_DIR}/disable_dm"
+            ;;
+        reset)
+            echo "0x00" > "${DEBUGFS_DIR}/disable_dm"
+            "$0" set-pd-thresh 0
+            "$0" set-aggressive-edca disable
+            ;;
+        *)
+            print_usage
+            ;;
+    esac
+    echo
+done
