@@ -6,7 +6,7 @@
 
 pkgname=plymouth
 pkgver=22.02.122
-pkgrel=7.3
+pkgrel=7.4
 pkgdesc='Graphical boot splash screen'
 arch=('x86_64')
 url='https://www.freedesktop.org/wiki/Software/Plymouth/'
@@ -54,7 +54,7 @@ source=("https://www.freedesktop.org/software/$pkgname/releases/$pkgname-$pkgver
 
 sha256sums=('100551442221033ce868c447ad6c74d831d209c18ae232b98ae0207e34eadaeb'
             'cd35f5d5c6ceff353375500fbe4ea2293b5bfb13c3a02dab2c82c1a85b808288'
-            '6b7d54b69f37a6c87fbf072eed03b82c52b1f6e2b88d1e2fc9bde03e86ea05c7'
+            '66a3ed408d29d133de84458aeb583e0ae7266319ef99b25aa90d186b73c236f5'
             '91125025f33f3d74957cec7b01e7930073067768b36455728c5e761e1aed6ee3'
             '7a2a83b98a3b79145ac4f41d6bff9829ca601e8ff3b35d78bdee5e001364d320'
             'e7744dbc89e0facf72a8202b2dc4f310bcc84d5f77bc4fa077984b865f9f860a'
