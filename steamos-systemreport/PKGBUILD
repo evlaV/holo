@@ -1,10 +1,10 @@
 # Author : Clayton Craft <clayton@igalia.com>
 
 pkgname='steamos-systemreport'
-pkgver=0.19
+pkgver=0.20
 pkgrel=1
 pkgdesc='System report collection tool'
-arch=('any')
+arch=('x86_64' 'aarch64')
 license=('LGPL2.1')
 url='https://github.com/evlav/holo'
 source=(
@@ -12,8 +12,8 @@ source=(
   'steamos-systemreport-privileged'
   'com.steampowered.SteamOS.systemreport.policy'
 )
-sha256sums=('d1e924d4e6749c929927bd7e7004838e8fb645c738c5606a8f7e60c05eafd0ad'
-            'ba38397f247c8ae62037291451b9b8e7eeb946a99add7078ebc5f316ccaf203a'
+sha256sums=('1752d44930e4beda16297bfdde1b2cd63a4d425085d98aafdcb6fce092a05b5b'
+            '36cfc19000071ebcdf59f23ab9779b26b00dcbaa1b59b0010b72bca7c3198128'
             'b36473e3b77307450e75c59e248dde34d95b69c6c765a425fc30d9e201e23067')
 
 package() {
@@ -35,11 +35,21 @@ package() {
     'util-linux'                     # lsblk, hexdump
     'parted'                         # parted
     'smartmontools'                  # smartctl
-    'steamos-customizations-jupiter' # steamos-{readonly,dump-info}
-    'jupiter-hw-support'             # amd_system_info
     'polkit'
     'zstd'
   )
+
+  if [[ "${CARCH}" == "x86_64" ]]; then
+    depends+=(
+      'steamos-customizations-jupiter' # steamos-{readonly,dump-info}
+      'jupiter-hw-support'             # amd_system_info
+    )
+  elif [[ "${CARCH}" == "aarch64" ]]; then
+    depends+=(
+      'steamos-customizations-deckard' # steamos-{readonly,dump-info}
+    )
+  fi
+
   install -Dm755 steamos-systemreport -t "$pkgdir"/usr/bin/
   install -Dm755 steamos-systemreport-privileged -t "$pkgdir"/usr/bin/steamos-polkit-helpers
   install -m755 -d "$pkgdir"/usr/share/polkit-1/actions

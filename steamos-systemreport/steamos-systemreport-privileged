@@ -29,7 +29,9 @@ function run {
 case ${1:-all} in
   all|firmware)
     # dumps info about firmware/BIOS, os-release
-    run amd_system_info
+    if [[ -n "$(which amd_system_info 2>/dev/null)" ]]; then
+      run amd_system_info
+    fi
     ;;&
 
   all|partitions)

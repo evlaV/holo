@@ -117,6 +117,11 @@ super bootconfig
 
 super storage-health
 
+# Additional files for SteamVR report on Steam Frame
+if [[ -n "$(which steamvr 2>/dev/null)" ]]; then
+  run 'steamvr report'
+fi
+
 # WiFi connection info
 run 'iw dev wlan0 link'
 run 'iw dev wlan0 survey dump'
