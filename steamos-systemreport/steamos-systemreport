@@ -119,6 +119,7 @@ super storage-health
 
 # WiFi connection info
 run 'iw dev wlan0 link'
+run 'iw dev wlan0 survey dump'
 
 # Network connectivity info
 run 'ip addr'

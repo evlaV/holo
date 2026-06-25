@@ -1,8 +1,8 @@
 # Author : Clayton Craft <clayton@igalia.com>
 
 pkgname='steamos-systemreport'
-pkgver=0.18
-pkgrel=2
+pkgver=0.19
+pkgrel=1
 pkgdesc='System report collection tool'
 arch=('any')
 license=('LGPL2.1')
@@ -12,7 +12,7 @@ source=(
   'steamos-systemreport-privileged'
   'com.steampowered.SteamOS.systemreport.policy'
 )
-sha256sums=('99356d78325a266fd0d885f5bca1deabeab2bb7f3a53760645cb4b7878a51289'
+sha256sums=('d1e924d4e6749c929927bd7e7004838e8fb645c738c5606a8f7e60c05eafd0ad'
             'ba38397f247c8ae62037291451b9b8e7eeb946a99add7078ebc5f316ccaf203a'
             'b36473e3b77307450e75c59e248dde34d95b69c6c765a425fc30d9e201e23067')
 
