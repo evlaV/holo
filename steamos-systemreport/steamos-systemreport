@@ -54,7 +54,7 @@ function run {
   echo "---------------------------------------------------"
   echo "Command: $1"
   echo
-  bash -c "$1 2>&1" || echo "Unable to run command!"
+  PAGER=cat SYSTEMD_PAGER=cat bash -c "$1 2>&1" || echo "Unable to run command!"
 }
 
 function super () {
