@@ -54,7 +54,7 @@ function run {
   echo "---------------------------------------------------"
   echo "Command: $1"
   echo
-  bash -c "$1 2>&1" || echo "Unable to run command!"
+  PAGER=cat SYSTEMD_PAGER=cat bash -c "$1 2>&1" || echo "Unable to run command!"
 }
 
 function super () {
@@ -118,7 +118,8 @@ super bootconfig
 super storage-health
 
 # WiFi connection info
-run 'iwctl station wlan0 show | grep -E "State|Frequency|RSSI|Mode|MCS|Bitrate"'
+run 'iw dev wlan0 link'
+run 'iw dev wlan0 survey dump'
 
 # Network connectivity info
 run 'ip addr'

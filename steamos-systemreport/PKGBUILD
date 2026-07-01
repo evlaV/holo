@@ -1,8 +1,8 @@
 # Author : Clayton Craft <clayton@igalia.com>
 
 pkgname='steamos-systemreport'
-pkgver=0.18
-pkgrel=1.1
+pkgver=0.19.1 # Contains 0.21 backport from main, but not 0.20
+pkgrel=1
 pkgdesc='System report collection tool'
 arch=('any')
 license=('LGPL2.1')
@@ -12,7 +12,7 @@ source=(
   'steamos-systemreport-privileged'
   'com.steampowered.SteamOS.systemreport.policy'
 )
-sha256sums=('7b2814a69fe24c26158851c5af971907e7a9058fe920d25394a6294764177515'
+sha256sums=('ec4ab0d0113f0ee863244a8d85bb5efc09b1c63348c107405f2d55844b922a06'
             'ba38397f247c8ae62037291451b9b8e7eeb946a99add7078ebc5f316ccaf203a'
             'b36473e3b77307450e75c59e248dde34d95b69c6c765a425fc30d9e201e23067')
 

@@ -1,0 +1,21 @@
+# Maintainer: Elliot Saba <sabae@valvesoftware.com>
+
+pkgname='holo-realtek-firmware-toggles'
+pkgver=1.1
+pkgrel=1
+pkgdesc='Tool to toggle realtek rtw89 driver bits'
+arch=('any')
+license=('MIT')
+url='https://github.com/evlav/holo'
+source=(
+  'holo-realtek-firmware-toggles'
+  'org.valve.holo-realtek-firmware-toggles.policy'
+)
+sha256sums=('60cc21c551f6d4788ab513bd20fe2bb07d79da6615084f86cfaefe7d3c2d2117'
+            '7e1c21c1b23b67d7baea989b85f96a8d8c611778b09449fb181619064cf7231e')
+depends=('bash')
+
+package() {
+  install -DTm0755 holo-realtek-firmware-toggles "${pkgdir}/usr/bin/holo-polkit-helpers/holo-realtek-firmware-toggles"
+  install -DTm0755 org.valve.holo-realtek-firmware-toggles.policy "${pkgdir}/usr/share/polkit-1/actions/org.valve.holo-realtek-firmware-toggles.policy"
+}
