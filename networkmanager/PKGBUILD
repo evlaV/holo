@@ -16,7 +16,7 @@ pkgname=(
   networkmanager-docs
 )
 pkgver=1.52.1
-pkgrel=1.2
+pkgrel=1.3
 pkgdesc="Network connection manager and user applications"
 url="https://networkmanager.dev/"
 arch=(x86_64)
@@ -68,7 +68,7 @@ checkdepends=(
   python-dbus
 )
 source=(
-  "git+https://gitlab.freedesktop.org/NetworkManager/NetworkManager.git?signed#tag=${pkgver/[a-z]/-&}"
+  "git+https://gitlab.freedesktop.org/NetworkManager/NetworkManager.git#tag=${pkgver/[a-z]/-&}"
   # https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1908
   # https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/merge_requests/2335
   "0001-device-Apply-powersave-configuration-with-iwd.patch"
