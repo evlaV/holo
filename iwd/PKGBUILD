@@ -4,7 +4,7 @@
 
 pkgname=iwd
 pkgver=3.9
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc='Internet Wireless Daemon'
 arch=('x86_64')
 url='https://git.kernel.org/cgit/network/wireless/iwd.git/'
@@ -51,6 +51,10 @@ prepare() {
   # and more since 3.10 - they don't fail building locally
   sed -i "s:unit/test-crypto::" Makefile.am
   sed -i "s:unit/test-eapol::" Makefile.am
+  # Holo: Disable tests relying on `AF_ALG` which don't have a runtime
+  # pre-check. `AF_ALG` has been disabled in CI as a workaround for
+  # CVE-2026-31431.
+  sed -i "s:unit/test-eap-sim::" Makefile.am
   autoreconf -vfi
 }
 
