@@ -6,7 +6,7 @@
 
 pkgname=plymouth
 pkgver=22.02.122
-pkgrel=7.4
+pkgrel=7.5
 pkgdesc='Graphical boot splash screen'
 arch=('x86_64')
 url='https://www.freedesktop.org/wiki/Software/Plymouth/'
@@ -50,6 +50,8 @@ source=("https://www.freedesktop.org/software/$pkgname/releases/$pkgname-$pkgver
         '0016-script-add-scrape_display-special-image.patch'              # SteamOS: Ibid
         '0020-Suppress-unimportant-unused-result-warnings-in-ply_b.patch' # SteamOS: plymouth build flags & arch defaults clash
         '0001-script-Add-System-script-plugin.patch'                      # SteamOS: Allow themes to make product decisions
+        '0001-drm-set-connector-content-type-to-Game.patch'               # SteamOS: Set Game content metadata to hint TVs to game mode
+        '0002-drm-clear-connector-HDR_OUTPUT_METADATA.patch'              # SteamOS: Set sRGB default HDR property to hint TVs to hdr mode
 )
 
 sha256sums=('100551442221033ce868c447ad6c74d831d209c18ae232b98ae0207e34eadaeb'
@@ -70,7 +72,9 @@ sha256sums=('100551442221033ce868c447ad6c74d831d209c18ae232b98ae0207e34eadaeb'
             'f5fda6cef4e054bac8e880d8c7f64311d3f747ae063d0399c14335434194bd91'
             '3409d1efc64cd9e20a9941de6a7cbde3623c193f9137b507118515c40739d2b3'
             'ab1cca2bb02897d8915e936b5e8f449d55b7bf4217128ff36e23ea2296c984de'
-            '6ab2fbf2f8d28f59cb3320d673df47b2d5d8495a7fcf40807ed0b03bbf385e04')
+            '6ab2fbf2f8d28f59cb3320d673df47b2d5d8495a7fcf40807ed0b03bbf385e04'
+            'd8ff7508a443356c8c7f2f4457a8c41936f7261afb0085eb9a15376d29bc71f0'
+            '38c800c3f5849737b2f63a32a2bdd6a50f61d2f1b9fe6e0b2b15aea0dca641d4')
 
 prepare() {
   cd "$pkgname-$pkgver"
