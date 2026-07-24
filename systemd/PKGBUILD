@@ -19,7 +19,7 @@ pkgname=('systemd'
 # way or another. We use proper version for pacman here (no dash for rc
 # release!), and change in source array below.
 pkgver=257.7
-pkgrel=2.6
+pkgrel=2.7
 arch=('x86_64')
 license=('LGPL-2.1-or-later')
 url='https://www.github.com/systemd/systemd'
@@ -69,6 +69,9 @@ source=("git+https://github.com/systemd/systemd#tag=v${pkgver/rc/-rc}?signed"
         # cancellation
         '0001-sleep-Don-t-fallback-to-suspend-if-hibernate-failed-.patch'
 
+        # Holo: backport of https://github.com/systemd/systemd/pull/43089
+        '0001-hwdb-classify-PlayStation-controller-audio-as-contro.patch'
+
         # bootloader files
         'arch.conf'
         'loader.conf'
@@ -95,6 +98,7 @@ sha512sums=('94c4f1fa540395653594d25a9633a47d2ce3053f0511b041b0ec73ddbb0db7877a5
             '3b602e4a47f524fdc285d3f1f501c7791e4934906715eee561ee9e4f8524049652d77f60e004d9a8d30345acc06571d21974d4488ee4af7c1d2ccc2f7eb2f88d'
             '052916dcec0bc68bf4f7a77bc32b97fbd0d7e59a77bc7779ac32a8370c4605f5c3515ba4d2c48595d611adf50e353b4a1dd30fff2f91dba099689d2dc3b065ec'
             '28db3e3c9f2d54c7b4595ed2147649f81db3522b6b9659c3ac7b5ec47e384a82c53401c78a5d72e97f3f77b703a54318842f5002029d191bdb36bb1367efedb7'
+            '4830ff9f172740fa047b44dc75d3df0c3e6368e9e7d0561e6d75cec263ee01b8425c9edcf87e3ca135e60ea1c30f8f9b3ea4ddc4d19cb7156f4d36862f2c94ba'
             '61032d29241b74a0f28446f8cf1be0e8ec46d0847a61dadb2a4f096e8686d5f57fe5c72bcf386003f6520bc4b5856c32d63bf3efe7eb0bc0deefc9f68159e648'
             'c416e2121df83067376bcaacb58c05b01990f4614ad9de657d74b6da3efa441af251d13bf21e3f0f71ddcb4c9ea658b81da3d915667dc5c309c87ec32a1cb5a5'
             '5a1d78b5170da5abe3d18fdf9f2c3a4d78f15ba7d1ee9ec2708c4c9c2e28973469bc19386f70b3cf32ffafbe4fcc4303e5ebbd6d5187a1df3314ae0965b25e75'
