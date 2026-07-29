@@ -139,7 +139,9 @@ run 'getent ahostsv6 test.steampowered.com'
 run 'ls -lt /dev/snd/*'
 run 'aplay -l'
 run 'arecord -l'
+run 'amixer -c0 contents'
 run "find /proc/asound/card* -name 'eld*' -print -exec cat '{}' \;"
+run 'for i in /proc/asound/card*/pcm*/sub*/status; do echo $i; cat $i; done'
 run "find ~/.config/{pipewire,wireplumber} -type f -print -exec echo '{}' \;"
 run "find ~/.local/share/wireplumber -type f -print -exec echo '{}' \;"
 run 'pw-dump Client | jq -c'
