@@ -1,18 +1,15 @@
 # Maintainer: Antonio Rojas <arojas@archlinux.org>
 
 pkgname=kscreenlocker
-pkgver=6.4.3
+pkgver=6.7.3
 _dirver=$(echo $pkgver | cut -d. -f1-3)
-pkgrel=2
+pkgrel=1.1
 pkgdesc='Library and components for secure lock screen architecture'
 arch=(x86_64)
 url='https://kde.org/plasma-desktop/'
 license=(LGPL-2.0-or-later)
-backup=(etc/pam.d/kde
-        etc/pam.d/kde-fingerprint
-        etc/pam.d/kde-smartcard)
-depends=(gcc-libs
-         glibc
+depends=(glibc
+         kcmutils
          kconfig
          kcoreaddons
          kcrash
@@ -29,6 +26,7 @@ depends=(gcc-libs
          kxmlgui
          layer-shell-qt
          libkscreen
+         libstdc++
          libx11
          libxcb
          libxi
@@ -39,16 +37,16 @@ depends=(gcc-libs
          wayland
          xcb-util-keysyms)
 makedepends=(extra-cmake-modules
-             kcmutils
              kdoctools)
-optdepends=('kcmutils: configuration module')
 groups=(plasma)
 source=(https://download.kde.org/stable/plasma/$_dirver/$pkgname-$pkgver.tar.xz{,.sig}
         kde.pam
         kde-fingerprint.pam 
         kde-smartcard.pam
+
+        # Holo: To be documented
         0001-use-qtvirtualkeyboard.patch)
-sha256sums=('3441174426fd18524ca59fa2246f9ee99c31dec0fd89eaa79705e6a32d1dcac3'
+sha256sums=('76d4bbb1201102e1b5dd34142c55006bf27f3ced39fa64c97a7f44bb1e534dfe'
             'SKIP'
             'adba7bb7c27eb3a572e5e9d3cea0dbeebe59d3634472d1863d14fe892cb13b2b'
             '32734b4e1ec8b7f7e32b6cb2d68285c5c4f15f53736bba085096e76095181241'
@@ -60,7 +58,7 @@ validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell
               '1FA881591C26B276D7A5518EEAAF29B42A678C20') # Marco Martin <notmart@gmail.com>
 
 prepare() {
-  patch -d kscreenlocker-6.4.3 -Np1 -i "$srcdir/0001-use-qtvirtualkeyboard.patch"
+  patch -d $pkgname-$pkgver -Np1 -i "$srcdir/0001-use-qtvirtualkeyboard.patch"
 }
 
 build() {
@@ -73,7 +71,7 @@ build() {
 package() {
   DESTDIR="$pkgdir" cmake --install build
 
-  install -Dm644 "$srcdir"/kde.pam "$pkgdir"/etc/pam.d/kde
-  install -Dm644 "$srcdir"/kde-fingerprint.pam "$pkgdir"/etc/pam.d/kde-fingerprint
-  install -Dm644 "$srcdir"/kde-smartcard.pam "$pkgdir"/etc/pam.d/kde-smartcard
+  install -Dm644 "$srcdir"/kde.pam "$pkgdir"/usr/lib/pam.d/kde
+  install -Dm644 "$srcdir"/kde-fingerprint.pam "$pkgdir"/usr/lib/pam.d/kde-fingerprint
+  install -Dm644 "$srcdir"/kde-smartcard.pam "$pkgdir"/usr/lib/pam.d/kde-smartcard
 }
