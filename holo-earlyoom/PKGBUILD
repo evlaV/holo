@@ -2,7 +2,7 @@
 
 pkgname=holo-earlyoom
 pkgver=1.1
-pkgrel=1
+pkgrel=2
 pkgdesc="Depend on 'earlyoom' and change config without modifying /etc/default/earlyoom"
 arch=(any)
 license=(MIT)

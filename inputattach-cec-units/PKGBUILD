@@ -3,7 +3,7 @@
 pkgname=inputattach-cec-units
 _srctag=v2
 pkgver=${_srctag##v}
-pkgrel=1
+pkgrel=2
 pkgdesc="Systemd units and udev rules for automatically attaching CEC devices via inputattach"
 url="https://github.com/evlav/inputattach-cec-units"
 arch=('any')
