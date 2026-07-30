@@ -1,7 +1,7 @@
 pkgname=debos
 epoch=1
 pkgver=1.1.7
-pkgrel=1
+pkgrel=2
 pkgdesc="OS images builder"
 arch=(x86_64)
 url="https://github.com/go-debos/${pkgname}"
