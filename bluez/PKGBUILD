@@ -6,71 +6,62 @@
 
 pkgbase=bluez
 pkgname=('bluez' 'bluez-utils' 'bluez-libs' 'bluez-cups' 'bluez-deprecated-tools' 'bluez-hid2hci' 'bluez-mesh' 'bluez-obex')
-pkgver=5.86
-pkgrel=4.1
+pkgver=5.87
+pkgrel=2.1
 url="http://www.bluez.org/"
 arch=('x86_64')
 license=('GPL-2.0-only')
 # Holo change: The python explicit version dependency is used for all our
 # packages. It helps us avoid retaining old packages when we bump Python.
 # By explicitly depending on the right version, packages are forced to rebuild.
-makedepends=('dbus' 'libical' 'systemd' 'alsa-lib' 'json-c' 'ell' 'python-docutils' 'python-pygments' 'cups' 'python>=3.13' 'python<3.14')
-source=(https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz,sign}
+makedepends=('dbus' 'libical' 'systemd' 'alsa-lib' 'json-c' 'ell' 'python-docutils' 'python-pygments' 'cups' 'git' 'python>=3.14' 'python<3.15')
+source=(#https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz,sign}
+        # "git+https://github.com/bluez/bluez.git?signed#tag=$pkgver"
+        "git+https://github.com/bluez/bluez.git#tag=$pkgver"
         bluetooth.modprobe
-        # Fix bt_shell_printf in non-interactive mode
-        # See https://github.com/bluez/bluez/issues/1896
-        # and https://gitlab.archlinux.org/archlinux/packaging/packages/bluez/-/issues/17#note_423645
-        fix-broken-stdin-handling.patch::https://github.com/bluez/bluez/commit/21e13976f2e375d701b8b7032ba5c1b2e56c305f.patch?full_index=1
-        revert_e73bf58.patch::https://github.com/bluez/bluez/commit/b33e923b55e4d0e9d78a83cfcb541fd1f687ef54.patch?full_index=1
 
-        0001-valve-bluetooth-config.patch  # SteamOS: Enable compatibility with devices like AirPods Pro
-        0014-shared-gatt-Add-env-variable-to-prefer-indication-ov.patch # SteamOS: For Bluetooth qualification tests GAP/SEC/SEM/BV-56-C, GAP/SEC/SEM/BV-57-C and GAP/SEC/SEM/BV-58-C # not upstreamable
-        0018-disable-unreliable-vcp-tests.patch
-        0019-plugins-Add-new-plugin-to-manage-wake-policy.patch
-        0020-plugins-wake-policy-Only-allow-Peripherals-to-wake-u.patch
-        0021-valve-bluetooth-ll-privacy.patch
+        0001-valve-bluetooth-config.patch  # Holo: Enable compatibility with devices like AirPods Pro
+        0014-shared-gatt-Add-env-variable-to-prefer-indication-ov.patch # Holo: For Bluetooth qualification tests GAP/SEC/SEM/BV-56-C, GAP/SEC/SEM/BV-57-C and GAP/SEC/SEM/BV-58-C # not upstreamable
+        0018-disable-unreliable-vcp-tests.patch  # Holo: TODO
+        0019-plugins-Add-new-plugin-to-manage-wake-policy.patch  # Holo: TODO
+        0020-plugins-wake-policy-Only-allow-Peripherals-to-wake-u.patch  # Holo: TBD
+        0021-valve-bluetooth-ll-privacy.patch  # Holo: TBD
 
         # Holo: Fix for the Steam Controller that could block a suspend request
         # Part of https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1267
         # At the moment of writing, the upstream patch has still not being merged
         # https://lore.kernel.org/all/CABBYNZKFEBuW2OeU4uOSfku=-jCnn3oXJENDMBGmkqP-4rybDA@mail.gmail.com/t/#u
         0001-BlueZ-adapter-Fix-execute-LE-Add-Device-To-Resolving.patch)
-# see https://www.kernel.org/pub/linux/bluetooth/sha256sums.asc
-sha256sums=('99f144540c6070591e4c53bcb977eb42664c62b7b36cb35a29cf72ded339621d'
-            'SKIP'
-            '46c021be659c9a1c4e55afd04df0c059af1f3d98a96338236412e449bf7477b4'
-            'e042d131206c2080f32b7f0d954092e8be34ecd8892fe9f2b7d26d90313bf2af'
-            'd4256f1a29abc50e4116e3ab6d31a75f2f69f3704e662e59656c10ee2276c92e'
-            '42ca8090a4b04854210c7b3a4618e5bb09457247993151549b4db2c9109dacc6'
-            'a7928e6c78ce81abe9aa0022900a33577c1c76fd5bdf6e24f0c753013b8ead4c'
-            'c0acf96d27bf2aec97cc1c1b66cc4be079712959d1ea266052f3e886d534c1e9'
-            '78a5d3b1bfc3fa91d6ffe59fe244bf839a126989533bfe699c1a7a3d324964ef'
-            '0919781b35efb1e53b60dbad947ec282ad82f413879fd3e58af38a7b49a91941'
-            '5800e6f6ff74a2a1b2c4482a393c65a83b10b0be52a53d51588e7a192d16fa0f'
-            '24e49ec04e5c985d7f42acceb7c2dd9bad6ad6f8be80ff12368e18293448c42a')
-validpgpkeys=('E932D120BC2AEC444E558F0106CA9F5D1DCF2659') # Marcel Holtmann <marcel@holtmann.org>
+b2sums=('9abcc5de17102c1307396627c87cffb5585e1c9b099cfd33d2a682d93f10e48a178fe8651c16ab9bb788d80f603f91db75e9fcadf7b627017202402d4ec396e5'
+        '0ce33d13b796d4ae2fd688b17742b3a3055663b68a352b02720dac82bcfdaa47bf2ee2a034dfb8ef4ddf3f827bc58fe80548730939c2915f64864cea39c10170'
+        '355c0dfce71d3e832fb5b091a26afcfc1f7f7b890befee3eb525505c4cacaf5c8121d097a1724ba0ad70b74c3ddffef17046747e93c241f948304663643d8316'
+        'ec40df76b5e20fbb41a70bd9930f587ee172e16a39218666607708d3b6873f29959e89945e06c8b1212d5ad8eb4aec98c5f39a7c844cbdd9d1b096dd02f728d2'
+        '2e5087a348599131aeb2343a0e68846c04e3ea3ff45488c2f82f6c82087a4403012ce6bacdad75d39f13770368661b07af83174b3e23c64a5838863a2752a0dc'
+        'e8df6143b7ce3541b94fff37a2488c574753467e1ccc7d852652c7a6e889350bceb95ef3ad5809c001fd6982d066a7e6796a3b7f358f658ff2fb33e1ef859abb'
+        '78e0d61ae87c8e12805cd09872abe3e1be2c5a68ea7fe814e5e938f16ebb519d1f758bd776d26ed970fecd2a905bae33ae2d5afd2c5973106ed0faf9a743e4a5'
+        'f8e7344443cbd28700a087dc76331f38503a1a18b9813009f1989733ff2e6ffac75a6ae83a56d3cc534c50f8de57c7d915b05b3afdad8bc66550198d5d3a8e2c'
+        '041d344b81ea91bce7702019436c28126bb6f7afb3870d642f667c5e0f1ba42625a825e1db02b94556cd8b91b357e6ffde89bfe7f5e13f048ea719bebaed88a8')
+# validpgpkeys=('E932D120BC2AEC444E558F0106CA9F5D1DCF2659') # Marcel Holtmann <marcel@holtmann.org>
 
 prepare() {
-  # Remove the vendored ell to avoid conflicts in header search paths
-  rm -r "${pkgname}-${pkgver}"/ell
+  cd "${pkgname}"
 
   for patch in "${source[@]}"
   do
     case $patch in
       *.patch)
         echo "# Applying ${patch}"
-        patch -d "${pkgname}"-${pkgver} -p1 -i "${srcdir}"/"${patch}"
+        patch -p1 -i "${srcdir}"/"${patch}"
         ;;
     esac
   done
+
+  autoreconf -vfi
 }
 
 build() {
-  cd "${pkgname}"-${pkgver}
-
-  # Holo: we patched a new plugin into Makefile.plugins so we need to re-run this:
-  autoreconf -ivf
-
+  cd "${pkgname}"
+  ICAL_LIBS="-lical -licalvcal" \
   ./configure \
           --prefix=/usr \
           --mandir=/usr/share/man \
@@ -95,15 +86,21 @@ build() {
   # add missing tools FS#41132, FS#41687, FS#42716
   for files in `find tools/ -type f -perm -755`; do
     filename=$(basename $files)
-    install -Dm755 "${srcdir}"/"${pkgbase}"-${pkgver}/tools/$filename "${srcdir}/fakeinstall"/usr/bin/$filename
+    install -Dm755 "${srcdir}"/"${pkgbase}"/tools/$filename "${srcdir}/fakeinstall"/usr/bin/$filename
   done
+
+  for files in `find client/btpclient/ -type f -perm -755`; do
+    filename=$(basename $files)
+    install -Dm755 "${srcdir}"/"${pkgbase}"/client/btpclient/$filename "${srcdir}/fakeinstall"/usr/bin/$filename
+  done
+  
 
   # add man pages for the above tools
   # https://github.com/bluez/bluez/commit/44e3dd321e4be052bcde40939552b93b734538d3
   for manfile in `find doc/ -type f -regex '.*\.[1-8]'`; do
     section=$(echo $manfile | sed -E 's/.*\.([1-8])$/\1/')
     filename=$(basename $manfile)
-    install -Dm644 "${srcdir}"/"${pkgbase}"-${pkgver}/doc/$filename "${srcdir}/fakeinstall"/usr/share/man/man${section}/$filename
+    install -Dm644 "${srcdir}"/"${pkgbase}"/doc/$filename "${srcdir}/fakeinstall"/usr/share/man/man${section}/$filename
   done
 }
 
@@ -120,7 +117,7 @@ _install() {
 }
 
 check() {
-  cd "$pkgname"-$pkgver
+  cd "$pkgname"
   make check
 }
 
@@ -144,7 +141,7 @@ package_bluez() {
 
   # add basic documention
   install -dm755 "${pkgdir}"/usr/share/doc/"${pkgbase}"/dbus-apis
-  cp -a "${pkgbase}"-${pkgver}/doc/*.txt "${pkgdir}"/usr/share/doc/"${pkgbase}"/dbus-apis/
+  cp -a "${pkgbase}"/doc/*.txt "${pkgdir}"/usr/share/doc/"${pkgbase}"/dbus-apis/
   # fix module loading errors
   install -dm755 "${pkgdir}"/usr/lib/modprobe.d
   install -Dm644 "${srcdir}"/bluetooth.modprobe "${pkgdir}"/usr/lib/modprobe.d/bluetooth-usb.conf
@@ -152,24 +149,24 @@ package_bluez() {
   # https://bugzilla.kernel.org/show_bug.cgi?id=196621
   install -dm755 "$pkgdir"/usr/lib/modules-load.d
   echo "crypto_user" > "$pkgdir"/usr/lib/modules-load.d/bluez.conf
-
-  # ship wake-policy config file
-  install -Dm644 "${srcdir}"/"${pkgbase}"-${pkgver}/plugins/wake-policy.conf "${pkgdir}"/etc/bluetooth/wake-policy.conf
 }
 
 package_bluez-utils() {
   pkgdesc="Development and debugging utilities for the bluetooth protocol stack"
   depends=('dbus' 'systemd-libs' 'glib2' 'glibc' 'readline')
-  optdepends=('ell: for btpclient')
+  optdepends=('ell: for btpclient'
+              'perl: for parse_companies.pl')
+  
   provides=('bluez-plugins')
   replaces=('bluez-plugins')
 
-  _install fakeinstall/usr/bin/{advtest,avinfo,avtest,bcmfw,bdaddr,bluemoon,bluetoothctl,bluetooth-player,bneptest,btattach,btconfig,btgatt-client,btgatt-server,btinfo,btiotest,btmgmt,btmon,btpclient,btpclientctl,btproxy,btsnoop,check-selftest,cltest,create-image,eddystone,gatt-service,hcieventmask,hcisecfilter,hex2hcd,hid2hci,hwdb,ibeacon,isotest,l2ping,l2test,mpris-proxy,nokfw,oobtest,rctest,rtlfw,scotest,seq2bseq,test-runner}
+  _install fakeinstall/usr/bin/{advtest,avinfo,avtest,bcmfw,bdaddr,bluemoon,bluetoothctl,bluetooth-player,bneptest,btattach,btconfig,btgatt-client,btgatt-server,btinfo,btiotest,btmgmt,btmon,btpclient,btpclientctl,btproxy,btsnoop,check-selftest,cltest,create-image,eddystone,gatt-service,hcieventmask,hcisecfilter,hex2hcd,hid2hci,hwdb,ibeacon,isotest,l2ping,l2test,mpris-proxy,nokfw,oobtest,parse_companies.pl,rctest,rtlfw,scotest,seq2bseq,test-runner,update_compids.sh}
   _install fakeinstall/usr/lib/systemd/user/mpris-proxy.service
   _install fakeinstall/usr/share/man/man1/bluetoothctl*.1
-  _install fakeinstall/usr/share/man/man1/{bdaddr,btattach,btmgmt,btmon,isotest,l2ping,rctest}.1
+  # _install fakeinstall/usr/share/man/man1/{bdaddr,btattach,btmgmt,btmon,isotest,l2ping,rctest}.1
+  _install fakeinstall/usr/share/man/man1/{btattach,btmon,isotest,l2ping,rctest}.1
   _install fakeinstall/usr/share/man/man5/org.bluez.{A,B,C,D,G,I,L,M,N,P,T}*.5
-  _install fakeinstall/usr/share/man/man7/{hci,l2cap,mgmt,sco,iso}.7
+  _install fakeinstall/usr/share/man/man7/{btsnoop,hci,l2cap,mgmt,sco,iso}.7
   _install fakeinstall/usr/share/zsh/site-functions/_bluetoothctl
 }
 
@@ -177,8 +174,8 @@ package_bluez-deprecated-tools() {
   pkgdesc="Deprecated tools that are no longer maintained"
   depends=('json-c' 'systemd-libs' 'glib2' 'dbus' 'readline' 'glibc')
 
-  _install fakeinstall/usr/bin/{ciptool,hciattach,hciconfig,hcidump,hcitool,meshctl,rfcomm,sdptool}
-  _install fakeinstall/usr/share/man/man1/{ciptool,hciattach,hciconfig,hcidump,hcitool,rfcomm,sdptool}.1
+  _install fakeinstall/usr/bin/{ciptool,hciattach,hciconfig,hcitool,meshctl,rfcomm,sdptool}
+  _install fakeinstall/usr/share/man/man1/{ciptool,hciattach,hciconfig,hcitool,rfcomm,sdptool}.1
   _install fakeinstall/usr/share/man/man7/rfcomm.7
 }
 
@@ -227,7 +224,7 @@ package_bluez-mesh() {
 
 package_bluez-obex() {
   pkgdesc="Object Exchange daemon for sharing content"
-  depends=('glib2' 'libical' 'dbus' 'readline' 'glibc')
+  depends=('glib2' 'libical' 'dbus' 'readline' 'systemd-libs' 'glibc')
 
   _install fakeinstall/usr/bin/{obexctl,obex-client-tool,obex-server-tool}
   _install fakeinstall/usr/lib/bluetooth/obexd
