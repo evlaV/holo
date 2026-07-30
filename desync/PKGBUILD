@@ -1,13 +1,12 @@
 # Maintainer: David Runge <dvzrv@archlinux.org>
 # Maintainer (Holo): Ludovico de Nittis <denittis@collabora.com>
 
-# Holo: We backport one commit from Desync master.
-# Once we'll have the upcoming Desync v1.0.1 in our repos, we can
-# drop this custom PKGBUILD.
+# Holo: Increase the goroutines. This is a temporary workaround until we
+# have a proper solution that we can send upstream.
 
 pkgname=desync
-pkgver=1.0.0
-pkgrel=1.2
+pkgver=1.0.3
+pkgrel=1.1
 pkgdesc="Alternative casync implementation"
 arch=(x86_64)
 url="https://github.com/folbricht/desync"
@@ -16,20 +15,17 @@ depends=(glibc)
 makedepends=(go)
 options=(!lto)
 source=($pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz
-        # This patch is already merged upstream, and will be part of next Desync v1.0.1 release
-        0001-Avoid-rewriting-self-seed-chunks-already-on-disk.patch
+        # Holo: Increase the number of goroutines. Temp fix that needs to be reworked
+        # and sent upstream. Ref https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/2068
         0001-Default-to-100-goroutines-rather-than-10-for-testing.patch
 )
-sha512sums=('a4f8638492b7eb2f78dd33ddf96ac120e900c6049babae105822ff5248e3398f08fc3880d55128f5e79ab7d78e469793cbd55d8330a86bf51b997402b28cc9a3'
-            '5d4f41ca3f3f7070eb38d85b91d606d5b8ecb52af5e1a1af232065bef71bd4659331c6ad1b8075c6dbd1a17cf5f2ce101ab78ff67ac93e5a2396adc6ee279d00'
+sha512sums=('f8cb2ee43bc658fb8018b80c9dfa92732c04a05ca7c08862b781c21bdad61018271c6a4c41bf48d49273262e2fcdbfc5e5d3df3ae5d925ad19b80be159356a19'
             '85c24188a7315befa26dd988926ea8ccca45aaeb7cac30bdb057bf50cbc5a6f40ad336f24a1bde23c9ba6b7f2d93c520fd5ed0a4f7204bb76ec14cc9a28f331e')
-b2sums=('f304ca105d02d38fe93a5006c6b2b7799065f6db25936838df9242778f8394159d7fc2a2f3ad6b342acc998fd203bcc10c3e001c5726a56af1fa55dbfb0d259f'
-        'ea8511ef32c1620c08ac9da9c1f5e40326b8ac1d446ce9dd1b975797620610bc635ac51bbecefec58fbbf05225fce8435bbc66ff4b3e06768082770cb89e813c'
+b2sums=('9dc1b30cb384d45cea20c37d252a78eb0dc7576f3fb6316ac8295b83a427bbf3eb32bd962a19fac08f566928fc8ed9f2aceb09451f02abf7d6190d87e401817a'
         '70a3513913f660bcf987a190c9e795716861501a00fe8c802dee9363b7c66ca69a5146ddba35db9b8001372d3347fe78ba416440a9d1a7c288313989491c7b77')
 
 prepare() {
   cd $pkgname-$pkgver
-  patch -p1 -i "${srcdir}"/0001-Avoid-rewriting-self-seed-chunks-already-on-disk.patch
   patch -p1 -i "${srcdir}"/0001-Default-to-100-goroutines-rather-than-10-for-testing.patch
 }
 
