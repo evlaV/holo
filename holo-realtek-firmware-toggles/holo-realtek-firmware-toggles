@@ -7,6 +7,12 @@ then
     exec pkexec --disable-internal-agent "$0" "$@"
 fi
 
+error() {
+   echo "ERROR at ${1}:${2}" >&2
+   exit 1
+}
+trap 'error "${BASH_SOURCE}" "${LINENO}"' ERR
+
 # Gett list of `rtw89` directories in `/sys/kernel/debug`.  We store in an array
 # because there can be more then one if someone has plugged more than one dongle in
 mapfile -t RTW89_DEBUGFS_DIRS < <(find /sys/kernel/debug/ieee80211 -name rtw89 -type d)
@@ -97,6 +103,60 @@ function set_pd_thresh() {
     echo "$1" | static_pd_th
 }
 
+
+function log2_floor()
+{
+    local x="${1}"
+    local count="0"
+    while [ "${x}" -gt 0 ]; do
+        count=$((count + 1))
+        x=$((x / 2))
+    done
+    echo -n "${count}"
+}
+
+function build_edca()
+{
+    TXOP="${1}"
+    CWMAX="${2}"
+    CWMIN="${3}"
+    AIFSN="${4}"
+    
+    # cwmin/cwmax are, as in the 802.11 standard, locked to values of the form 2^n - 1
+    # which are efficiently encoded as `int(log2(cwmax)) + 1`
+    # txop is how long we pad our channel reservation, rounded up to the nearest 32us
+    # aifs is 16 + 9*aifsn, which is what gets stored
+    # Final bit layout is:
+    #   int((txop - 1)/32) + 1 | int(log2(cwmax)) + 1 | int(log2(cwmin)) + 1 | 16 + 9*aifsn
+    printf "%04X%1X%1X%02X\n" "$(( ( "${TXOP}" - 1 ) / 32 + 1))" "$(log2_floor "${CWMAX}")" "$(log2_floor "${CWMIN}")" "$((16 + 9 * "${AIFSN}"))"
+}
+
+function print_led_color()
+{
+    local LED_DIR="${1}"
+    if [[ ! -d "${LED_DIR}" ]]; then
+        return
+    fi
+
+    local BRIGHTNESS="$(cat "${LED_DIR}/brightness")"
+    if [[ "${BRIGHTNESS}" == "0" ]]; then
+        echo "LED: off"
+    else
+        INTENSITIES=( $(cat "${LED_DIR}/multi_intensity") )
+        NAMES=( white red green blue )
+        printf "LED: "
+        for idx in 1 2 3 4; do
+            if [[ "${INTENSITIES[${idx}]}" == "1" ]]; then
+                printf "[${NAMES[${idx}]}] "
+            else
+                printf "${NAMES[${idx}]} "
+            fi
+        done
+        printf "\n"
+    fi
+}
+
+
 function print_usage() {
     local prog_name="$(basename "$0")"
 
@@ -109,10 +169,13 @@ Usage:
 
 To manually set different parameters that are part of low latency mode, use:
 
+    $prog_name set-amsdu [on|off]             - default is 'on'
     $prog_name set-feature HW_SCAN [on|off]   - default is 'on'
     $prog_name set-pd-thresh <val>            - default is '0'
     $prog_name set-powersave [on|off]         - default is 'on'
     $prog_name set-aggressive-edca [on|off]   - default is 'off'
+
+NOTE: default values refer to when low-latency mode is disabled.
 EOF
     exit 1
 }
@@ -120,11 +183,12 @@ EOF
 # For each dongle plugged in, set/unset the requested parameters
 for DEBUGFS_DIR in "${RTW89_DEBUGFS_DIRS[@]}"; do
     PHY_NAME="$(basename "$(dirname "${DEBUGFS_DIR}" )" )"
+    LED_DIR="/sys/class/leds/rtw89-${PHY_NAME}-multicolor"
     WLAN_NAME="$(basename "$(compgen -G "$(dirname "${DEBUGFS_DIR}" )/netdev:*")" | cut -d: -f2-)"
 
     # Load the current state
     parse_disable_dm "${DEBUGFS_DIR}/disable_dm"
-    
+
     case "${1:-}" in
         set-low-latency-mode)
             if [[ -z "${2:-}" ]]; then
@@ -133,15 +197,56 @@ for DEBUGFS_DIR in "${RTW89_DEBUGFS_DIRS[@]}"; do
             case "$(boolify "${2}")" in
                 1)
                     "$0" set-feature HW_SCAN off
-                    "$0" set-pd-thresh -75
+                    "$0" set-amsdu off
+                    "$0" set-mcs-rates 0-9
                     "$0" set-powersave off
-                    "$0" set-aggressive-edca on
+                    "$0" set-pd-thresh -75
+                    "$0" set-aggressive-edca off
                     ;;
                 0)
                     "$0" reset
                     ;;
             esac
             ;;
+
+        # Set aggregation of SDU's; realtek's driver has a bug with this aggregation, disable it for low-latency mode.
+        set-amsdu)
+            if [[ -z "${2:-}" ]]; then
+                print_usage
+            fi
+
+            case "$(boolify "${2}")" in
+                1)
+                    iw dev "${WLAN_NAME}" set tidconf tids 0xff amsdu on
+                    ;;
+                0)
+                    iw dev "${WLAN_NAME}" set tidconf tids 0xff amsdu off
+                    ;;
+            esac
+            ;;
+
+        # Set MCS rates; by limiting MCS rates to lower values, we improve resilience while limiting throughput
+        set-mcs-rates)
+            # Usually something like "0-9", but empty means default
+            MCS_RATES="${2:-}"
+
+            if [[ -z "${MCS_RATES}" ]]; then
+                # Reset to default, ignore failure
+                iw dev "${WLAN_NAME}" set bitrates 2>/dev/null || true
+            else
+                # Apply the MCS rates to each band, and each spatial stream
+                IW_ARGS=()
+                for BAND in 5 6; do
+                    IW_ARGS+=( "he-mcs-${BAND}" )
+                    for SPATIAL_STREAM in 1 2; do
+                        IW_ARGS+=( "${SPATIAL_STREAM}:${MCS_RATES}" )
+                    done
+                done
+                iw dev "${WLAN_NAME}" set bitrates "${IW_ARGS[@]}"
+            fi
+            ;;
+
+        # Disable power save features, both firmware-internal powersave and host-side powersave.
         set-powersave)
             if [[ -z "${2:-}" ]]; then
                 print_usage
@@ -159,6 +264,8 @@ for DEBUGFS_DIR in "${RTW89_DEBUGFS_DIRS[@]}"; do
             esac
             print_mask > "${DEBUGFS_DIR}/disable_dm"
             ;;
+
+        # Set a static packet detection threshold attempt to ignore distant interferers
         set-pd-thresh)
             if [[ -z "${2:-}" ]]; then
                 print_usage
@@ -172,38 +279,45 @@ for DEBUGFS_DIR in "${RTW89_DEBUGFS_DIRS[@]}"; do
                 echo "1 ${2}" >"${DEBUGFS_DIR}/static_pd_th"
             fi
             ;;
+
+        # Set aggressive EDCA (packet timing) values, so we attempt to retry faster
         set-aggressive-edca)
-            # Disabled for now until we properly reverse-engineer the EDCA bit packing
-            exit 0
+            # We set values for each QoS category (we treat all equally)
+            REGISTER_ADDRS=( c300 c304 c308 c30c )
+
             case "$(boolify "${2}")" in
                 1)
-                    echo "c300 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
-                    echo "c304 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
-                    echo "c308 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
-                    echo "c30c 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
+                    # Keep these roughly inline with what Steam manually sets on Windows
+                    EDCA_PARAMS="$(build_edca 2000 7 3 1)"
+                    for REG_ADDR in "${REGISTER_ADDRS[@]}"; do
+                        echo "${REG_ADDR} ${EDCA_PARAMS} 4" >"${DEBUGFS_DIR}/write_reg"
+                    done
                     ;;
                 0)
-                    echo "c300 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
-                    echo "c304 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
-                    echo "c308 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
-                    echo "c30c 3f3219 4" >"${DEBUGFS_DIR}/write_reg"
+                    # We don't actually do anything here; EDCA resets upon disassociation
                     ;;
             esac
             ;;
+
+        # Helper to set firmware toggles
         set-feature)
             set_feature "$2" "$3"
             print_mask > "${DEBUGFS_DIR}/disable_dm"
             ;;
+
         list)
             echo "-> ${PHY_NAME} (${WLAN_NAME})"
             cat "${DEBUGFS_DIR}/disable_dm"
             cat "${DEBUGFS_DIR}/static_pd_th" | grep -E 'DIG:|OFDM'
+            print_led_color "${LED_DIR}"
             ;;
         reset)
             echo "0x00" > "${DEBUGFS_DIR}/disable_dm"
             "$0" set-pd-thresh 0
             "$0" set-aggressive-edca disable
             "$0" set-powersave on
+            "$0" set-amsdu on
+            "$0" set-mcs-rates
             ;;
         *)
             print_usage
