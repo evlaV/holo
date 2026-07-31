@@ -1,0 +1,42 @@
+# Maintainer: Andreas Radke <andyrtr@archlinux.org>
+# Contributor: Laurent Carlier <lordheavym@gmail.com>
+
+pkgname=libxfont2
+pkgver=2.0.8
+pkgrel=1.1 # Rebuild for Holo
+pkgdesc="X11 font rasterisation library"
+arch=(x86_64)
+url="https://xorg.freedesktop.org/"
+license=('BSD-2-Clause'
+         'BSD-4-Clause-UC'
+         'HPND-sell-variant'
+         'MIT-open-group'
+         'SMLNJ'
+         'X11')
+depends=('freetype2' 'libfontenc' 'xorgproto' 'zlib' 'glibc')
+makedepends=('git' 'xorg-util-macros' 'xtrans')
+source=(git+https://gitlab.freedesktop.org/xorg/lib/libxfont.git?signed#tag=libXfont2-${pkgver})
+sha512sums=('ad2ce8e8937f8c35ec3f266f0e8a6732ab71b44d9b11c0eaeeb203936852bb4f945a8be19fdf6d65044ada7ded3c1904e3684444a5398de55e61440cad81f082')
+#validpgpkeys=('C383B778255613DFDB409D91DB221A6900000011') # Keith Packard <keithp@keithp.com>
+#validpgpkeys+=('995ED5C8A6138EB0961F18474C09DD83CAAA50B2') # "Adam Jackson <ajax@nwnk.net>"
+#validpgpkeys+=('C41C985FDCF1E5364576638B687393EE37D128F8') # "Matthieu Herrb <matthieu.herrb@laas.fr>"
+#validpgpkeys=('4A193C06D35E7C670FA4EF0BA2FB9E081F2D130E') #  "Alan Coopersmith <alan.coopersmith@oracle.com>"
+validpgpkeys=('3C2C43D9447D5938EF4551EBE23B7E70B467F0BF') # "Peter Hutterer <peter.hutterer@who-t.net>"
+
+prepare() {
+  cd libxfont
+  autoreconf -fiv
+}
+
+build() {
+  cd libxfont
+  ./configure --prefix=/usr --sysconfdir=/etc --disable-static
+  make
+}
+
+package() {
+  cd libxfont
+  make DESTDIR="${pkgdir}" install
+  install -m755 -d "${pkgdir}/usr/share/licenses/${pkgname}"
+  install -m644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/"
+}
