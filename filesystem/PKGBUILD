@@ -10,8 +10,9 @@ source filesystem_common.pkgbuild
 # Keep the pkgname exactly `filesystem`, otherwise the package from Arch Linux
 # upstream will be chosen instead
 pkgname=filesystem
-pkgver=${_pkgver:-1}
-pkgrel=${_pkgrel:-1}
+pkgver=2021.12.07
+# https://bugs.archlinux.org/task/72284
+pkgrel=1.19
 pkgdesc='Base Holo Linux files'
 sha256sums=('e03bede3d258d680548696623d5979c6edf03272e801a813c81ba5a5c64f4f82'
             'ed0cb4f1db4021f8c3b5ce78fdf91d2c0624708f58f36c9cf867f4d93c3bc6da'
@@ -43,6 +44,6 @@ sha256sums=('e03bede3d258d680548696623d5979c6edf03272e801a813c81ba5a5c64f4f82'
             'd40e4e9b9ac1facae3bedf170782ac95bebf707c0f4defff9b06432d6216e9a6'
             'c3e409ac247f13c47c0d3f5627e9544ffe9a4aa9403dab079f695025d9c76fee'
             '934ff7bf4ed4e8f9b57e300136fe866f157e40b52559ee05263fe0fca9e24f52'
-            'e9a358abfa9a7946af556befdb18a8f72d1e47add4bceb422768341b7bb2b421')
+            '8fc6f45f30b24005b1eed8f9c1caacb5eeb11d86422b96f60e2f1e003c4020bc')
 
 # vim:set ts=2 sw=2 et:
