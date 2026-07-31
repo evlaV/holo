@@ -5,7 +5,7 @@
 
 pkgname=orca
 pkgver=48.9
-pkgrel=1.0
+pkgrel=1.1
 pkgdesc="Screen reader for individuals who are blind or visually impaired"
 url="https://orca.gnome.org/"
 arch=(any)
@@ -24,7 +24,8 @@ depends=(
   liblouis
   libwnck3
   pango
-  python
+  'python>=3.14'
+  'python<3.15'
   python-cairo
   python-dbus
   python-gobject
