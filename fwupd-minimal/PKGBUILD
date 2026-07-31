@@ -6,7 +6,7 @@
 
 # Holo: Variant of fwupd disabling some less common plugins/features to save on disk space/dependencies
 pkgname=fwupd-minimal
-pkgver=2.0.18
+pkgver=2.1.7
 pkgrel=1
 pkgdesc="Simple daemon to allow session software to update firmware"
 arch=(x86_64)
@@ -17,23 +17,25 @@ depends=(
   bluez
   curl
   fwupd-efi
-  gcc-libs
   glib2
   glibc
   gnutls
   hicolor-icon-theme
-  json-glib
-  libarchive
-  libcbor
   libdrm
-  libjcat
+  libgcc
+  libusb
+  libmbim
+  libmm-glib
+  libmnl
   libxmlb
   polkit
-  'python>=3.13'
-  'python<3.14'
+  'python>=3.14'
+  'python<3.15'
   shared-mime-info
   sqlite
   systemd-libs
+  tpm2-tss
+  udisks2
   xz
   zlib
 )
@@ -41,30 +43,31 @@ makedepends=(
   bash-completion
   git
   gnu-efi-libs
+  gobject-introspection
   libdrm
   meson
   noto-fonts
   noto-fonts-cjk
-  protobuf-c
   python-cairo
   python-dbus
+  python-dbusmock
   python-gobject
   python-jinja
-  python-pillow
+  umockdev
   vala
   valgrind
 )
 source=(
   "git+https://github.com/fwupd/fwupd.git#tag=${pkgver}?signed"
   fwupd.sysusers
-  fwupd.conf
+  fwupd-refresh.rules
 )
-sha512sums=('ebe94f648f4324d4d4582b04f2cd8687e6f8f19234db2cfa1553f23edaa3bff2190e4156d5aed7c89de0a8f6a4af4c67723791a9e4571239663b24f7eecbf59a'
+sha512sums=('560fde8c73f68b2611786255c5bfffc3f30cbcf02b45ab54d9ac79dd93990c9be1421b952c1c7a0437baca1f208ce7f886dd0d9806fbdb04913c0141d6103fff'
             'f9a99c60786a2b98e0de439a9288af61b2c0716f8339a4c93e2df7108d2a7f9ef8128967dcaa1e12022ffa647945bf5eb3749e38cac83e00a28cbc5b015fbee9'
-            '8ebedc0437788337e8433cd67c9868fce1cdc01383a37092bfb83b6deac28ff5c79e0987390c3960b3a44b2acef2216b7489325741c4210a715f34d7bd9c8da1')
-b2sums=('e6790f9d934dba1382cb94fe210492c2471d5d5f96720220531e5d8de08e8db5d9eaa86a40dc25e20f03f98b5e5ad8d80039c7e3237e238b969e474ea4ea1c72'
+            '21e04acbae83d8ca548d6e7f9b2344e7b4dc8e1ab1c0a7799ded3160c99c54c2116b158a559d2b3243e960a6e4c72a3391599d68327209fa79a291622de3c1b8')
+b2sums=('098893b6ec9e0592b0647740e928fbad2665976f95d24dd232a6ea0ab141fa9ea01f5203430569dc20a2966f5f06e2aa574398805a8ad48de13cabef0fb25d92'
         'c294c6dd324c0ad0d752affdc459d427d34f4bf865def099ac0e25db6b5dfbfcf645ca325e4e7732d1256e75c624ff27094d5c814726909c7e348128a9dd93f9'
-        'd0154258fa07cfef0ae8c79f90cb6e79a962aa8293b5c107e5fc129f303ad72aa656d49321192c2341149b9d35f84e75144bda0c88aa33343e005c5a4bfbd1f7')
+        'b9e1c1c66452adb29378cbb42bd18152a2760750696644ee8dd4c09c6f23116d3e66fd405fc69c4694a5ea0f47b75d5959356a12da56ab1cc8345fe926098b3b')
 validpgpkeys=(163EB50119225DB3DF8F49EA17ACBA8DFA970E17) # Richard Hughes <richard@hughsie.com>
 
 build() {
@@ -77,11 +80,15 @@ build() {
     -D hsi=disabled
     -D introspection=disabled
     -D umockdev_tests=disabled
-    -D plugin_flashrom=disabled
     -D passim=disabled
     -D plugin_modem_manager=disabled
     -D fish_completion=false
   )
+
+  # HSI (Host Security ID) is x86-only in fwupd's meson.build;
+  # arch-meson uses --auto-features=enabled which turns it on and then
+  # the require(cpu in ['x86','x86_64']) check fails on other arches.
+  [[ "$CARCH" != x86_64 && "$CARCH" != i686 ]] && meson_options+=(-D hsi=disabled)
 
   arch-meson fwupd build "${meson_options[@]}"
   meson compile -C build
@@ -103,15 +110,13 @@ _pick() {
 
 package() {
   depends+=(
-    libarchive.so
-    libcbor.so
-    libcurl.so
-    libjson-glib-1.0.so
+    curl libcurl.so
+    libmm-glib libmm-glib.so
+    libqmi libqmi-glib.so
   )
   optdepends=(
     'python-dbus: Firmware packaging tools'
     'python-gobject: Firmware packaging tools'
-    'udisks2: UEFI firmware upgrade support'
   )
   provides=(libfwupd.so)
   backup=(
@@ -129,7 +134,12 @@ package() {
   # Conflicts with the dbxtool package
   mv "${pkgdir}"/usr/bin/{,fwupd-}dbxtool
   mv "${pkgdir}"/usr/share/man/man1/{,fwupd-}dbxtool.1
-  # Don't allow enumeration of any device that might detach a kernel driver
-  cp fwupd.conf "${pkgdir}"/etc/fwupd/fwupd.conf
+  # Remove msr module-load config as it is built-in
+  rm -f "${pkgdir}"/usr/lib/modules-load.d/fwupd-msr.conf
+  # Compile Python scripts
+  python -m compileall -d /usr/share "${pkgdir}"/usr/share
+  python -O -m compileall -d /usr/share "${pkgdir}"/usr/share
 
+  install -Dm644 -t "${pkgdir}"/usr/share/polkit-1/rules.d fwupd-refresh.rules
 }
+
