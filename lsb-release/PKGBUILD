@@ -9,7 +9,7 @@ pkgname=lsb-release
 pkgver=2.0.r55.a25a4fc
 _commit=a25a4fcd73c79bd5af0dd8d948a7c96dcbfd2d07
 # SteamOS custom/vendor /etc/lsb-release
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc='LSB version query program'
 arch=('any')
 url='https://refspecs.linuxfoundation.org/lsb.shtml'
