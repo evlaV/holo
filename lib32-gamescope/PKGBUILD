@@ -5,7 +5,7 @@
 pkgname=lib32-gamescope
 _srctag=3.16.15
 pkgver=${_srctag//-/.}
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc="gaming shell based on Xwayland, powered by Vulkan and DRM (32-bit)"
 arch=(x86_64)
 url="https://github.com/Plagman/gamescope"
