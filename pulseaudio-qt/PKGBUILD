@@ -1,24 +1,22 @@
 # Maintainer:Antonio Rojas <arojas@archlinux.org>
 
 pkgname=pulseaudio-qt
-pkgver=1.7.0
-pkgrel=2
+pkgver=1.8.1
+pkgrel=1.1
 pkgdesc='Qt bindings for libpulse'
 arch=(x86_64)
 url='https://community.kde.org/Frameworks'
 license=(LGPL-2.1-only
          LGPL-3.0-only)
-depends=(gcc-libs
-         glibc
+depends=(glibc
          libpulse
+         libstdc++
          qt6-base)
-makedepends=(doxygen
-             extra-cmake-modules
-             qt6-doc
-             qt6-tools)
+makedepends=(extra-cmake-modules)
 source=(https://download.kde.org/stable/$pkgname/$pkgname-$pkgver.tar.xz{,.sig}
+        # Holo: To be documented
         0001-Expose-CEC-controls-and-properties.patch)
-sha256sums=('6a18db76dd2bcc3df7d9a9379c025295817264baa1f2ed8caaac7da44e04e931'
+sha256sums=('79619c55b94808aa7d307fb234ad39a1096d088f21f806be0e788be79a76b3c9'
             'SKIP'
             '77e632be5764bb12866eedffd6e8df281480e6e35b335829bbe646d863c4014b')
 validpgpkeys=(2D1D5B0588357787DE9EE225EC94D18F7F05997E  # Jonathan Riddell <jr@jriddell.org>
@@ -31,9 +29,7 @@ prepare() {
 
 build() {
   cmake -B build -S $pkgname-$pkgver \
-    -DBUILD_QCH=ON \
-    -DBUILD_TESTING=OFF \
-    -DQT_MAJOR_VERSION=6
+    -DBUILD_TESTING=OFF
   cmake --build build
 }
 
