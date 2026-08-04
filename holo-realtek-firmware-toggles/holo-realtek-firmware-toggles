@@ -145,7 +145,7 @@ function print_led_color()
         INTENSITIES=( $(cat "${LED_DIR}/multi_intensity") )
         NAMES=( white red green blue )
         printf "LED: "
-        for idx in 1 2 3 4; do
+        for idx in 0 1 2 3; do
             if [[ "${INTENSITIES[${idx}]}" == "1" ]]; then
                 printf "[${NAMES[${idx}]}] "
             else
