@@ -9,9 +9,9 @@
 
 pkgbase=plasma-workspace
 pkgname=(plasma-workspace plasma-x11-session)
-pkgver=6.4.3
+pkgver=6.7.3
 _dirver=$(echo $pkgver | cut -d. -f1-3)
-pkgrel=1.4
+pkgrel=2.1
 pkgdesc='KDE Plasma Workspace'
 arch=(x86_64)
 url='https://kde.org/plasma-desktop/'
@@ -21,7 +21,6 @@ depends=(accountsservice
          dbus
          fontconfig
          freetype2
-         gcc-libs
          glibc
          icu
          kactivitymanagerd
@@ -44,6 +43,7 @@ depends=(accountsservice
          kholidays
          ki18n
          kiconthemes
+         kidletime
          kio
          kio-extras
          kio-fuse
@@ -52,8 +52,8 @@ depends=(accountsservice
          kitemmodels
          kjobwidgets
          knewstuff
+         knighttime
          knotifications
-         knotifyconfig
          kpackage
          kparts
          kpipewire
@@ -66,7 +66,6 @@ depends=(accountsservice
          ksystemstats
          ktexteditor
          ktextwidgets
-         kunitconversion
          kuserfeedback
          kwallet
          kwayland
@@ -77,11 +76,13 @@ depends=(accountsservice
          layer-shell-qt
          libcanberra
          libice
+         libgcc
          libkexiv2
          libksysguard
          libplasma
          libqalculate
          libsm
+         libstdc++
          libx11
          libxau
          libxcb
@@ -94,7 +95,6 @@ depends=(accountsservice
          ocean-sound-theme
          plasma-activities
          plasma-activities-stats
-         plasma5support
          prison
          qt6-5compat
          qt6-base
@@ -104,7 +104,6 @@ depends=(accountsservice
          qt6-svg
          qt6-tools # for qdbus
          qt6-virtualkeyboard
-         qt6-wayland
          sh
          solid
          systemd-libs
@@ -112,6 +111,7 @@ depends=(accountsservice
          xcb-util
          xcb-util-cursor
          xcb-util-image
+         xcb-util-wm
          xorg-xmessage
          xorg-xrdb
          xorg-xwayland
@@ -120,18 +120,14 @@ makedepends=(baloo
              extra-cmake-modules
              kdoctools
              networkmanager-qt
-             phonon-qt6
              plasma-wayland-protocols
              qcoro)
 groups=(plasma)
 source=(https://download.kde.org/stable/plasma/$_dirver/$pkgname-$pkgver.tar.xz{,.sig}
-        0001-shutdown-Stop-graphical-session.target-directly.patch
-        0002-skip-checking-disk-when-clicking-mount-and-open.patch
+        # Holo: To be documented
         0003-use-qtvirtualkeyboard.patch)
-sha256sums=('7254f285a91ec802b0612a7adb242d98362accdff866fc1285bb65b8048dedb8'
+sha256sums=('438851708a70781ecf3afa0a08488fdc6768b6ed5abca5f202a87e395aa6376f'
             'SKIP'
-            '671cc54bf9b932ee5a8b73739523d0c7b99d0b2e76674350743bab056822b13e'
-            'e5908cc9a89fcd0e1e026a785aa7b0dbedbd83f2440a77ac652364a9a6acdd4d'
             '59d41b5073a01a93416c0f0b68b90936261d49ff7f12c4526ce21550f538f98a')
 validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>
               '0AAC775BB6437A8D9AF7A3ACFE0784117FBCE11D'  # Bhushan Shah <bshah@kde.org>
@@ -139,10 +135,7 @@ validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell
               '1FA881591C26B276D7A5518EEAAF29B42A678C20') # Marco Martin <notmart@gmail.com>
 
 prepare() {
-  patch -d plasma-workspace-6.4.3 -Np1 -i "$srcdir/0001-shutdown-Stop-graphical-session.target-directly.patch"
- # Skip the verification of a drive when clicking mount and open, can be removed in 6.6.0
-  patch -d plasma-workspace-6.4.3 -Np1 -i "$srcdir/0002-skip-checking-disk-when-clicking-mount-and-open.patch"
-  patch -d plasma-workspace-6.4.3 -Np1 -i "$srcdir/0003-use-qtvirtualkeyboard.patch"
+  patch -d $pkgname-$pkgver -Np1 -i "$srcdir/0003-use-qtvirtualkeyboard.patch"
 }
 
 build() {
@@ -160,7 +153,7 @@ build() {
 }
 
 package_plasma-workspace() {
-  optdepends=('appmenu-gtk-module: global menu support for GTK2 and some GTK3 applications'
+  optdepends=('appmenu-gtk-module: global menu support for some GTK3 applications'
             'baloo: Baloo search runner'
             'discover: manage applications installation from the launcher'
             'kdepim-addons: displaying PIM events in the calendar'
