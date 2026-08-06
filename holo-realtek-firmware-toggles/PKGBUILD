@@ -2,7 +2,7 @@
 
 pkgname='holo-realtek-firmware-toggles'
 pkgver=1.3
-pkgrel=1
+pkgrel=2
 pkgdesc='Tool to toggle realtek rtw89 driver bits'
 arch=('any')
 license=('MIT')
