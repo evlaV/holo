@@ -4,7 +4,7 @@
 
 pkgname=xdg-desktop-portal-gtk
 pkgver=1.15.3
-pkgrel=1.1 # Holo: Drop the gtk-portal.conf that Arch adds
+pkgrel=1.2 # Holo: Drop the gtk-portal.conf that Arch adds
 pkgdesc="A backend implementation for xdg-desktop-portal using GTK"
 url="https://github.com/flatpak/xdg-desktop-portal-gtk"
 arch=(x86_64)

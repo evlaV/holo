@@ -2,7 +2,7 @@
 
 pkgname='steamos-systemreport'
 pkgver=1.22
-pkgrel=1
+pkgrel=2
 pkgdesc='System report collection tool'
 arch=('x86_64' 'aarch64')
 license=('LGPL2.1')
@@ -22,7 +22,7 @@ package() {
     'bluez-deprecated-tools'         # hcitool
     'coreutils'                      # dd
     'rauc'                           # rauc status
-    'drm_info'                       # drm_info
+    'drm-info'                       # drm_info
     'upower'                         # upower
     'wireplumber'                    # wpctl
     'iputils'                        # ping
