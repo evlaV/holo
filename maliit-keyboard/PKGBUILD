@@ -3,7 +3,7 @@
 
 pkgname=maliit-keyboard
 pkgver=2.3.1
-pkgrel=4.2 # Holo: disable presage, see https://bugs.archlinux.org/task/79500
+pkgrel=4.3 # Holo: disable presage, see https://bugs.archlinux.org/task/79500
 pkgdesc='Virtual keyboard based on Maliit framework'
 arch=(x86_64)
 url='https://maliit.github.io/'

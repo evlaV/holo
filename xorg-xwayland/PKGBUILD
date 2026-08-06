@@ -6,7 +6,7 @@
 
 pkgname=xorg-xwayland
 pkgver=24.1.13
-pkgrel=1.1 # Add seamless boot fixes
+pkgrel=1.2 # Add seamless boot fixes
 arch=('x86_64')
 license=(
     LicenseRef-Adobe-Display-PostScript

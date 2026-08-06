@@ -2,13 +2,13 @@
 
 pkgname=steamos-atomupd-client
 pkgver=0.20260625.1
-pkgrel=1
+pkgrel=2
 pkgdesc='SteamOS Atomic Update (client) - Atomic update client for SteamOS.'
 arch=('any')
 url='https://store.steampowered.com/steamos/'
 license=('LGPL2.1')
 makedepends=('git' 'python-setuptools')
-depends=('python>=3.13' 'python<3.14' 'rauc' 'python-semantic-version')
+depends=('python>=3.14' 'python<3.15' 'rauc' 'python-semantic-version')
 optdepends=(
   'desync'
   'steamos-alias: for steamos-alias compatibility symlinks'
