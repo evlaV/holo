@@ -1,4 +1,4 @@
-From 26af3c282de53fca215392de842cb6f8415b3ec2 Mon Sep 17 00:00:00 2001
+From 0012acc476f221f038a77d1eb042a5c33f388901 Mon Sep 17 00:00:00 2001
 From: Matthew Schwartz <matthew.schwartz@linux.dev>
 Date: Sat, 31 Jan 2026 22:06:30 -0800
 Subject: [PATCH 2/2] station: protect pending BSS during connection attempt
@@ -8,10 +8,10 @@ Subject: [PATCH 2/2] station: protect pending BSS during connection attempt
  1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/src/station.c b/src/station.c
-index 8266769d..b1f0a148 100644
+index ca1bcbd4..ec9a6880 100644
 --- a/src/station.c
 +++ b/src/station.c
-@@ -667,6 +667,7 @@ static bool bss_match(const void *a, const void *b)
+@@ -668,6 +668,7 @@ static bool bss_match(const void *a, const void *b)
  
  struct bss_expiration_data {
  	struct scan_bss *connected_bss;
@@ -19,7 +19,7 @@ index 8266769d..b1f0a148 100644
  	uint64_t now;
  	const struct scan_freq_set *freqs;
  	struct station *station;
-@@ -679,8 +680,9 @@ static bool bss_free_if_expired(void *data, void *user_data)
+@@ -680,8 +681,9 @@ static bool bss_free_if_expired(void *data, void *user_data)
  	struct scan_bss *bss = data;
  	struct bss_expiration_data *expiration_data = user_data;
  
@@ -31,7 +31,7 @@ index 8266769d..b1f0a148 100644
  		return false;
  
  	/* Keep any BSSes that are not on the frequency list */
-@@ -704,6 +706,7 @@ static void station_bss_list_remove_expired_bsses(struct station *station,
+@@ -705,6 +707,7 @@ static void station_bss_list_remove_expired_bsses(struct station *station,
  	struct bss_expiration_data data = {
  		.now = l_time_now(),
  		.connected_bss = station->connected_bss,
@@ -40,5 +40,5 @@ index 8266769d..b1f0a148 100644
  		.station = station,
  	};
 -- 
-2.52.0
+2.55.0
 

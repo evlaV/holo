@@ -3,13 +3,13 @@
 # Maintainer: Levente Polyak <anthraxx[at]archlinux[dot]org>
 
 pkgname=iwd
-pkgver=3.9
-pkgrel=1.4
+pkgver=3.12
+pkgrel=1.2
 pkgdesc='Internet Wireless Daemon'
 arch=('x86_64')
 url='https://git.kernel.org/cgit/network/wireless/iwd.git/'
 license=('LGPL-2.1-or-later')
-depends=('glibc' 'readline' 'libreadline.so' 'ell' 'gcc-libs')
+depends=('glibc' 'readline' 'libreadline.so' 'ell' 'libgcc')
 makedepends=('python-docutils' 'dbus' 'systemd')
 optdepends=('qrencode: for displaying QR code after DPP is started')
 source=(https://www.kernel.org/pub/linux/network/wireless/iwd-${pkgver}.tar{.xz,.sign}
@@ -27,11 +27,11 @@ source=(https://www.kernel.org/pub/linux/network/wireless/iwd-${pkgver}.tar{.xz,
         # TBD if this is a proper fix that should be sent upstream
         0001-station-Cancel-scans-before-connecting.patch)
 # https://mirrors.edge.kernel.org/pub/linux/network/wireless/sha256sums.asc
-sha256sums=('0cd7dc9b32b9d6809a4a5e5d063b5c5fd279f5ad3a0bf03d7799da66df5cad45'
+sha256sums=('d89a5e45c7180170e19be828f9e944a768c593758094fc57a358d0e7c4cb1a49'
             'SKIP'
             'd5fb4fb864b7a0632117aa2039df535ab5c1d024ae618a1f09e34dfab8ee0cc7'
-            'ba4f87cb770d38088260500e52c59500dc67801a625a5cb084598382ce4cf947'
-            '8fa1163c9c27b94e5a2efb08a9fc7b53817b729e28f365f36646a51bcb460883'
+            'fb573fbea862377ec4ba404b3430f886dee297d6e9e913b47f9f00582a66671a'
+            '58614bbc48e03073d9b204b98b9268434529de4bdeb4bd5831ad813cf935472b'
             '5adc33168ee7dd4772d94a2e873952c113bfc91e2cbff41df3243af148738d84')
 validpgpkeys=('E932D120BC2AEC444E558F0106CA9F5D1DCF2659')
 # https://lore.kernel.org/iwd/20240122104541.74f1a697@workstation64.local/T/#u

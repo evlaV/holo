@@ -8,20 +8,23 @@
 # sd-resolved: Used by steamos devkit (mDNS publishing)
 # avahi: mDNS browsing (finding network printers for CUPS)
 pkgname=avahi
-pkgver=0.8+r194+g3f79789c
-pkgrel=3.2
+pkgver=0.9rc5
+pkgrel=1.1
 epoch=1
 pkgdesc="Service Discovery for Linux using mDNS/DNS-SD (compatible with Bonjour)"
 url="https://github.com/avahi/avahi"
-license=(LGPL)
+license=(LGPL-2.1-or-later)
 arch=(x86_64)
 depends=(
+  bash
   dbus
   expat
   gdbm
   glib2
+  glibc
   libcap
   libdaemon
+  systemd-libs
 )
 makedepends=(
   doxygen
@@ -33,7 +36,7 @@ makedepends=(
   libevent
   python-dbus
   python-gobject
-  qt5-base
+  systemd
   xmltoman
 )
 optdepends=(
@@ -43,32 +46,23 @@ optdepends=(
   'python-dbus: avahi-bookmarks, avahi-discover'
   'python-gobject: avahi-bookmarks, avahi-discover'
   'python-twisted: avahi-bookmarks'
-  'qt5-base: qt5 bindings'
 )
 provides=(
-  libavahi-{client,common,core,glib,gobject,libevent,qt5,ui-gtk3}.so
+  libavahi-{client,common,core,glib,gobject,libevent,ui-gtk3}.so
   libdns_sd.so
 )
 backup=(
   etc/avahi/{hosts,avahi-daemon.conf,avahi-{autoip,dnsconf}d.action}
   usr/lib/avahi/service-types.db
 )
-_commit=3f79789c484518f82c36ff59c0f45abe7e6580a2  # master
 source=(
-  "git+https://github.com/avahi/avahi#commit=$_commit"
+  "git+$url#tag=v${pkgver/[a-z]/-&}"
   0001-HACK-Install-fixes.patch
   0002-disable-publishing-by-default.patch
-  9c4214146738146e454f098264690e8e884c39bd.context-trimmed.patch
 )
-b2sums=(SKIP
+b2sums=('4878a236ded4ef93573df43dc0c04d538d1c77028c9427d826158bd39f27cc65ad08f4290883848a471d7890533c36f9f3ad7072baf45ec129acd0993d6d48d2'
         'a15b00c05cce3b6a1479d88b1393cd955a80c669fed03be5f624a8e8701f22fe327bbd42f7563a532ae8ebc39408f3aedfc982c42a2b6141ccc22af96f16293c'
-        'c815c1c394df7f098d2d68651c6b8837d7b8519db782df89212b7865ea4d99533f623f376529c1234becaae6dada5574089541011ba1443ad12855d6a2fe2c2f'
-        '2794f19b8d55d94ad86eabb09f951a68333e308ad72b8ea72314af7e80c0b2af7e5b760d16bf8c7268eb2d3679a8833be6c3e9c28d7b4a5f1ac30f395b39d357')
-
-pkgver() {
-  cd avahi
-  git describe --tags | sed 's/^v//;s/[^-]*-g/r&/;s/-/+/g'
-}
+        'c815c1c394df7f098d2d68651c6b8837d7b8519db782df89212b7865ea4d99533f623f376529c1234becaae6dada5574089541011ba1443ad12855d6a2fe2c2f')
 
 prepare() {
   cd avahi
@@ -78,12 +72,6 @@ prepare() {
 
   # Holo: disable publishing by default (handled by sd-resolved on Holo)
   patch -p1 < ../0002-disable-publishing-by-default.patch
-
-  # Holo: disable enable-wide-area to mitigate CVE-2024-52615 and
-  # CVE-2024-52616, and because it's been disabled by default due to other
-  # problems.  Patch taken from upstream, with slightly trimmed context to apply
-  # cleanly, as previous patches modify the same lines.
-  patch -p1 < ../9c4214146738146e454f098264690e8e884c39bd.context-trimmed.patch
 
   NOCONFIGURE=1 ./autogen.sh
 }
@@ -96,6 +84,7 @@ build() {
     --sbindir=/usr/bin
     --runstatedir=/run
     --disable-mono
+    --disable-qt5
     --enable-compat-libdns_sd
     --with-autoipd-group=avahi
     --with-autoipd-user=avahi
