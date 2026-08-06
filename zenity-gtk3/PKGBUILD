@@ -2,8 +2,8 @@
 # Contributor: Jan de Groot <jgc@archlinux.org>
 
 pkgname=zenity-gtk3 # Holo: rename the package
-pkgver=3.44.2
-pkgrel=4
+pkgver=3.44.5
+pkgrel=1.1
 pkgdesc="Display graphical dialog boxes from shell scripts using GTK3"
 url="https://gitlab.gnome.org/GNOME/zenity"
 arch=(x86_64)
@@ -18,9 +18,8 @@ makedepends=(
   yelp-tools
 )
 optdepends=('perl: gdialog wrapper')
-_commit=e9a591aa1d182e220013d9ab50dcc7607734d7b1  # tags/3.44.2-real^0
-source=("git+https://gitlab.gnome.org/GNOME/zenity.git#commit=$_commit")
-b2sums=('SKIP')
+source=("git+https://gitlab.gnome.org/GNOME/zenity.git#tag=$pkgver")
+b2sums=('60f67b16ce2deefd81b07bd5de7d353f808868c123ed4c5feaa7865a9c19ccd1bdc87fb67133642c1181e734fe7dcdd6447e9ebe93d7ec111feafc1f6854e5a2')
 
 # Holo: ensure that we can't install both zenity and zenity-gtk3 at the same time
 provides=('zenity')
