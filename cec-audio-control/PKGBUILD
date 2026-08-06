@@ -2,7 +2,7 @@
 
 pkgname=cec-audio-control
 pkgver=0.1.0
-pkgrel=6
+pkgrel=7
 pkgdesc='CEC userspace daemon'
 arch=('x86_64')
 url='https://github.com/evlav/cec-audio-control'
