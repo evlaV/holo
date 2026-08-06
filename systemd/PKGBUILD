@@ -18,16 +18,16 @@ pkgname=('systemd'
 # Upstream versioning is incompatible with pacman's version comparisons, one
 # way or another. We use proper version for pacman here (no dash for rc
 # release!), and change in source array below.
-pkgver=257.7
-pkgrel=2.7
+pkgver=261.2
+pkgrel=1.1
 arch=('x86_64')
 license=('LGPL-2.1-or-later')
 url='https://www.github.com/systemd/systemd'
-makedepends=('acl' 'cryptsetup' 'docbook-xsl' 'gperf' 'lz4' 'xz' 'pam' 'libelf'
-             'intltool' 'iptables' 'kmod' 'libarchive' 'libcap' 'libidn2' 'libgcrypt'
+makedepends=('acl' 'apparmor' 'cryptsetup' 'docbook-xsl' 'gperf' 'lz4' 'xz' 'pam' 'libelf'
+             'intltool' 'iptables' 'kmod' 'libarchive' 'libidn2' 'libgcrypt'
              'libmicrohttpd' 'libxcrypt' 'libxslt' 'util-linux' 'linux-api-headers'
              'python-jinja' 'python-lxml' 'quota-tools' 'shadow' 'git'
-             'python>=3.13' 'python<3.14' # Holo: pin Python version
+             'python>=3.14' 'python<3.15' # Holo: pin Python version
              'meson' 'libseccomp' 'pcre2' 'audit' 'kexec-tools' 'libxkbcommon'
              'bash-completion' 'p11-kit' 'systemd' 'libfido2' 'tpm2-tss' 'rsync'
              'bpf' 'libbpf' 'clang' 'llvm' 'curl' 'gnutls' 'python-pyelftools'
@@ -44,33 +44,9 @@ source=("git+https://github.com/systemd/systemd#tag=v${pkgver/rc/-rc}?signed"
         # Holo - don't reap "old" files while running, only on boot
         '0002-Make-the-tmp-and-var-tmp-reapers-fire-only-during-bo.patch'
 
-        # Holo: Backport the name change for the 15e3 AMD APU audio controller
-        # Upstream change from https://admin.pci-ids.ucw.cz/read/PC/1022/15e3 and
-        # https://github.com/pciutils/pciids/commit/282d63a312f443378019740728c9b565cce5dc9e
-        # Addresses https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1891
-        # Can be removed once systemd upstream runs `ninja -C build update-hwdb` again after
-        # 2025-11-08, to update their https://github.com/systemd/systemd/blob/main/hwdb.d/20-pci-vendor-model.hwdb
-        '0001-hwdb-Update-the-15e3-HD-Audio-Controller-name.patch'
-
-        # Holo: Backport the fingerprint rules update from upstream systemd to avoid
-        # battery drain on ROG Ally models.
-        # Addresses https://github.com/ValveSoftware/steamos/issues/2268
-        # Can be removed once the systemd package is updated to systemd v259 stable
-        # or later.
-        '0001-hwdb-update-autosuspend-rules.patch'
-
-        # Holo: Backport updates to hwdb for MSI Claw devices.
-        # Improves support for low volume 8 AI+ variants and adds A8 BZ2EM (AMD) model.
-        # Can be removed once the systemd package is updated to systemd v260.3 stable
-        # or later.
-        '0001-hwdb-Update-MSI-Claw-Entries.patch'
-
         # Holo: allow suspend-then-hibernate to work together with hibernation
         # cancellation
         '0001-sleep-Don-t-fallback-to-suspend-if-hibernate-failed-.patch'
-
-        # Holo: backport of https://github.com/systemd/systemd/pull/43089
-        '0001-hwdb-classify-PlayStation-controller-audio-as-contro.patch'
 
         # bootloader files
         'arch.conf'
@@ -81,38 +57,34 @@ source=("git+https://github.com/systemd/systemd#tag=v${pkgver/rc/-rc}?signed"
         # pacman / libalpm hooks
         'systemd-hook'
         '20-systemd-sysusers.hook'
-        '30-systemd-binfmt.hook'
-        '30-systemd-catalog.hook'
+        '21-systemd-tmpfiles.hook'
+        '25-systemd-binfmt.hook'
+        '25-systemd-catalog.hook'
+        '25-systemd-hwdb.hook'
+        '25-systemd-sysctl.hook'
         '30-systemd-daemon-reload-system.hook'
         '30-systemd-daemon-reload-user.hook'
-        '30-systemd-hwdb.hook'
-        '30-systemd-restart-marked.hook'
-        '30-systemd-sysctl.hook'
-        '30-systemd-tmpfiles.hook'
-        '30-systemd-udev-reload.hook'
-        '30-systemd-update.hook')
-sha512sums=('94c4f1fa540395653594d25a9633a47d2ce3053f0511b041b0ec73ddbb0db7877a50563be6c3ac3c9c5d1f5964b88a7de17f5fbd843e1391123ee6f0227fbd02'
-            '78065bde708118b7d6e4ed492e096c763e4679a1c54bd98750d5d609d8cc2f1373023f308880f14fc923ae7f9fea34824917ef884c0f996b1f43d08ef022c0fb'
+        '35-systemd-enqueue-marked.hook'
+        '35-systemd-udev-reload.hook'
+        '35-systemd-update.hook')
+sha512sums=('1c2a3aed0b7c613040722ef1bd063a1f35d2f3993e0f678701ef5e4d42d31628804df477158e5fa2bb47e523a9969d01cfb7622762cf32ff44e0367e5f432368'
+            'ddb9401e47d0bf01874f255803a4b2167ec631484189d29d03694101fd9c77724e735f16d99c5f4ffd8061ae78839b2826ff0e0a925a6f0dbca25f2cfb271a82'
             'f0a8a7ec9ab53ad5273c491f3b8d94cf76b51434a030e572178bd04d3ebb5936b38bf17a708290f4d054d5cb93545b2e2049113268b234f12004d0c7d296989e'
-            '128681afb3cf58708c98fd53c57d4d86d2f3ff11fb6135e40b0c3202112cf0eab64e126bc33aca00c650a85284d77e60a64400da36abc8b2a2724da8b6545521'
-            '3b602e4a47f524fdc285d3f1f501c7791e4934906715eee561ee9e4f8524049652d77f60e004d9a8d30345acc06571d21974d4488ee4af7c1d2ccc2f7eb2f88d'
-            '052916dcec0bc68bf4f7a77bc32b97fbd0d7e59a77bc7779ac32a8370c4605f5c3515ba4d2c48595d611adf50e353b4a1dd30fff2f91dba099689d2dc3b065ec'
             '28db3e3c9f2d54c7b4595ed2147649f81db3522b6b9659c3ac7b5ec47e384a82c53401c78a5d72e97f3f77b703a54318842f5002029d191bdb36bb1367efedb7'
-            '4830ff9f172740fa047b44dc75d3df0c3e6368e9e7d0561e6d75cec263ee01b8425c9edcf87e3ca135e60ea1c30f8f9b3ea4ddc4d19cb7156f4d36862f2c94ba'
             '61032d29241b74a0f28446f8cf1be0e8ec46d0847a61dadb2a4f096e8686d5f57fe5c72bcf386003f6520bc4b5856c32d63bf3efe7eb0bc0deefc9f68159e648'
-            'c416e2121df83067376bcaacb58c05b01990f4614ad9de657d74b6da3efa441af251d13bf21e3f0f71ddcb4c9ea658b81da3d915667dc5c309c87ec32a1cb5a5'
+            '3194d1f8bff31b88a79657df83632b9224b66ca2cf8fd806a3ef35cf7a43f46c09c57f3dfd02256a99b6514a8f789b7d3bcfd7e17e00e34aa55ff0c6cedb5f01'
             '5a1d78b5170da5abe3d18fdf9f2c3a4d78f15ba7d1ee9ec2708c4c9c2e28973469bc19386f70b3cf32ffafbe4fcc4303e5ebbd6d5187a1df3314ae0965b25e75'
             '32580b82e97573d3e499821e2ce415ff134c0ec52c9b44a3c0862c4007d347f55636d6afac3dfc6831a9b384c7448075bdf3a12f369b4d8b62b24dfdb9c8a76a'
-            '81baa1ae439b0f4d1f09371a82c02db06a97a4fc35545fc2654f7905b4422fc8cf085f70304919a4323f39e662df1e05aa8d977d1dde73507527abe3072c386b'
+            'f2f9c8de7fc10c84f8ad4b3286c6878d35cf80ac9841a55759db46f40e69b012b2d6a6638fb107a442c6e545558f864af1477f701bc0693dc452772be232b7a7'
             '299dcc7094ce53474521356647bdd2fb069731c08d14a872a425412fcd72da840727a23664b12d95465bf313e8e8297da31259508d1c62cc2dcea596160e21c5'
+            'da7a97d5d3701c70dd5388b0440da39006ee4991ce174777931fea2aa8c90846a622b2b911f02ae4d5fffb92680d9a7e211c308f0f99c04896278e2ee0d9a4dc'
             '0d6bc3d928cfafe4e4e0bc04dbb95c5d2b078573e4f9e0576e7f53a8fab08a7077202f575d74a3960248c4904b5f7f0661bf17dbe163c524ab51dd30e3cb80f7'
             '2b50b25e8680878f7974fa9d519df7e141ca11c4bfe84a92a5d01bb193f034b1726ea05b3c0030bad1fbda8dbb78bf1dc7b73859053581b55ba813c39b27d9dc'
+            'a1661ab946c6cd7d3c6251a2a9fd68afe231db58ce33c92c42594aedb5629be8f299ba08a34713327b373a3badd1554a150343d8d3e5dfb102999c281bd49154'
+            '9426829605bbb9e65002437e02ed54e35c20fdf94706770a3dc1049da634147906d6b98bf7f5e7516c84068396a12c6feaf72f92b51bdf19715e0f64620319de'
             'a436d3f5126c6c0d6b58c6865e7bd38dbfbfb7babe017eeecb5e9d162c21902cbf4e0a68cf3ac2f99815106f9fa003b075bd2b4eb5d16333fa913df6e2f3e32a'
             '190112e38d5a5c0ca91b89cd58f95595262a551530a16546e1d84700fc9644aa2ca677953ffff655261e8a7bff6e6af4e431424df5f13c00bc90b77c421bc32d'
-            'a1661ab946c6cd7d3c6251a2a9fd68afe231db58ce33c92c42594aedb5629be8f299ba08a34713327b373a3badd1554a150343d8d3e5dfb102999c281bd49154'
-            'f6b154fdc612916d7788720cf703e34255b43ba2d19413de5f3f63f07508f4ce561ca138f987c2118c7128e1dfb01976b0ac7d5efee4d9ebaadd180e70fa013e'
-            '9426829605bbb9e65002437e02ed54e35c20fdf94706770a3dc1049da634147906d6b98bf7f5e7516c84068396a12c6feaf72f92b51bdf19715e0f64620319de'
-            'da7a97d5d3701c70dd5388b0440da39006ee4991ce174777931fea2aa8c90846a622b2b911f02ae4d5fffb92680d9a7e211c308f0f99c04896278e2ee0d9a4dc'
+            '51ebf20a1c93c2a86e8ced0d68e91f4a2bf6a537a2d674e05da69961d5861213159e28f228ffdc897bed721abd61ff133f49aeb0a9ebbbe76020c5b847c2a2df'
             'a50d202a9c2e91a4450b45c227b295e1840cc99a5e545715d69c8af789ea3dd95a03a30f050d52855cabdc9183d4688c1b534eaa755ebe93616f9d192a855ee3'
             '825b9dd0167c072ba62cabe0677e7cd20f2b4b850328022540f122689d8b25315005fa98ce867cf6e7460b2b26df16b88bb3b5c9ebf721746dce4e2271af7b97')
 
@@ -179,15 +151,16 @@ build() {
   local _timeservers=({0..3}.arch.pool.ntp.org)
   local _nameservers=(
     # We use these public name services, ordered by their privacy policy (hopefully):
-    #  * Cloudflare (https://1.1.1.1/)
-    #  * Quad9 (https://www.quad9.net/)
-    #  * Google (https://developers.google.com/speed/public-dns/)
-    '1.1.1.1#cloudflare-dns.com'
+    #  * Quad9 (https://quad9.net/privacy/policy/)
     '9.9.9.9#dns.quad9.net'
-    '8.8.8.8#dns.google'
-    '2606:4700:4700::1111#cloudflare-dns.com'
     '2620:fe::9#dns.quad9.net'
+    #  * Cloudflare (https://developers.cloudflare.com/1.1.1.1/privacy/public-dns-resolver/)
+    '1.1.1.1#cloudflare-dns.com'
+    '2606:4700:4700::1111#cloudflare-dns.com'
+    #  * Google (https://developers.google.com/speed/public-dns/privacy)
+    '8.8.8.8#dns.google'
     '2001:4860:4860::8888#dns.google'
+    # You do not agree? Fine, change it in your local configuration.
   )
 
   local _meson_options=(
@@ -196,7 +169,7 @@ build() {
     -Dshared-lib-tag="${_meson_version}"
     -Dmode=release
 
-    -Dapparmor=disabled
+    -Dapparmor=enabled
     -Dbootloader=enabled
     -Dxenctrl=disabled
     -Dbpf-framework=enabled
@@ -207,12 +180,11 @@ build() {
     -Dman=enabled
     -Dselinux=disabled
     -Dsshdprivsepdir=/usr/share/empty.sshd
+    -Dsysupdated=enabled
     -Dvmlinux-h=provided
     -Dvmlinux-h-path=/usr/src/linux/vmlinux.h
 
-    # We disable DNSSEC by default, it still causes trouble:
-    # https://github.com/systemd/systemd/issues/10579
-
+    -Dcompat-sysv-interfaces=false
     -Ddbuspolicydir=/usr/share/dbus-1/system.d
     -Ddefault-dnssec=no
     -Ddefault-kill-user-processes=false
@@ -224,8 +196,6 @@ build() {
     -Dntp-servers="${_timeservers[*]}"
     -Ddns-servers="${_nameservers[*]}"
     -Drpmmacrosdir=no
-    -Dsysvinit-path=
-    -Dsysvrcnd-path=
 
     -Dsbat-distro='arch'
     -Dsbat-distro-summary='Arch Linux'
@@ -250,31 +220,34 @@ package_systemd() {
     'GPL-2.0-or-later' # udev
     'MIT-0' # documentation and config files
   )
-  depends=("systemd-libs=${pkgver}"
-           'acl' 'libacl.so' 'bash' 'cryptsetup' 'libcryptsetup.so' 'dbus'
-           'dbus-units' 'kbd' 'kmod' 'hwdata' 'libcap' 'libcap.so'
-           'libgcrypt' 'libxcrypt' 'libcrypt.so' 'libidn2' 'lz4' 'pam'
-           'libelf' 'libseccomp' 'libseccomp.so' 'util-linux' 'libblkid.so'
-           'libmount.so' 'xz' 'pcre2' 'audit' 'libaudit.so'
-           'openssl' 'libcrypto.so' 'libssl.so')
+  depends=(
+    "systemd-libs=${pkgver}"
+    'acl' 'bash' 'cryptsetup' 'dbus'
+    'dbus-units' 'kbd' 'kmod' 'hwdata'
+    'libgcrypt' 'libxcrypt' 'libidn2' 'lz4' 'pam'
+    'libelf' 'libseccomp' 'util-linux' 'xz' 'pcre2' 'audit'
+    'openssl')
   provides=('nss-myhostname' "systemd-tools=$pkgver" "udev=$pkgver")
   replaces=('nss-myhostname' 'systemd-tools' 'udev')
   conflicts=('nss-myhostname' 'systemd-tools' 'udev')
-  optdepends=('libmicrohttpd: systemd-journal-gatewayd and systemd-journal-remote'
-              'quota-tools: kernel-level quota management'
-              'systemd-sysvcompat: symlink package to provide sysvinit binaries'
-              'systemd-ukify: combine kernel and initrd into a signed Unified Kernel Image'
-              'polkit: allow administration as unprivileged user'
-              'curl: systemd-journal-upload, machinectl pull-tar and pull-raw'
-              'gnutls: systemd-journal-gatewayd and systemd-journal-remote'
-              'qrencode: show QR codes'
-              'iptables: firewall features'
-              'libarchive: convert DDIs to tarballs'
-              'libbpf: support BPF programs'
-              'libpwquality: check password quality'
-              'libfido2: unlocking LUKS2 volumes with FIDO2 token'
-              'libp11-kit: support PKCS#11'
-              'tpm2-tss: unlocking LUKS2 volumes with TPM2')
+  optdepends=(
+    'apparmor: additional security features'
+    'curl: systemd-journal-upload, machinectl pull-tar and pull-raw'
+    'gnutls: systemd-journal-gatewayd and systemd-journal-remote'
+    'iptables: firewall features'
+    'libarchive: convert DDIs to tarballs'
+    'libbpf: support BPF programs'
+    'libfido2: unlocking LUKS2 volumes with FIDO2 token'
+    'libmicrohttpd: systemd-journal-gatewayd and systemd-journal-remote'
+    'libp11-kit: support PKCS#11'
+    'libpwquality: check password quality'
+    'polkit: allow administration as unprivileged user'
+    'qemu-base: systemd-vmspawn'
+    'qrencode: show QR codes'
+    'quota-tools: kernel-level quota management'
+    'systemd-sysvcompat: symlink package to provide sysvinit binaries'
+    'systemd-ukify: combine kernel and initrd into a signed Unified Kernel Image'
+    'tpm2-tss: unlocking LUKS2 volumes with TPM2')
   backup=(etc/systemd/coredump.conf
           etc/systemd/homed.conf
           etc/systemd/journald.conf
@@ -295,15 +268,14 @@ package_systemd() {
 
   meson install -C build --no-rebuild --destdir "$pkgdir" --quiet
 
-  # we'll create this on installation
-  rmdir "$pkgdir"/var/log/journal/remote
-
   # runtime libraries shipped with systemd-libs
   install -d -m0755 systemd-libs/lib/
   mv "$pkgdir"/usr/lib/lib{nss,systemd,udev}*.so* systemd-libs/lib/
   mv "$pkgdir"/usr/lib/pkgconfig systemd-libs/lib/pkgconfig
   mv "$pkgdir"/usr/include systemd-libs/include
   mv "$pkgdir"/usr/share/man/man3 systemd-libs/man3
+  install -d -m0755 systemd-libs/man8/
+  mv "$pkgdir"/usr/share/man/man8/*nss* systemd-libs/man8/
 
   # ukify shipped in separate package
   install -d -m0755 systemd-ukify/{bin,systemd,man1,install.d}
@@ -315,6 +287,7 @@ package_systemd() {
   mv "$pkgdir"/usr/lib/kernel/install.d/60-ukify.install systemd-ukify/install.d
 
   # manpages shipped with systemd-sysvcompat
+  rm "$pkgdir"/usr/share/man/man1/init.1
   rm "$pkgdir"/usr/share/man/man8/{halt,poweroff,reboot,shutdown}.8
 
   # executable (symlinks) shipped with systemd-sysvcompat
@@ -358,11 +331,15 @@ package_systemd() {
   # handle uncommon license
   install -d -m0755 "$pkgdir/usr/share/licenses/$pkgbase"
   ln -s -t "$_" /usr/share/doc/systemd/LICENSES/MIT-0.txt
+
+  # symlink kernel-install to installkernel
+  ln -s kernel-install "$pkgdir"/usr/bin/installkernel
+  ln -s kernel-install.8.gz "$pkgdir"/usr/share/man/man8/installkernel.8.gz
 }
 
 package_systemd-libs() {
   pkgdesc='systemd client libraries'
-  depends=('glibc' 'gcc-libs' 'libcap' 'libgcrypt' 'lz4' 'xz' 'zstd')
+  depends=('glibc' 'libgcc' 'libgcc_s.so' 'libgcrypt' 'lz4' 'xz'  'zstd')
   license+=(
     'CC0-1.0' # siphash
     'GPL-2.0-or-later WITH Linux-syscall-note' # src/basic/linux/*
@@ -375,6 +352,7 @@ package_systemd-libs() {
   mv systemd-libs/lib "$pkgdir"/usr/lib
   mv systemd-libs/include "$pkgdir"/usr/include
   mv systemd-libs/man3 "$pkgdir"/usr/share/man/man3
+  mv systemd-libs/man8 "$pkgdir"/usr/share/man/man8
 }
 
 package_systemd-resolvconf() {
@@ -395,6 +373,8 @@ package_systemd-sysvcompat() {
   conflicts=('sysvinit')
   depends=("systemd=${pkgver}")
 
+  install -D -m0644 -t "$pkgdir"/usr/share/man/man1 \
+    build/man/init.1
   install -D -m0644 -t "$pkgdir"/usr/share/man/man8 \
     build/man/{halt,poweroff,reboot,shutdown}.8
 
