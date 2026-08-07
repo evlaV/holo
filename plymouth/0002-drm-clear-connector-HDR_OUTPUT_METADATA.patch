@@ -1,0 +1,102 @@
+From 8d4b7b38b1aa359ffc9842fa2fd76851381d2023 Mon Sep 17 00:00:00 2001
+From: Robert Beckett <bob.beckett@collabora.com>
+Date: Fri, 10 Jul 2026 17:12:47 +0100
+Subject: [PATCH 2/2] drm: clear connector HDR_OUTPUT_METADATA
+
+Assign a zeroed struct hdr_output_metadata blob to the connector's
+HDR_OUTPUT_METADATA property during the modeset. This drives the sink
+as SDR, matching the default state gamescope starts from, so the
+plymouth -> compositor handoff does not trigger an HDR (de)activation
+mode change.
+
+The blob is created, assigned, and then released; the kernel takes its
+own reference on assignment. Connectors without the property are
+silently skipped.
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+Signed-off-by: Robert Beckett <bob.beckett@collabora.com>
+---
+ src/plugins/renderers/drm/plugin.c | 59 +++++++++++++++++++++++++++++-
+ 1 file changed, 58 insertions(+), 1 deletion(-)
+
+diff --git a/src/plugins/renderers/drm/plugin.c b/src/plugins/renderers/drm/plugin.c
+index 217314581a2d..c310a648de48 100644
+--- a/src/plugins/renderers/drm/plugin.c
++++ b/src/plugins/renderers/drm/plugin.c
+@@ -721,6 +721,61 @@ ply_renderer_connector_set_content_type_game (ply_renderer_backend_t *backend,
+         drmModeFreeConnector (connector);
+ }
+ 
++static void
++ply_renderer_connector_clear_hdr_output_metadata (ply_renderer_backend_t *backend,
++                                                  uint32_t                connector_id)
++{
++        struct hdr_output_metadata metadata = { 0 };
++        drmModeConnector *connector;
++        drmModePropertyPtr prop;
++        uint32_t blob_id = 0;
++        int i, err;
++
++        connector = drmModeGetConnector (backend->device_fd, connector_id);
++        if (!connector)
++                return;
++
++        for (i = 0; i < connector->count_props; i++) {
++                prop = drmModeGetProperty (backend->device_fd, connector->props[i]);
++                if (!prop)
++                        continue;
++
++                if ((prop->flags & DRM_MODE_PROP_BLOB) &&
++                    strcmp (prop->name, "HDR_OUTPUT_METADATA") == 0) {
++                        /* Point the connector at a zeroed hdr_output_metadata
++                         * blob so the sink is driven as SDR, matching the
++                         * default state gamescope starts from and avoiding an
++                         * HDR (de)activation mode change at handoff.
++                         */
++                        err = drmModeCreatePropertyBlob (backend->device_fd,
++                                                         &metadata, sizeof(metadata),
++                                                         &blob_id);
++                        if (err == 0) {
++                                err = drmModeObjectSetProperty (backend->device_fd,
++                                                                connector_id,
++                                                                DRM_MODE_OBJECT_CONNECTOR,
++                                                                connector->props[i],
++                                                                blob_id);
++                                ply_trace ("Set HDR_OUTPUT_METADATA on connector %u result %d",
++                                           connector_id, err);
++                                /* The kernel takes its own reference on the blob
++                                 * when it is assigned, so drop ours.
++                                 */
++                                drmModeDestroyPropertyBlob (backend->device_fd, blob_id);
++                        } else {
++                                ply_trace ("Failed to create HDR_OUTPUT_METADATA blob: %d", err);
++                        }
++
++                        drmModeFreeProperty (prop);
++                        break;
++                }
++
++                drmModeFreeProperty (prop);
++        }
++
++        drmModeFreeConnector (connector);
++}
++
+ static bool
+ ply_renderer_head_set_scan_out_buffer (ply_renderer_backend_t *backend,
+                                        ply_renderer_head_t    *head,
+@@ -740,8 +795,10 @@ ply_renderer_head_set_scan_out_buffer (ply_renderer_backend_t *backend,
+         /* Set the content type before the modeset so a legacy KMS driver
+          * picks it up as part of the following drmModeSetCrtc().
+          */
+-        for (i = 0; i < number_of_connectors; i++)
++        for (i = 0; i < number_of_connectors; i++) {
+                 ply_renderer_connector_set_content_type_game (backend, connector_ids[i]);
++                ply_renderer_connector_clear_hdr_output_metadata (backend, connector_ids[i]);
++        }
+ 
+         /* Set gamma table, do this only once */
+         if (head->gamma) {
+-- 
+2.48.1
+

@@ -1,0 +1,97 @@
+From 81c520327a9b4198e17fe95fbf55313c3f021646 Mon Sep 17 00:00:00 2001
+From: Robert Beckett <bob.beckett@collabora.com>
+Date: Fri, 10 Jul 2026 16:07:17 +0100
+Subject: [PATCH] drm: set connector content type to Game
+
+Advertise the splash as game content by setting the "content type"
+connector property to DRM_MODE_CONTENT_TYPE_GAME during the modeset.
+This matches what gamescope selects, so TVs and other sinks stay in the
+same content-type mode across the plymouth -> compositor handoff and
+avoid a slow mode change.
+
+The property is set before drmModeSetCrtc() so legacy KMS drivers pick
+it up as part of the following modeset; connectors without the property
+(older kernels, non-HDMI sinks) are silently skipped.
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+Signed-off-by: Robert Beckett <bob.beckett@collabora.com>
+---
+ src/plugins/renderers/drm/plugin.c | 48 ++++++++++++++++++++++++++++++
+ 1 file changed, 48 insertions(+)
+
+diff --git a/src/plugins/renderers/drm/plugin.c b/src/plugins/renderers/drm/plugin.c
+index 46aa60e7f12c..217314581a2d 100644
+--- a/src/plugins/renderers/drm/plugin.c
++++ b/src/plugins/renderers/drm/plugin.c
+@@ -680,6 +680,47 @@ ply_renderer_head_clear_plane_rotation (ply_renderer_backend_t *backend,
+         }
+ }
+ 
++static void
++ply_renderer_connector_set_content_type_game (ply_renderer_backend_t *backend,
++                                              uint32_t                connector_id)
++{
++        drmModeConnector *connector;
++        drmModePropertyPtr prop;
++        int i, err;
++
++        connector = drmModeGetConnector (backend->device_fd, connector_id);
++        if (!connector)
++                return;
++
++        for (i = 0; i < connector->count_props; i++) {
++                prop = drmModeGetProperty (backend->device_fd, connector->props[i]);
++                if (!prop)
++                        continue;
++
++                if ((prop->flags & DRM_MODE_PROP_ENUM) &&
++                    strcmp (prop->name, "content type") == 0) {
++                        /* Advertise the splash as game content so that TVs and
++                         * other sinks stay in the same content-type mode that
++                         * gamescope selects, avoiding a slow mode change when
++                         * plymouth hands off to the compositor.
++                         */
++                        err = drmModeObjectSetProperty (backend->device_fd,
++                                                        connector_id,
++                                                        DRM_MODE_OBJECT_CONNECTOR,
++                                                        connector->props[i],
++                                                        DRM_MODE_CONTENT_TYPE_GAME);
++                        ply_trace ("Set content type to Game on connector %u result %d",
++                                   connector_id, err);
++                        drmModeFreeProperty (prop);
++                        break;
++                }
++
++                drmModeFreeProperty (prop);
++        }
++
++        drmModeFreeConnector (connector);
++}
++
+ static bool
+ ply_renderer_head_set_scan_out_buffer (ply_renderer_backend_t *backend,
+                                        ply_renderer_head_t    *head,
+@@ -688,6 +729,7 @@ ply_renderer_head_set_scan_out_buffer (ply_renderer_backend_t *backend,
+         drmModeModeInfo *mode = &head->connector0_mode;
+         uint32_t *connector_ids;
+         int number_of_connectors;
++        int i;
+ 
+         connector_ids = (uint32_t *) ply_array_get_uint32_elements (head->connector_ids);
+         number_of_connectors = ply_array_get_size (head->connector_ids);
+@@ -695,6 +737,12 @@ ply_renderer_head_set_scan_out_buffer (ply_renderer_backend_t *backend,
+         ply_trace ("Setting scan out buffer of %ldx%ld head to our buffer",
+                    head->area.width, head->area.height);
+ 
++        /* Set the content type before the modeset so a legacy KMS driver
++         * picks it up as part of the following drmModeSetCrtc().
++         */
++        for (i = 0; i < number_of_connectors; i++)
++                ply_renderer_connector_set_content_type_game (backend, connector_ids[i]);
++
+         /* Set gamma table, do this only once */
+         if (head->gamma) {
+                 drmModeCrtcSetGamma (backend->device_fd,
+-- 
+2.48.1
+
