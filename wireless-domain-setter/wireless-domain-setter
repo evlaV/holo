@@ -26,27 +26,50 @@ function filter_valid_domains()
     grep -v '^00$' | grep -v '^na$'
 }
 
-# Do nothing if the global domain is already set to something else
-GLOBAL_DOMAIN="$(get_domains "global" | head -n1)"
-if [[ -n "$(filter_valid_domains <<<"${GLOBAL_DOMAIN}")" ]]; then
-    echo "Early-exiting as global domain is already set to ${GLOBAL_DOMAIN}"
-    exit 0
-fi
-
-# Do nothing if there are no self-managed phy's
-if [[ -z "$(get_domains "phy")" ]]; then
-    echo "Early-exiting as we found no self-managed phy's"
-    exit 0
-fi
-
-while true; do
-    # Get list of non-00 self-managed phy domains, loop until we have at least one
-    SELF_MANAGED_DOMAINS=( $(get_domains "phy" | filter_valid_domains) )
-    if [[ ${#SELF_MANAGED_DOMAINS[@]} -gt 0 ]]; then
-        break
+function copy_domain()
+{
+    # Do nothing if the global domain is already set to something else
+    GLOBAL_DOMAIN="$(get_domains "global" | head -n1)"
+    if [[ -n "$(filter_valid_domains <<<"${GLOBAL_DOMAIN}")" ]]; then
+        echo "Early-exiting as global domain is already set to ${GLOBAL_DOMAIN}"
+        return
     fi
-    sleep 5
-done
 
-echo "Setting global regulatory domain to ${SELF_MANAGED_DOMAINS[0]}"
-iw reg set "${SELF_MANAGED_DOMAINS[0]}"
+    # Do nothing if there are no self-managed phy's
+    if [[ -z "$(get_domains "phy")" ]]; then
+        echo "Early-exiting as we found no self-managed phy's"
+        return
+    fi
+
+    while true; do
+        # Get list of non-00 self-managed phy domains, loop until we have at least one
+        SELF_MANAGED_DOMAINS=( $(get_domains "phy" | filter_valid_domains) )
+        if [[ ${#SELF_MANAGED_DOMAINS[@]} -gt 0 ]]; then
+            break
+        fi
+        sleep 5
+    done
+
+    echo "Setting global regulatory domain to ${SELF_MANAGED_DOMAINS[0]}"
+    iw reg set "${SELF_MANAGED_DOMAINS[0]}"
+}
+
+SHOULD_RELOAD_KMOD=false
+if lsmod | grep -q '^rtw89_8852cu'; then
+    SHOULD_RELOAD_KMOD=true
+fi
+
+copy_domain
+
+# Annoying hack: The rtw89_8852cu driver has a race condition where if it is loaded
+# too early at boot (e.g. because the USB dongle is connected during boot) it can get
+# wedged in annoying ways, not respecting the regulatory domain that we set here.
+# To fix this, we force-unload the module if it is loaded, and reload it.
+# Realtek is fixing this, they estimate their PoC will be ready in October 2026,
+# with an unknown length of time before it's fully upstreamed from there.
+if [[ "${SHOULD_RELOAD_KMOD}" == "true" ]]; then
+    sleep 1
+    echo "Reloading rtw89_8852cu driver to work around race condition at boot"
+    rmmod rtw89_8852cu
+    modprobe rtw89_8852cu
+fi
