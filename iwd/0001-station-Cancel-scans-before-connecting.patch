@@ -1,0 +1,44 @@
+From 7829f52281d3f94aaaf8fbbc51b80f9ae927d119 Mon Sep 17 00:00:00 2001
+From: Ludovico de Nittis <ludovico.denittis@collabora.com>
+Date: Tue, 4 Aug 2026 12:10:29 +0200
+Subject: [PATCH] station: Cancel scans before connecting
+
+If for whatever reason we have a pending D-Bus scan that got stale, we
+should cancel it to prevent indefinitely blocking the rest of the new
+commands being requested.
+
+Signed-off-by: Ludovico de Nittis <ludovico.denittis@collabora.com>
+---
+ src/station.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/src/station.c b/src/station.c
+index 8fcf8c70..0371a921 100644
+--- a/src/station.c
++++ b/src/station.c
+@@ -4020,6 +4020,22 @@ void station_connect_network(struct station *station, struct network *network,
+ 	struct l_dbus *dbus = dbus_get_bus();
+ 	int err;
+ 
++	/*
++	 * An explicit connection takes precedence over a D-Bus scan.
++	 * Ensure a scan command doesn't indefinitely block.
++	 */
++	if (station->dbus_scan_id) {
++		scan_cancel(netdev_get_wdev_id(station->netdev),
++				station->dbus_scan_id);
++
++		if (station->scan_pending)
++			dbus_pending_reply(&station->scan_pending,
++				dbus_error_aborted(station->scan_pending));
++
++		station->dbus_scan_id = 0;
++		station_property_set_scanning(station, false);
++	}
++
+ 	/*
+ 	 * If a hidden scan is not completed, station_is_busy would not
+ 	 * indicate anything is going on so we need to cancel the scan and
+-- 
+2.55.0
+

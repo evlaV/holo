@@ -4,7 +4,7 @@
 
 pkgname=iwd
 pkgver=3.9
-pkgrel=1.2
+pkgrel=1.4
 pkgdesc='Internet Wireless Daemon'
 arch=('x86_64')
 url='https://git.kernel.org/cgit/network/wireless/iwd.git/'
@@ -19,13 +19,20 @@ source=(https://www.kernel.org/pub/linux/network/wireless/iwd-${pkgver}.tar{.xz,
         # See https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1978 for details
         # These should be upstreamed after further testing, at which point we can drop our fork.
         0001-station-avoid-flushing-BSS-cache-on-partial-channel-.patch
-        0002-station-protect-pending-BSS-during-connection-attemp.patch)
+        0002-station-protect-pending-BSS-during-connection-attemp.patch
+
+        # Holo: we have intances where a scan request could get stuck and never complete.
+        # With this patch we prevent old scan requests to block new connection attempts.
+        # Part of https://github.com/evlav/tasks/-/work_items/754
+        # TBD if this is a proper fix that should be sent upstream
+        0001-station-Cancel-scans-before-connecting.patch)
 # https://mirrors.edge.kernel.org/pub/linux/network/wireless/sha256sums.asc
 sha256sums=('0cd7dc9b32b9d6809a4a5e5d063b5c5fd279f5ad3a0bf03d7799da66df5cad45'
             'SKIP'
             'd5fb4fb864b7a0632117aa2039df535ab5c1d024ae618a1f09e34dfab8ee0cc7'
             'ba4f87cb770d38088260500e52c59500dc67801a625a5cb084598382ce4cf947'
-            '8fa1163c9c27b94e5a2efb08a9fc7b53817b729e28f365f36646a51bcb460883')
+            '8fa1163c9c27b94e5a2efb08a9fc7b53817b729e28f365f36646a51bcb460883'
+            '5adc33168ee7dd4772d94a2e873952c113bfc91e2cbff41df3243af148738d84')
 validpgpkeys=('E932D120BC2AEC444E558F0106CA9F5D1DCF2659')
 # https://lore.kernel.org/iwd/20240122104541.74f1a697@workstation64.local/T/#u
 options=('!lto')
@@ -41,6 +48,8 @@ prepare() {
   patch -Np1 -i ../0001-station-avoid-flushing-BSS-cache-on-partial-channel-.patch
   # Holo: protect pending BSS ids during connection
   patch -Np1 -i ../0002-station-protect-pending-BSS-during-connection-attemp.patch
+  # Holo: cancel eventual stuck scan request before connecting
+  patch -Np1 -i ../0001-station-Cancel-scans-before-connecting.patch
 
   # https://lore.kernel.org/iwd/20240122105312.66fb4dbf@workstation64.local/T/#u
   # disable one expected test failure - requires a kernel module we cannot load
