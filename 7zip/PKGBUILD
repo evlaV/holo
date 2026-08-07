@@ -1,19 +1,24 @@
 # Maintainer: Evangelos Foutras <foutrelis@archlinux.org>
 
 pkgname=7zip
-pkgver=25.01
-pkgrel=1.1 # 25.01-1 from Arch rebuilt for Holo
-pkgdesc="File archiver for extremely high compression"
-arch=('x86_64')
-url="https://www.7-zip.org"
-license=('LGPL-2.1-or-later' 'BSD-3-Clause' 'LicenseRef-UnRAR')
-depends=('glibc' 'gcc-libs' 'sh')
-makedepends=('uasm')
-provides=('p7zip')
-conflicts=('p7zip')
-replaces=('p7zip')
+pkgver=26.02
+pkgrel=1.1 # Rebuild for Holo
+pkgdesc='File archiver for extremely high compression'
+arch=(x86_64 aarch64)
+url='https://www.7-zip.org'
+license=('LGPL-2.1-or-later AND LicenseRef-UnRAR AND BSD-3-Clause AND BSD-2-Clause')
+depends=(
+  sh
+  gcc-libs
+  glibc
+)
+makedepends_x86_64=(uasm)
+provides=(p7zip)
+conflicts=(p7zip)
+replaces=(p7zip)
 source=(https://7-zip.org/a/7z${pkgver//./}-src.tar.xz)
-sha256sums=('ed087f83ee789c1ea5f39c464c55a5c9d4008deb0efe900814f2df262b82c36e')
+sha512sums=('85449360904b295cb47a86597cca5e6623f4119e4e5ad3491d67bea8cd416bad68c4bfb69b9ec521ccee6e431a080d9e8aa8f5eecb69d8305c66973048e56a16')
+b2sums=('26fb72ffef65c316ff97959981e4f8eb4dbbd5ac09900d3c6ab880347ff23cc781f4b4196f138e8c558afa5c1fd738feebc73299f6be70d9787dfc9ffa9afc69')
 
 build() {
   local _platform_flags=()
@@ -26,7 +31,7 @@ build() {
       _platform_flags=(PLATFORM=x86 IS_X86=1 MY_ASM=uasm USE_ASM=1)
       ;;
     aarch64)
-      _platform_flags=(PLATFORM=arm64 IS_ARM64=1 MY_ASM=uasm USE_ASM=1)
+      _platform_flags=(PLATFORM=arm64 IS_ARM64=1 USE_ASM=1)
       ;;
   esac
 
