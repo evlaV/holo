@@ -1,7 +1,7 @@
 # Maintainer: Elliot Saba <sabae@valvesoftware.com>
 
 pkgname='wireless-domain-setter'
-pkgver=1.1
+pkgver=1.2
 pkgrel=1
 pkgdesc='Copy wireless regulatory domain from self-managed devices to global kernel domain'
 arch=('any')
@@ -12,7 +12,7 @@ source=(
   'wireless-domain-setter.service'
 )
 sha256sums=('56ae7ce4778a10d27946119b741ad644839ccff6305299e481f71e421ae78f83'
-            'ffd317da07b6fb3a904c6877d809318d07392fb9386ca7c8976d2b7d69f685c9')
+            'e77c10e919e02d65b6fb7bea012d500e30821fceb12a7dc0200cde8a8bdb6d3a')
 depends=(
   'bash'
 )
