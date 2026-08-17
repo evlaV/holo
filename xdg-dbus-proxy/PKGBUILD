@@ -2,8 +2,8 @@
 # Contributor: Bartłomiej Piotrowski <bpiotrowski@archlinux.org>
 
 pkgname=xdg-dbus-proxy
-pkgver=0.1.7
-pkgrel=1.1 # Rebuild for holo
+pkgver=0.1.8
+pkgrel=1.1 # Rebuild for Holo
 pkgdesc="Filtering proxy for D-Bus connections"
 url="https://github.com/flatpak/xdg-dbus-proxy"
 arch=(x86_64)
@@ -11,7 +11,7 @@ license=(LGPL-2.1-or-later)
 depends=(
   glib2
   glibc
-  gcc-libs
+  libgcc
 )
 makedepends=(
   docbook-xsl
@@ -19,7 +19,7 @@ makedepends=(
   meson
 )
 source=("git+$url#tag=$pkgver")
-b2sums=('c4dc53d5d662d23e4ca75d7f6f0fa5b7c58afc755206e6293185591b85c6317f30dadd3074c6f7f59582e8ee8175a061120e8e91b6c31c715f578e0fa7d0a37a')
+b2sums=('69b4ad2ae007072c117493bb5801086ae2a341096a0930a6176d614d8a09f17d23211795550a2221dc957772177889a0b8816ccc61a7454525be9b6337b18db2')
 
 prepare() {
   cd $pkgname
