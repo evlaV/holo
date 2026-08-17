@@ -7,8 +7,8 @@ pkgname=(
   flatpak
   flatpak-docs
 )
-pkgver=1.16.6
-pkgrel=1.1 # Rebuild for holo
+pkgver=1.18.1
+pkgrel=1.1 # Rebuild for Holo
 epoch=1
 pkgdesc="Linux application sandboxing and distribution framework (formerly xdg-app)"
 url="https://flatpak.org"
@@ -28,7 +28,7 @@ depends=(
   gpgme
   json-glib
   libarchive
-  gcc-libs
+  libgcc
   libmalcontent
   libseccomp
   libxau
@@ -63,12 +63,10 @@ checkdepends=(
 source=(
   "git+https://github.com/flatpak/flatpak?signed#tag=$pkgver"
   https://dl.flathub.org/repo/flathub.flatpakrepo
-  disable-lseek-warning.patch
   flatpak-bindir.sh
 )
-b2sums=('c1423f0086e0a779be3d6c4322daf8122af221a2c2e94d0534085339415b0d9d0d40b45339f062f6fe199bac7033b460e9805c1acf0b633a2cb8e1db550ad33c'
+b2sums=('563cafc9783d11add1930ac5df874fc32bea0f7d544adade434a04af53f0c09e54d0d723ad7cc2ae5463716a4c80b46cf3be004d598c652293f4e4695464d324'
         'c094461a28dab284c1d32cf470f38118a6cbce27acce633b81945fb859daef9bdec1261490f344221b5cacf4437f53934cb51173f7ad2f1d2e05001139e75c54'
-        '5d717297d940d9faac500f5773ac8e60506d812227d6f36517426bfba1a50c91c84230f01e38f8396465f4465e8128c9706186f02c22d98812a8249d34b77985'
         '1c45caa65e2a1598f219977d5a81dcb8ea5d458880c43c40ba452b0c77cbbf41b36fa6911741f22c807d318e04e39e4fcc1455ed8d68faaba10162dae2570abc')
 validpgpkeys=(
   DA98F25C0871C49A59EAFF2C4DE8FF2A63C7CC90 # Simon McVittie <smcv@collabora.com>
@@ -78,13 +76,10 @@ validpgpkeys=(
 
 prepare() {
   cd flatpak
-  # holo: disable bogus warning
-  patch -p1 < ../disable-lseek-warning.patch
 }
 
 build() {
   local meson_options=(
-    -D dbus_config_dir=/usr/share/dbus-1/system.d
     -D selinux_module=disabled
     -D system_bubblewrap=bwrap
     -D system_dbus_proxy=xdg-dbus-proxy
