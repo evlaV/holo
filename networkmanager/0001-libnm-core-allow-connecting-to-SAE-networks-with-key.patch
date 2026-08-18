@@ -1,0 +1,38 @@
+From 6b56139cf8a5fbdffbad6d22b48a9c8a42ffe5bf Mon Sep 17 00:00:00 2001
+From: Beniamino Galvani <bgalvani@redhat.com>
+Date: Tue, 14 Jul 2026 10:18:56 +0200
+Subject: [PATCH] libnm-core: allow connecting to SAE networks with
+ key-mgmt=wpa-psk
+
+Since commit f5d78c2d289c ('supplicant: enable WPA3 for WPA-PSK
+connections'), we also pass "sae" as a valid authentication protocol
+to the supplicant for connection profiles with key-mgmt=wpa-psk.
+
+However that works only for manual activations. The auto-connect path
+calls nm_setting_wireless_ap_security_compatible() to verify that the
+security of the AP is compatible with the profile, and the function
+was not updated accordingly. Do that now.
+
+Fixes: f5d78c2d289c ('supplicant: enable WPA3 for WPA-PSK connections')
+---
+ src/libnm-core-impl/nm-setting-wireless.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/libnm-core-impl/nm-setting-wireless.c b/src/libnm-core-impl/nm-setting-wireless.c
+index 4a4100e9df..2207552d72 100644
+--- a/src/libnm-core-impl/nm-setting-wireless.c
++++ b/src/libnm-core-impl/nm-setting-wireless.c
+@@ -244,7 +244,9 @@ nm_setting_wireless_ap_security_compatible(NMSettingWireless         *s_wireless
+     if (NM_IN_STRSET(key_mgmt, "wpa-psk", "wpa-eap", "sae", "owe")) {
+         if (nm_streq(key_mgmt, "wpa-psk")) {
+             if (!(ap_wpa & NM_802_11_AP_SEC_KEY_MGMT_PSK)
+-                && !(ap_rsn & NM_802_11_AP_SEC_KEY_MGMT_PSK))
++                && !(ap_rsn & NM_802_11_AP_SEC_KEY_MGMT_PSK)
++                /* key-mgmt=wpa-psk allows connecting to SAE networks */
++                && !(ap_rsn & NM_802_11_AP_SEC_KEY_MGMT_SAE))
+                 return FALSE;
+         } else if (nm_streq(key_mgmt, "wpa-eap")) {
+             if (!(ap_wpa & NM_802_11_AP_SEC_KEY_MGMT_802_1X)
+-- 
+2.47.3
+

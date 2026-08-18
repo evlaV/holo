@@ -1,0 +1,35 @@
+From 7d3e522d52a792a6e298aff90cd3f15e962ffbcb Mon Sep 17 00:00:00 2001
+From: Vignesh Raman <vignesh.raman@collabora.com>
+Date: Thu, 13 Aug 2026 16:34:16 +0530
+Subject: [PATCH] libnm-core: allow connecting to SAE networks reported as PSK
+ by iwd
+
+iwd never reports SAE separately from PSK. A connection made under
+wpa_supplicant gets labeled key-mgmt=sae, but with iwd it is
+key-mgmt=wpa-psk. The compatibility check still looks for an AP with
+the SAE bit set, but iwd provides only PSK. So auto-connect fails
+when switching wifi.backend from wpa_supplicant to iwd.
+
+Accept an AP that only advertises the PSK bit for a SAE profile.
+---
+ src/libnm-core-impl/nm-setting-wireless.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/libnm-core-impl/nm-setting-wireless.c b/src/libnm-core-impl/nm-setting-wireless.c
+index 2207552d72..7c73ee7c4b 100644
+--- a/src/libnm-core-impl/nm-setting-wireless.c
++++ b/src/libnm-core-impl/nm-setting-wireless.c
+@@ -254,7 +254,9 @@ nm_setting_wireless_ap_security_compatible(NMSettingWireless         *s_wireless
+                 return FALSE;
+         } else if (nm_streq(key_mgmt, "sae")) {
+             if (!(ap_wpa & NM_802_11_AP_SEC_KEY_MGMT_SAE)
+-                && !(ap_rsn & NM_802_11_AP_SEC_KEY_MGMT_SAE))
++                && !(ap_rsn & NM_802_11_AP_SEC_KEY_MGMT_SAE)
++                /* iwd does not report SAE networks distinctly from PSK ones */
++                && !(ap_rsn & NM_802_11_AP_SEC_KEY_MGMT_PSK))
+                 return FALSE;
+         } else if (nm_streq(key_mgmt, "owe")) {
+             if (!NM_FLAGS_ANY(ap_wpa,
+-- 
+2.47.3
+
