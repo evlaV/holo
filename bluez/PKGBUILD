@@ -7,7 +7,7 @@
 pkgbase=bluez
 pkgname=('bluez' 'bluez-utils' 'bluez-libs' 'bluez-cups' 'bluez-deprecated-tools' 'bluez-hid2hci' 'bluez-mesh' 'bluez-obex')
 pkgver=5.87
-pkgrel=2.1
+pkgrel=2.2
 url="http://www.bluez.org/"
 arch=('x86_64')
 license=('GPL-2.0-only')
@@ -31,7 +31,9 @@ source=(#https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz
         # Part of https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1267
         # At the moment of writing, the upstream patch has still not being merged
         # https://lore.kernel.org/all/CABBYNZKFEBuW2OeU4uOSfku=-jCnn3oXJENDMBGmkqP-4rybDA@mail.gmail.com/t/#u
-        0001-BlueZ-adapter-Fix-execute-LE-Add-Device-To-Resolving.patch)
+        0001-BlueZ-adapter-Fix-execute-LE-Add-Device-To-Resolving.patch
+        # Holo: Fix unstable BT connection with Nintendo Switch Pro v1
+        0024-Modify-Nintendo-gamepad-abnormal-disconnect-during-use.patch)
 b2sums=('9abcc5de17102c1307396627c87cffb5585e1c9b099cfd33d2a682d93f10e48a178fe8651c16ab9bb788d80f603f91db75e9fcadf7b627017202402d4ec396e5'
         '0ce33d13b796d4ae2fd688b17742b3a3055663b68a352b02720dac82bcfdaa47bf2ee2a034dfb8ef4ddf3f827bc58fe80548730939c2915f64864cea39c10170'
         '355c0dfce71d3e832fb5b091a26afcfc1f7f7b890befee3eb525505c4cacaf5c8121d097a1724ba0ad70b74c3ddffef17046747e93c241f948304663643d8316'
@@ -40,7 +42,8 @@ b2sums=('9abcc5de17102c1307396627c87cffb5585e1c9b099cfd33d2a682d93f10e48a178fe86
         'e8df6143b7ce3541b94fff37a2488c574753467e1ccc7d852652c7a6e889350bceb95ef3ad5809c001fd6982d066a7e6796a3b7f358f658ff2fb33e1ef859abb'
         '78e0d61ae87c8e12805cd09872abe3e1be2c5a68ea7fe814e5e938f16ebb519d1f758bd776d26ed970fecd2a905bae33ae2d5afd2c5973106ed0faf9a743e4a5'
         'f8e7344443cbd28700a087dc76331f38503a1a18b9813009f1989733ff2e6ffac75a6ae83a56d3cc534c50f8de57c7d915b05b3afdad8bc66550198d5d3a8e2c'
-        '041d344b81ea91bce7702019436c28126bb6f7afb3870d642f667c5e0f1ba42625a825e1db02b94556cd8b91b357e6ffde89bfe7f5e13f048ea719bebaed88a8')
+        '041d344b81ea91bce7702019436c28126bb6f7afb3870d642f667c5e0f1ba42625a825e1db02b94556cd8b91b357e6ffde89bfe7f5e13f048ea719bebaed88a8'
+        '320ad8f3cede12214c2ad399b490ff69a22efee52e0b51fa84f4420d67692463300830266588ea02d50f738d602c682620a0051d832ade1269e9ce437e72d22a')
 # validpgpkeys=('E932D120BC2AEC444E558F0106CA9F5D1DCF2659') # Marcel Holtmann <marcel@holtmann.org>
 
 prepare() {
