@@ -7,7 +7,7 @@
 pkgbase=bluez
 pkgname=('bluez' 'bluez-utils' 'bluez-libs' 'bluez-cups' 'bluez-deprecated-tools' 'bluez-hid2hci' 'bluez-mesh' 'bluez-obex')
 pkgver=5.87
-pkgrel=2.2
+pkgrel=2.3
 url="http://www.bluez.org/"
 arch=('x86_64')
 license=('GPL-2.0-only')
@@ -33,6 +33,9 @@ source=(#https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz
         # https://lore.kernel.org/all/CABBYNZKFEBuW2OeU4uOSfku=-jCnn3oXJENDMBGmkqP-4rybDA@mail.gmail.com/t/#u
         0001-BlueZ-adapter-Fix-execute-LE-Add-Device-To-Resolving.patch
         # Holo: Fix unstable BT connection with Nintendo Switch Pro v1
+        # Part of https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/2268 and
+        # https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/2287
+        # At the moment of writing this patch has not been sent upstream yet
         0024-Modify-Nintendo-gamepad-abnormal-disconnect-during-use.patch)
 b2sums=('9abcc5de17102c1307396627c87cffb5585e1c9b099cfd33d2a682d93f10e48a178fe8651c16ab9bb788d80f603f91db75e9fcadf7b627017202402d4ec396e5'
         '0ce33d13b796d4ae2fd688b17742b3a3055663b68a352b02720dac82bcfdaa47bf2ee2a034dfb8ef4ddf3f827bc58fe80548730939c2915f64864cea39c10170'
