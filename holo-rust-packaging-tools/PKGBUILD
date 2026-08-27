@@ -1,6 +1,6 @@
 pkgname=holo-rust-packaging-tools
-pkgver=0.1.1
-pkgrel=6
+pkgver=0.1.2
+pkgrel=1
 pkgdesc="Packaging tools for Rust in Holo"
 arch=(any)
 url="https://github.com/evlav/rust-packaging/"
@@ -15,7 +15,7 @@ makedepends=('python>=3.14'
 source=(
   "$pkgname-$pkgver::git+https://github.com/evlav/rust-packaging.git#tag=v$pkgver"
 )
-sha256sums=('2e473a91c534921a9822c3a7e45545def1b3304eeea8a4d19f270de2e2c26c32')
+sha256sums=('956681e27bd1428c2de59abbcd3f9021d4bb40924786d04fe0a6c699c125ee44')
 
 build() {
   cd $pkgname-$pkgver
