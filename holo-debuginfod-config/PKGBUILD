@@ -1,0 +1,22 @@
+# Author : Manuel A. Fernandez Montecelo <mafm@igalia.com>
+
+pkgname='holo-debuginfod-config'
+pkgver=1.0
+pkgrel=1
+pkgdesc='Configuration for debuginfod in Holo'
+arch=('any')
+license=('MIT')
+url='https://github.com/evlav/holo'
+depends=('debuginfod')
+source=(
+  'holo.urls'
+)
+b2sums=(
+  '35976d7d2e9812d10596d97c2826ab1a33a8d90d1c397660d17b15768cebe73443a8dc1dd6a132ab05d7e64f3341064701b92216fdcc01242b54baf031ebd94c'
+)
+
+package() {
+  local dest_etc_debuginfod="${pkgdir}/etc/debuginfod"
+
+  install -Dm644 holo.urls -t "${dest_etc_debuginfod}"
+}
