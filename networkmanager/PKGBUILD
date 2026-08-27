@@ -18,7 +18,7 @@ pkgname=(
   networkmanager-docs
 )
 pkgver=1.58.0
-pkgrel=1.5
+pkgrel=1.6
 pkgdesc="Network connection manager and user applications"
 url="https://networkmanager.dev/"
 arch=(x86_64)
@@ -91,15 +91,23 @@ source=(
   "0001-libnm-core-allow-connecting-to-SAE-networks-reported.patch"
 
   # Holo: https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/1457
-  # At the moment of writing this patch has not been sent upstream yet
+  # https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/merge_requests/2514
   "0001-wifi-supplicant-scan-only-the-last-associated-freq.patch"
+
+  # Holo: https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/1471
+  # Workaround needed for 3.9. Can be dropped in 3.10 once 3.9 reaches
+  # stable and users can no longer downgrade to 3.8 from the UI.
+  "0001-iwd-mirror-wpa_supplicant-connections-into-IWD-profi.patch"
+  "0002-iwd-remove-IWD-profile-on-forget.patch"
 )
 b2sums=('1bf42970ab8ffc3fe919d00cf2aca9626dfde0db24e655514b4f2873fef2dda3a88608d72487619c755f5c9e366789cf18943e7502a3ec5476ea7c914d7d48a4'
         'acb84792effee07ff8853f85136d5fe2822f11810a82a6dbb071c9dba7051d9f5ad232e49442b78cf3b29f24caf9e947ee18941adbe3e1876c11f7212e055509'
         '4e9d904527b8c7f85c68119c75cc92afba70948a188fa3c679e339171f68cf8da075ad4fcf04d1ed8ee11f4a2164c84010e1338552601d4a0a93da8a8ea1d662'
         '89e643e4e708b837fc666cf17bac26677568ca2ed7e5a14b4f18772a5b233591452cc95b32d00dd875bad8a8d9a16b0decdb60279efc36c9a71547b2680a17e1'
         '00829f18f0e159a43f33dccb9230abbf6cc1690752b215e8ae8c2157a16353cf0b6e35c78c50605aac5122f02be234daf377f3b6a0d2f63e11b7cc35f64164f0'
-        '83fa2db6a72c30a9ee636929d967fff75bccb2612d9ace5e3eed5b0917793e561aed244ebf62ebb51c2155567f0057bdcf41c717b5b1beaae05543b318fa705c')
+        '83fa2db6a72c30a9ee636929d967fff75bccb2612d9ace5e3eed5b0917793e561aed244ebf62ebb51c2155567f0057bdcf41c717b5b1beaae05543b318fa705c'
+        'a700bf7a441b2dcc5aca0847936d890e07b9297970592945732107f90fdf6d0f7dc500f850aaf36d4af77c384905112543d267d3f3ba2214622f2da33f78fae4'
+        '97a27192ccc2cf37a7cc7cdccc4b867c127bcb2a698db1b4c529c3021e01ea5b6a61738f50f6c7c04acb6f72995583ecf1d0e6896b15b5cb7eee5f0cf404ed05')
 validpgpkeys=(
   3D10AD045AB4AAFF8E8F36AF9B980AC2FB874FEB # Ana Cabral <acabral@redhat.com>
   F07F7C1EABD382F81CBFBA3B998D4828CD7E1656 # Beniamino Galvani <bgalvani@redhat.com>
@@ -125,6 +133,8 @@ prepare() {
   patch -Np1 < ../0001-libnm-core-allow-connecting-to-SAE-networks-with-key.patch
   patch -Np1 < ../0001-libnm-core-allow-connecting-to-SAE-networks-reported.patch
   patch -Np1 < ../0001-wifi-supplicant-scan-only-the-last-associated-freq.patch
+  patch -Np1 < ../0001-iwd-mirror-wpa_supplicant-connections-into-IWD-profi.patch
+  patch -Np1 < ../0002-iwd-remove-IWD-profile-on-forget.patch
 }
 
 build() {

@@ -1,0 +1,167 @@
+From 07ed997cacd08d069d18b1de97ebd6c07a3a08f0 Mon Sep 17 00:00:00 2001
+From: Vignesh Raman <vignesh.raman@collabora.com>
+Date: Mon, 24 Aug 2026 12:26:33 +0530
+Subject: [PATCH 2/2] iwd: remove IWD profile on forget
+
+When a Wi-Fi connection is forgotten under wpa_supplicant, remove its
+mirrored IWD profile too, so IWD does not keep auto connecting to a
+network NM no longer knows about.
+---
+ src/core/devices/wifi/nm-iwd-manager.c  | 97 +++++++++++++++++++++++++
+ src/core/devices/wifi/nm-iwd-manager.h  |  2 +
+ src/core/devices/wifi/nm-wifi-factory.c |  5 ++
+ 3 files changed, 104 insertions(+)
+
+diff --git a/src/core/devices/wifi/nm-iwd-manager.c b/src/core/devices/wifi/nm-iwd-manager.c
+index ff70b34d47..660482e82d 100644
+--- a/src/core/devices/wifi/nm-iwd-manager.c
++++ b/src/core/devices/wifi/nm-iwd-manager.c
+@@ -1528,6 +1528,67 @@ nm_mirror_wpa_supplicant_connection_to_iwd(NMSettingsConnection *sett_conn)
+                full_path);
+ }
+ 
++/* Called once a Wi-Fi connection is removed (forgotten) under wpa_supplicant,
++ * so IWD's profile is also removed.
++ *
++ * Known limitation: The IWD profile is named only by SSID+security, so several
++ * NM connections can share one file. Forgetting one deletes it even if another
++ * still uses it, but it's re-created on the next connect.
++ */
++void
++nm_delete_wpa_supplicant_connection_iwd_profile(NMSettingsConnection *sett_conn)
++{
++    NMConnection        *conn = nm_settings_connection_get_connection(sett_conn);
++    NMSettingWireless   *s_wireless;
++    NMIwdNetworkSecurity security;
++    char                 ssid_buf[33];
++    const guint8        *ssid_bytes;
++    gsize                ssid_len;
++    const char          *iwd_dir;
++    gs_free char        *filename  = NULL;
++    gs_free char        *full_path = NULL;
++
++    if (NM_FLAGS_HAS(nm_settings_connection_get_flags(sett_conn),
++                     NM_SETTINGS_CONNECTION_INT_FLAGS_NM_GENERATED))
++        return;
++
++    if (!nm_wifi_connection_get_iwd_ssid_and_security(conn, NULL, &security))
++        return;
++
++    s_wireless = nm_connection_get_setting_wireless(conn);
++    if (!s_wireless)
++        return;
++
++    ssid_bytes = g_bytes_get_data(nm_setting_wireless_get_ssid(s_wireless), &ssid_len);
++    if (!ssid_bytes || ssid_len > 32 || memchr(ssid_bytes, 0, ssid_len))
++        return;
++
++    memcpy(ssid_buf, ssid_bytes, ssid_len);
++    ssid_buf[ssid_len] = '\0';
++
++    if (!g_utf8_validate((const char *) ssid_bytes, ssid_len, NULL))
++        return;
++
++    iwd_dir = get_wpa_supplicant_iwd_dir();
++    if (!iwd_dir)
++        return;
++
++    filename = nm_wifi_utils_get_iwd_config_filename(ssid_buf, ssid_len, security);
++    if (!filename)
++        return;
++
++    full_path = g_strdup_printf("%s/%s", iwd_dir, filename);
++
++    if (g_remove(full_path) == 0)
++        nm_log_dbg(LOGD_WIFI, "iwd: profile at %s removed", full_path);
++    else if (errno != ENOENT)
++        nm_log_dbg(LOGD_WIFI,
++                   "iwd: profile at %s not removed: %s (%i)",
++                   full_path,
++                   nm_strerror_native(errno),
++                   errno);
++}
++
+ static void
+ connection_added(NMSettings *settings, NMSettingsConnection *sett_conn, gpointer user_data)
+ {
+@@ -2150,6 +2211,42 @@ nm_iwd_manager_unregister_wfd(NMIwdManager *self)
+                       NULL);
+ }
+ 
++static void
++wpa_supplicant_connection_removed(NMSettings           *settings,
++                                  NMSettingsConnection *sett_conn,
++                                  gpointer              user_data)
++{
++    nm_delete_wpa_supplicant_connection_iwd_profile(sett_conn);
++}
++
++/* Install the handler only if wifi.backend is wpa_supplicant, and not iwd,
++ * so this never races with IWD's own connection removal handling.
++ */
++void
++nm_wpa_supplicant_iwd_delete_init(NMSettings *settings)
++{
++    gs_free char *backend_free = NULL;
++    const char   *backend;
++
++    backend = nm_config_data_get_device_config_by_pllink(NM_CONFIG_GET_DATA,
++                                                         NM_CONFIG_KEYFILE_KEY_DEVICE_WIFI_BACKEND,
++                                                         NULL,
++                                                         "wifi",
++                                                         NULL);
++    backend = nm_strstrip_avoid_copy_a(300, backend, &backend_free);
++
++    if (!backend)
++        backend = "" NM_CONFIG_DEFAULT_WIFI_BACKEND;
++
++    if (g_ascii_strcasecmp(backend, "wpa_supplicant") != 0)
++        return;
++
++    g_signal_connect(settings,
++                     NM_SETTINGS_SIGNAL_CONNECTION_REMOVED,
++                     G_CALLBACK(wpa_supplicant_connection_removed),
++                     NULL);
++}
++
+ /*****************************************************************************/
+ 
+ NM_DEFINE_SINGLETON_GETTER(NMIwdManager, nm_iwd_manager_get, NM_TYPE_IWD_MANAGER);
+diff --git a/src/core/devices/wifi/nm-iwd-manager.h b/src/core/devices/wifi/nm-iwd-manager.h
+index 2bc6aa7059..04ac0c71ae 100644
+--- a/src/core/devices/wifi/nm-iwd-manager.h
++++ b/src/core/devices/wifi/nm-iwd-manager.h
+@@ -69,5 +69,7 @@ void     nm_iwd_manager_unregister_wfd(NMIwdManager *self);
+ bool nm_iwd_manager_is_recently_mirrored(NMIwdManager *self, const GBytes *ssid);
+ 
+ void nm_mirror_wpa_supplicant_connection_to_iwd(NMSettingsConnection *sett_conn);
++void nm_delete_wpa_supplicant_connection_iwd_profile(NMSettingsConnection *sett_conn);
++void nm_wpa_supplicant_iwd_delete_init(NMSettings *settings);
+ 
+ #endif /* __NETWORKMANAGER_IWD_MANAGER_H__ */
+diff --git a/src/core/devices/wifi/nm-wifi-factory.c b/src/core/devices/wifi/nm-wifi-factory.c
+index 19880a908b..be16840543 100644
+--- a/src/core/devices/wifi/nm-wifi-factory.c
++++ b/src/core/devices/wifi/nm-wifi-factory.c
+@@ -16,6 +16,7 @@
+ #include "nm-device-iwd.h"
+ #include "nm-device-iwd-p2p.h"
+ #include "nm-iwd-manager.h"
++#include "settings/nm-settings.h"
+ #include "settings/nm-settings-connection.h"
+ #include "libnm-platform/nm-platform.h"
+ #include "nm-config.h"
+@@ -54,6 +55,10 @@ NM_DEVICE_FACTORY_DECLARE_TYPES(
+ G_MODULE_EXPORT NMDeviceFactory *
+ nm_device_factory_create(GError **error)
+ {
++#if WITH_IWD
++    nm_wpa_supplicant_iwd_delete_init(NM_SETTINGS_GET);
++#endif
++
+     return g_object_new(NM_TYPE_WIFI_FACTORY, NULL);
+ }
+ 
+-- 
+2.47.3
+

@@ -1,0 +1,156 @@
+From a5865b334ce1ff091c8e19d4dee3a81bdc8ce4aa Mon Sep 17 00:00:00 2001
+From: Vignesh Raman <vignesh.raman@collabora.com>
+Date: Mon, 24 Aug 2026 12:26:15 +0530
+Subject: [PATCH 1/2] iwd: mirror wpa_supplicant connections into IWD profiles
+
+Once wpa_supplicant connects, mirror this connection as an IWD
+profile, so it's already there once wifi.backend switches to iwd
+and auto-reconnect works.
+---
+ src/core/devices/wifi/nm-device-wifi.c |  8 +++
+ src/core/devices/wifi/nm-iwd-manager.c | 91 ++++++++++++++++++++++++++
+ src/core/devices/wifi/nm-iwd-manager.h |  2 +
+ 3 files changed, 101 insertions(+)
+
+diff --git a/src/core/devices/wifi/nm-device-wifi.c b/src/core/devices/wifi/nm-device-wifi.c
+index d4fed1ad9e..804d580feb 100644
+--- a/src/core/devices/wifi/nm-device-wifi.c
++++ b/src/core/devices/wifi/nm-device-wifi.c
+@@ -15,6 +15,7 @@
+ #include "libnm-glib-aux/nm-ref-string.h"
+ #include "libnm-glib-aux/nm-c-list.h"
+ #include "nm-device-wifi-p2p.h"
++#include "nm-iwd-manager.h"
+ #include "nm-wifi-ap.h"
+ #include "libnm-core-aux-intern/nm-common-macros.h"
+ #include "libnm-core-aux-intern/nm-libnm-core-utils.h"
+@@ -3768,6 +3769,13 @@ device_state_changed(NMDevice           *device,
+             priv->scan_explicit_requested        = TRUE;
+             priv->scan_followup_bypass_ratelimit = TRUE;
+         }
++
++#if WITH_IWD
++        /* Mirror this connection as IWD profile, so it's already
++         * there once wifi.backend switches to iwd.
++         */
++        nm_mirror_wpa_supplicant_connection_to_iwd(nm_device_get_settings_connection(device));
++#endif
+         break;
+     case NM_DEVICE_STATE_FAILED:
+         _indicate_addressing_running_reset(self);
+diff --git a/src/core/devices/wifi/nm-iwd-manager.c b/src/core/devices/wifi/nm-iwd-manager.c
+index bb2e056d39..ff70b34d47 100644
+--- a/src/core/devices/wifi/nm-iwd-manager.c
++++ b/src/core/devices/wifi/nm-iwd-manager.c
+@@ -1437,6 +1437,97 @@ try_delete_file:
+               errno);
+ }
+ 
++/* No D-Bus connection to IWD here to query its real StateDirectory, so fall
++ * back to IWD's compiled-in default.
++ */
++static const char *
++get_wpa_supplicant_iwd_dir(void)
++{
++    const char *path = nm_config_data_get_iwd_config_path(NM_CONFIG_GET_DATA);
++
++    if (path && path[0] == '\0')
++        return NULL;
++
++    if (!path || nm_streq(path, "auto"))
++        return "/var/lib/iwd";
++
++    return path;
++}
++
++/* Mirror NM's own Wi-Fi connections as IWD profile while wifi.backend wpa_supplicant,
++ * so they still auto-connect once the backend switches to iwd.
++ */
++void
++nm_mirror_wpa_supplicant_connection_to_iwd(NMSettingsConnection *sett_conn)
++{
++    NMConnection                   *conn       = nm_settings_connection_get_connection(sett_conn);
++    NMSettingConnection            *s_conn     = nm_connection_get_setting_connection(conn);
++    nm_auto_unref_keyfile GKeyFile *iwd_config = NULL;
++    const char                     *iwd_dir;
++    gs_free char                   *filename  = NULL;
++    gs_free char                   *full_path = NULL;
++    gs_free_error GError           *error     = NULL;
++    struct timespec                 mtime     = {.tv_sec = 1};
++    NMSettingsConnectionIntFlags    flags;
++
++    if (!nm_streq(nm_settings_connection_get_connection_type(sett_conn), "802-11-wireless"))
++        return;
++
++    iwd_dir = get_wpa_supplicant_iwd_dir();
++    if (!iwd_dir)
++        return;
++
++    flags = nm_settings_connection_get_flags(sett_conn);
++    if (NM_FLAGS_HAS(flags, NM_SETTINGS_CONNECTION_INT_FLAGS_NM_GENERATED))
++        return;
++
++    /* If the connection has any permissions other than the default we don't
++     * want to save it as an IWD profile.  IWD will make it available for
++     * everybody to attempt a connection, remove, or toggle "autoconnectable".
++     */
++    if (s_conn && nm_setting_connection_get_num_permissions(s_conn)) {
++        nm_log_dbg(LOGD_WIFI,
++                   "Wi-Fi connection %s not mirrored as IWD profile because of non-default "
++                   "permissions",
++                   nm_settings_connection_get_id(sett_conn));
++        return;
++    }
++
++    iwd_config = nm_wifi_utils_connection_to_iwd_config(conn, &filename, &error);
++    if (!iwd_config) {
++        /* The error message here is not translated and it only goes in
++         * the logs.
++         */
++        nm_log_dbg(LOGD_WIFI,
++                   "Wi-Fi connection %s not mirrored as IWD profile: %s",
++                   nm_settings_connection_get_id(sett_conn),
++                   error->message);
++        return;
++    }
++
++    full_path = g_strdup_printf("%s/%s", iwd_dir, filename);
++    if (g_file_test(full_path, G_FILE_TEST_EXISTS)) {
++        nm_log_dbg(LOGD_WIFI,
++                   "Wi-Fi connection %s not mirrored as IWD profile because %s already exists",
++                   nm_settings_connection_get_id(sett_conn),
++                   full_path);
++        return;
++    }
++
++    if (!iwd_config_write(iwd_config, full_path, &mtime, &error)) {
++        nm_log_dbg(LOGD_WIFI,
++                   "Wi-Fi connection %s not mirrored as IWD profile: save error: %s",
++                   nm_settings_connection_get_id(sett_conn),
++                   error->message);
++        return;
++    }
++
++    nm_log_dbg(LOGD_WIFI,
++               "Wi-Fi connection %s mirrored as IWD profile %s",
++               nm_settings_connection_get_id(sett_conn),
++               full_path);
++}
++
+ static void
+ connection_added(NMSettings *settings, NMSettingsConnection *sett_conn, gpointer user_data)
+ {
+diff --git a/src/core/devices/wifi/nm-iwd-manager.h b/src/core/devices/wifi/nm-iwd-manager.h
+index 80123c9a81..2bc6aa7059 100644
+--- a/src/core/devices/wifi/nm-iwd-manager.h
++++ b/src/core/devices/wifi/nm-iwd-manager.h
+@@ -68,4 +68,6 @@ void     nm_iwd_manager_unregister_wfd(NMIwdManager *self);
+ 
+ bool nm_iwd_manager_is_recently_mirrored(NMIwdManager *self, const GBytes *ssid);
+ 
++void nm_mirror_wpa_supplicant_connection_to_iwd(NMSettingsConnection *sett_conn);
++
+ #endif /* __NETWORKMANAGER_IWD_MANAGER_H__ */
+-- 
+2.47.3
+
