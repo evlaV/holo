@@ -1,0 +1,23 @@
+# Author : Manuel A. Fernandez Montecelo <mafm@igalia.com>
+
+pkgname='holo-upower-config'
+pkgver=1.0
+pkgrel=1
+pkgdesc='Configuration for UPower in Holo'
+arch=('any')
+license=('MIT')
+url='https://github.com/evlav/holo'
+depends=('upower')
+source=(
+  '10-holo-defaults.conf'
+)
+b2sums=(
+  '11fc55710206db2faf9163417858de96f8d10d92398e58e0c1785544693eef0fc1f578e2d6fafe2bb2746cc00659cbc80739df602339f44cfe2af408745d55df'
+)
+
+package() {
+  local dest_upower_confd="${pkgdir}/etc/UPower/UPower.conf.d"
+
+  install -d "${dest_upower_confd}"
+  install -Dm644 10-holo-defaults.conf -t "${dest_upower_confd}/"
+}
