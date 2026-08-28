@@ -18,7 +18,7 @@ pkgname=(
   networkmanager-docs
 )
 pkgver=1.52.1
-pkgrel=1.4
+pkgrel=1.5
 pkgdesc="Network connection manager and user applications"
 url="https://networkmanager.dev/"
 arch=(x86_64)
@@ -85,7 +85,7 @@ source=(
 b2sums=('0af9767688f43ccdca335c1655f4a0b7b2f0568f965b7cfc268aad63a4dfa0f0d9b86746a72e5d27923f0fb8fe8cc74d429fe977c10edea3b24dd47497d021b1'
         '297c28375da628144a28b2100b295e8b5c001b6cbfd9cb018c7aa56c9bba92742a6acf9cebcf9e48a07f0db407f52ed2ea7711e3eb058da9131bd44aece626db'
         'acb84792effee07ff8853f85136d5fe2822f11810a82a6dbb071c9dba7051d9f5ad232e49442b78cf3b29f24caf9e947ee18941adbe3e1876c11f7212e055509'
-        'bdf12843ea2e4e5e75e7e94acbfc54b3e4ac65d4ab69ee5757230065fc0142436da32479122a8252ae081dd0d50106357b4c003a99e0dfa9ff32bef584190f36')
+        '4e9d904527b8c7f85c68119c75cc92afba70948a188fa3c679e339171f68cf8da075ad4fcf04d1ed8ee11f4a2164c84010e1338552601d4a0a93da8a8ea1d662')
 validpgpkeys=(
   3D10AD045AB4AAFF8E8F36AF9B980AC2FB874FEB # Ana Cabral <acabral@redhat.com>
   F07F7C1EABD382F81CBFBA3B998D4828CD7E1656 # Beniamino Galvani <bgalvani@redhat.com>

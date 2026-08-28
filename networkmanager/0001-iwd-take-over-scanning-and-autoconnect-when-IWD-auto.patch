@@ -1,4 +1,4 @@
-From cc57624aff715546fe1e70f0a1c83883c54c8064 Mon Sep 17 00:00:00 2001
+From ea99e398e367b3f0afb9033d3bf5ddf28dd78368 Mon Sep 17 00:00:00 2001
 From: Ludovico de Nittis <ludovico.denittis@collabora.com>
 Date: Tue, 4 Aug 2026 12:02:29 +0200
 Subject: [PATCH] iwd: take over scanning and autoconnect when IWD autoconnect
@@ -25,11 +25,11 @@ the scans and autoconnect.
 
 Signed-off-by: Ludovico de Nittis <ludovico.denittis@collabora.com>
 ---
- src/core/devices/wifi/nm-device-iwd.c | 71 ++++++++++++++++++++++-----
- 1 file changed, 60 insertions(+), 11 deletions(-)
+ src/core/devices/wifi/nm-device-iwd.c | 72 +++++++++++++++++++++++----
+ 1 file changed, 61 insertions(+), 11 deletions(-)
 
 diff --git a/src/core/devices/wifi/nm-device-iwd.c b/src/core/devices/wifi/nm-device-iwd.c
-index fa6e2f9d3a..cdd91bc507 100644
+index fa6e2f9d3a..2409a23fe6 100644
 --- a/src/core/devices/wifi/nm-device-iwd.c
 +++ b/src/core/devices/wifi/nm-device-iwd.c
 @@ -66,6 +66,7 @@ typedef struct {
@@ -154,7 +154,7 @@ index fa6e2f9d3a..cdd91bc507 100644
          schedule_periodic_scan(self, TRUE);
  }
  
-@@ -2773,6 +2811,12 @@ state_changed(NMDeviceIwd *self, const char *new_state)
+@@ -2773,6 +2811,13 @@ state_changed(NMDeviceIwd *self, const char *new_state)
          network_path     = nm_ref_string_new(network_path_str);
          ap               = find_ap_by_supplicant_path(self, network_path);
  
@@ -162,12 +162,13 @@ index fa6e2f9d3a..cdd91bc507 100644
 +         * Network.Connect(), no need to use NM autoconnect anymore
 +         */
 +        priv->iwd_autoconnect_temp_disabled = FALSE;
++        schedule_periodic_scan(self, FALSE);
 +        nm_log_info(LOGD_DEVICE | LOGD_WIFI, "Handing over autoconnect back to IWD, if set");
 +
          if (!ap) {
              _LOGW(LOGD_DEVICE | LOGD_WIFI,
                    "ConnectedNetwork points to an unknown Network %s",
-@@ -2908,7 +2952,7 @@ state_changed(NMDeviceIwd *self, const char *new_state)
+@@ -2908,7 +2953,7 @@ state_changed(NMDeviceIwd *self, const char *new_state)
      /* Don't allow new connection until iwd exits disconnecting and no
       * Connect callback is pending.
       */
@@ -176,7 +177,7 @@ index fa6e2f9d3a..cdd91bc507 100644
          priv->nm_autoconnect = TRUE;
          if (!can_connect)
              nm_device_recheck_auto_activate_schedule(device);
-@@ -2930,7 +2974,7 @@ scanning_changed(NMDeviceIwd *self, gboolean new_scanning)
+@@ -2930,7 +2975,7 @@ scanning_changed(NMDeviceIwd *self, gboolean new_scanning)
      if (!priv->scanning) {
          update_aps(self);
  
@@ -185,7 +186,7 @@ index fa6e2f9d3a..cdd91bc507 100644
              schedule_periodic_scan(self, FALSE);
      }
  }
-@@ -3050,6 +3094,10 @@ powered_changed(NMDeviceIwd *self, gboolean new_powered)
+@@ -3050,6 +3095,10 @@ powered_changed(NMDeviceIwd *self, gboolean new_powered)
          GVariant *value;
  
          priv->dbus_station_proxy = G_DBUS_PROXY(interface);
@@ -196,7 +197,7 @@ index fa6e2f9d3a..cdd91bc507 100644
          g_signal_connect(priv->dbus_station_proxy,
                           "g-properties-changed",
                           G_CALLBACK(station_properties_changed),
-@@ -3076,9 +3124,10 @@ powered_changed(NMDeviceIwd *self, gboolean new_powered)
+@@ -3076,9 +3125,10 @@ powered_changed(NMDeviceIwd *self, gboolean new_powered)
          }
      } else {
          set_can_scan(self, FALSE);
