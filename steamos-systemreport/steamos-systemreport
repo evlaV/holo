@@ -93,12 +93,14 @@ run 'ps aux k-rss'
 run 'lspci -tv -nn'
 run 'lsusb -t -v'
 run 'coredumpctl -r --since -10d'
-run 'journalctl --namespace=+ec-log --no-pager -b 0'
+
+# Limit journalctl output to 10MB, because Steam refuses to upload anything more than 25MB large.
+run 'journalctl --namespace=+ec-log --no-pager -b 0 | tail -c 10M'
 # NOTE: These journals are from _this_ OS slot.
 # At present, both slots actually put their journals in a shared offload
 # on the /home partition, so this works as a result - but if the offloads
 # are ever split by partition set then this will become inaccurate:
-run 'journalctl --namespace=+ec-log --no-pager -b -1'
+run 'journalctl --namespace=+ec-log --no-pager -b -1 | tail -c 10M'
 
 # wake-up information
 super wakeup-info
