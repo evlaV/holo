@@ -7,7 +7,7 @@
 pkgbase=bluez
 pkgname=('bluez' 'bluez-utils' 'bluez-libs' 'bluez-cups' 'bluez-deprecated-tools' 'bluez-hid2hci' 'bluez-mesh')
 pkgver=5.83
-pkgrel=1.2
+pkgrel=1.4
 url="http://www.bluez.org/"
 arch=('x86_64')
 license=('GPL-2.0-only')
@@ -33,6 +33,14 @@ source=(https://www.kernel.org/pub/linux/bluetooth/${pkgname}-${pkgver}.tar.{xz,
         # Upstream issue https://github.com/bluez/bluez/issues/919
 	0001-shared-uhid.c-Fix-32-bit-integer-truncation.patch
 	0002-hog-lib-Fix-32-bit-integer-truncation.patch
+        # Holo: Fix unstable BT connection with Nintendo Switch Pro v1
+        # Part of https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/2268 and
+        # https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/2287
+        # At the moment of writing this patch has not been sent upstream yet
+        0024-Modify-Nintendo-gamepad-abnormal-disconnect-during-use.patch
+        # Holo: backport upstream fixes for test-mesh-crypto failures in CI
+        0001-test-mesh-crypto-Don-t-attempt-to-run-test-if-AF_ALG.patch
+        0001-test-mesh-crypto-Fix-retval-for-skipped-test.patch
 )
 # see https://www.kernel.org/pub/linux/bluetooth/sha256sums.asc
 sha256sums=('108522d909d220581399bfec93daab62035539ceef3dda3e79970785c63bd24c'
@@ -45,8 +53,11 @@ sha256sums=('108522d909d220581399bfec93daab62035539ceef3dda3e79970785c63bd24c'
             '0919781b35efb1e53b60dbad947ec282ad82f413879fd3e58af38a7b49a91941'
             '5800e6f6ff74a2a1b2c4482a393c65a83b10b0be52a53d51588e7a192d16fa0f'
             '24e49ec04e5c985d7f42acceb7c2dd9bad6ad6f8be80ff12368e18293448c42a'
-	    '81ce19db091b152e1a459f1a7d91770abf6e1ff1da33c1e07c67129ae7e217ff'
-	    'c37305eeb710588272fb79477b355aa3da032b78b460212453f2c95935b742d7')
+            '81ce19db091b152e1a459f1a7d91770abf6e1ff1da33c1e07c67129ae7e217ff'
+            'c37305eeb710588272fb79477b355aa3da032b78b460212453f2c95935b742d7'
+            '275ef088c4ff347fa798b29a682044ae9d2951e32c421e5f4779df5479db253f'
+            '699a982aab42df4adc923bee3186655ff73818ecae704e29ff4695f0dd50552f'
+            '2d6f7e74cddab406d551dd402c85c39c05abb3512c56d619af90051c8851109e')
 validpgpkeys=('E932D120BC2AEC444E558F0106CA9F5D1DCF2659') # Marcel Holtmann <marcel@holtmann.org>
 
 prepare() {

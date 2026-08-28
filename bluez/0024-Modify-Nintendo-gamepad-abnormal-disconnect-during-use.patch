@@ -1,0 +1,165 @@
+diff --git a/btio/btio.c b/btio/btio.c
+index cfaa9392d..68df9797f 100644
+--- a/btio/btio.c
++++ b/btio/btio.c
+@@ -68,6 +72,7 @@ struct set_opts {
+ 	int central;
+ 	uint8_t mode;
+ 	int flushable;
++	int force_active;
+ 	uint32_t priority;
+ 	uint16_t voice;
+ 	struct bt_iso_qos qos;
+@@ -581,6 +586,17 @@ static int l2cap_set_flushable(int sock, gboolean flushable)
+ 	return 0;
+ }
+ 
++static int l2cap_set_bt_power(int sock, int force_active)
++{
++	struct bt_power power = {0};
++
++	power.force_active = force_active;
++	if (setsockopt(sock, SOL_BLUETOOTH, BT_POWER, &power, sizeof(power)) < 0)
++		return -errno;
++
++	return 0;
++}
++
+ static int set_priority(int sock, uint32_t prio)
+ {
+ 	if (setsockopt(sock, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio)) < 0)
+@@ -676,7 +692,7 @@ static gboolean set_le_mode(int sock, uint8_t mode, GError **err)
+ 
+ static gboolean l2cap_set(int sock, uint8_t src_type, int sec_level,
+ 				int imtu, uint16_t omtu, uint8_t mode,
+-				int central, int flushable, uint32_t priority,
++				int central, int flushable, int force_active, uint32_t priority,
+ 				GError **err)
+ {
+ 	if (imtu != -1 || omtu || mode) {
+@@ -716,6 +732,11 @@ static gboolean l2cap_set(int sock, uint8_t src_type, int sec_level,
+ 		return FALSE;
+ 	}
+ 
++	if (force_active >= 0 && l2cap_set_bt_power(sock, force_active) < 0) {
++		ERROR_FAILED(err, "l2cap_set_bt_power", errno);
++		return FALSE;
++	}
++
+ 	if (priority > 0 && set_priority(sock, priority) < 0) {
+ 		ERROR_FAILED(err, "set_priority", errno);
+ 		return FALSE;
+@@ -948,6 +969,7 @@ static gboolean parse_set_opts(struct set_opts *opts, GError **err,
+ 	opts->central = -1;
+ 	opts->mode = L2CAP_MODE_BASIC;
+ 	opts->flushable = -1;
++	opts->force_active = -1;
+ 	opts->priority = 0;
+ 	opts->src_type = BDADDR_BREDR;
+ 	opts->dst_type = BDADDR_BREDR;
+@@ -1023,6 +1045,9 @@ static gboolean parse_set_opts(struct set_opts *opts, GError **err,
+ 		case BT_IO_OPT_FLUSHABLE:
+ 			opts->flushable = va_arg(args, gboolean);
+ 			break;
++		case BT_IO_OPT_FORCE_ACTIVE:
++			opts->force_active = va_arg(args, int);
++			break;		
+ 		case BT_IO_OPT_PRIORITY:
+ 			opts->priority = va_arg(args, int);
+ 			break;
+@@ -1367,6 +1392,7 @@ parse_opts:
+ 		case BT_IO_OPT_SOURCE_CHANNEL:
+ 		case BT_IO_OPT_DEST_CHANNEL:
+ 		case BT_IO_OPT_MTU:
++		case BT_IO_OPT_FORCE_ACTIVE:
+ 		case BT_IO_OPT_VOICE:
+ 		case BT_IO_OPT_QOS:
+ 		case BT_IO_OPT_BASE:
+@@ -1524,6 +1550,7 @@ static gboolean rfcomm_get(int sock, GError **err, BtIOOption opt1,
+ 		case BT_IO_OPT_IMTU:
+ 		case BT_IO_OPT_MODE:
+ 		case BT_IO_OPT_FLUSHABLE:
++		case BT_IO_OPT_FORCE_ACTIVE:
+ 		case BT_IO_OPT_PRIORITY:
+ 		case BT_IO_OPT_VOICE:
+ 		case BT_IO_OPT_QOS:
+@@ -1638,6 +1665,7 @@ static gboolean sco_get(int sock, GError **err, BtIOOption opt1, va_list args)
+ 		case BT_IO_OPT_CENTRAL:
+ 		case BT_IO_OPT_MODE:
+ 		case BT_IO_OPT_FLUSHABLE:
++		case BT_IO_OPT_FORCE_ACTIVE:
+ 		case BT_IO_OPT_PRIORITY:
+ 		case BT_IO_OPT_VOICE:
+ 		case BT_IO_OPT_QOS:
+@@ -1775,6 +1803,7 @@ static gboolean iso_get(int sock, GError **err, BtIOOption opt1, va_list args)
+ 		case BT_IO_OPT_CENTRAL:
+ 		case BT_IO_OPT_MODE:
+ 		case BT_IO_OPT_FLUSHABLE:
++		case BT_IO_OPT_FORCE_ACTIVE:		
+ 		case BT_IO_OPT_PRIORITY:
+ 		case BT_IO_OPT_VOICE:
+ 		case BT_IO_OPT_ISO_BC_NUM_BIS:
+@@ -1943,7 +1972,7 @@ gboolean bt_io_set(GIOChannel *io, GError **err, BtIOOption opt1, ...)
+ 	case BT_IO_L2CAP:
+ 		return l2cap_set(sock, opts.src_type, opts.sec_level, opts.imtu,
+ 					opts.omtu, opts.mode, opts.central,
+-					opts.flushable, opts.priority, err);
++					opts.flushable, opts.force_active, opts.priority, err);
+ 	case BT_IO_RFCOMM:
+ 		return rfcomm_set(sock, opts.sec_level, opts.central, err);
+ 	case BT_IO_SCO:
+@@ -1994,7 +2023,7 @@ static GIOChannel *create_io(gboolean server, struct set_opts *opts,
+ 			goto failed;
+ 		if (!l2cap_set(sock, opts->src_type, opts->sec_level,
+ 				opts->imtu, opts->omtu, opts->mode,
+-				opts->central, opts->flushable, opts->priority,
++				opts->central, opts->flushable, opts->force_active, opts->priority,
+ 				err))
+ 			goto failed;
+ 		break;
+diff --git a/btio/btio.h b/btio/btio.h
+index 3e69092b1..79d6611f6 100644
+--- a/btio/btio.h
++++ b/btio/btio.h
+@@ -42,6 +42,7 @@ typedef enum {
+ 	BT_IO_OPT_CLASS,
+ 	BT_IO_OPT_MODE,
+ 	BT_IO_OPT_FLUSHABLE,
++	BT_IO_OPT_FORCE_ACTIVE,
+ 	BT_IO_OPT_PRIORITY,
+ 	BT_IO_OPT_VOICE,
+ 	BT_IO_OPT_PHY,
+diff --git a/profiles/input/device.c b/profiles/input/device.c
+index 6bdc5ee3a..23e4d6577 100644
+--- a/profiles/input/device.c
++++ b/profiles/input/device.c
+@@ -1065,6 +1065,9 @@ static gboolean encrypt_notify(GIOChannel *io, GIOCondition condition,
+ 	return FALSE;
+ }
+ 
++#define NINTENDO_VENDOR_ID 0x057e
++#define NINTENDO_PRO_CONTROLLER_PID 0x2009
++
+ static int hidp_add_connection(struct input_device *idev)
+ {
+ 	struct hidp_connadd_req *req;
+@@ -1101,6 +1104,19 @@ static int hidp_add_connection(struct input_device *idev)
+ 		goto cleanup;
+ 	}
+ 
++	if((req->vendor == NINTENDO_VENDOR_ID) &&
++		(req->product == NINTENDO_PRO_CONTROLLER_PID)){
++		if (!bt_io_set(idev->intr_io, &gerr,
++					BT_IO_OPT_FORCE_ACTIVE,
++					BT_POWER_FORCE_ACTIVE_OFF,
++					BT_IO_OPT_INVALID)) {
++			error("btio: %s", gerr->message);
++			g_error_free(gerr);
++			err = -EFAULT;
++			goto cleanup;
++		}
++	}
++
+ 	/* Encryption is mandatory for keyboards */
+ 	/* Some platforms may choose to require encryption for all devices */
+ 	/* Note that this only matters for pre 2.1 devices as otherwise the */
