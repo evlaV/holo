@@ -1,0 +1,41 @@
+From 80e9eb51c4c9f60316c189f3498b137bfbbee7d3 Mon Sep 17 00:00:00 2001
+From: Bastien Nocera <hadess@hadess.net>
+Date: Fri, 5 Jun 2026 11:35:53 +0200
+Subject: [PATCH] test-mesh-crypto: Fix retval for skipped test
+
+Skipped tests should return 77, so they will be marked as skipped in
+reports:
+  $ make check
+  make --no-print-directory check-TESTS
+  [...]
+  PASS: unit/test-gatt
+  SKIP: unit/test-mesh-crypto
+  [...]
+  ============================================================================
+  Testsuite summary for bluez 5.86
+  ============================================================================
+  # TOTAL: 39
+  # PASS:  38
+  # SKIP:  1
+  [...]
+  ============================================================================
+---
+ unit/test-mesh-crypto.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/unit/test-mesh-crypto.c b/unit/test-mesh-crypto.c
+index 24fbbba33298..95d17e1d81c8 100644
+--- a/unit/test-mesh-crypto.c
++++ b/unit/test-mesh-crypto.c
+@@ -2133,7 +2133,7 @@ int main(int argc, char *argv[])
+ 	l_log_set_stderr();
+ 
+ 	if (!mesh_crypto_check_avail())
+-		return 0;
++		return 77;
+ 
+ 	/* Section 8.1 Sample Data Tests */
+ 	check_s1(&s8_1_1);
+-- 
+2.55.0
+
