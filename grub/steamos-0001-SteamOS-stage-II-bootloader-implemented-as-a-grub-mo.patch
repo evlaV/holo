@@ -164,7 +164,7 @@ index 000000000..9ca973109
 +    "loglevel=3 quiet splash "                          \
 +    "plymouth.ignore-serial-consoles "                  \
 +    "fbcon=vc:4-6"
-+#define DEFAULT_NOISY "loglevel=5 splash=verbose fbcon=nodefer " \
++#define DEFAULT_NOISY "loglevel=5 plymouth.ignore-show-splash fbcon=nodefer " \
 +    "sysrq_always_enabled"
 +
 +static int mode_grub_menu = 0;
@@ -2194,7 +2194,7 @@ index 6a316a5ba..366d9b035 100644
 +steamenv_loader_mode=${GRUB_GFXMODE}
 +steamenv_kernel_mode=${GRUB_GFXPAYLOAD_LINUX:-keep}
 +steamenv_quiet="loglevel=3 splash quiet plymouth.ignore-serial-consoles fbcon=vc:4-6"
-+steamenv_noisy="loglevel=5 sysrq_always_enabled splash=verbose fbcon=nodefer"
++steamenv_noisy="loglevel=5 sysrq_always_enabled plymouth.ignore-show-splash fbcon=nodefer"
 +steamenv_verbosity=""
 +timeout=0
 +timeout_style=menu
