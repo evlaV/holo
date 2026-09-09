@@ -6,7 +6,7 @@
 
 pkgname=plymouth
 pkgver=22.02.122
-pkgrel=7.6
+pkgrel=7.7
 pkgdesc='Graphical boot splash screen'
 arch=('x86_64')
 url='https://www.freedesktop.org/wiki/Software/Plymouth/'
@@ -52,6 +52,10 @@ source=("https://www.freedesktop.org/software/$pkgname/releases/$pkgname-$pkgver
         '0001-script-Add-System-script-plugin.patch'                      # SteamOS: Allow themes to make product decisions
         '0001-drm-set-connector-content-type-to-Game.patch'               # SteamOS: Set Game content metadata to hint TVs to game mode
         '0002-drm-clear-connector-HDR_OUTPUT_METADATA.patch'              # SteamOS: Set sRGB default HDR property to hint TVs to hdr mode
+        # Holo: Increase device timeout to keep seamless boot with slower systemd version
+        # https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/2286
+        # Holo specific config change, unlikely to be upstreamable
+        '0001-src-plymouthd.defaults-Increase-DeviceTimeout-from-8.patch' 
 )
 
 sha256sums=('100551442221033ce868c447ad6c74d831d209c18ae232b98ae0207e34eadaeb'
@@ -74,7 +78,8 @@ sha256sums=('100551442221033ce868c447ad6c74d831d209c18ae232b98ae0207e34eadaeb'
             'ab1cca2bb02897d8915e936b5e8f449d55b7bf4217128ff36e23ea2296c984de'
             '6ab2fbf2f8d28f59cb3320d673df47b2d5d8495a7fcf40807ed0b03bbf385e04'
             'd8ff7508a443356c8c7f2f4457a8c41936f7261afb0085eb9a15376d29bc71f0'
-            '38c800c3f5849737b2f63a32a2bdd6a50f61d2f1b9fe6e0b2b15aea0dca641d4')
+            '38c800c3f5849737b2f63a32a2bdd6a50f61d2f1b9fe6e0b2b15aea0dca641d4'
+            '297626b10b5c24555c2fa055847aaf57dc440cdd8f6b5a1582daa490aca7a36a')
 
 prepare() {
   cd "$pkgname-$pkgver"
