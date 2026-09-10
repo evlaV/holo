@@ -1,0 +1,55 @@
+From 52812b0a592ba48d23611409fce992e9eeb17873 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?N=C3=ADcolas=20F=2E=20R=2E=20A=2E=20Prado?=
+ <nfraprado@collabora.com>
+Date: Fri, 4 Sep 2026 13:55:03 -0400
+Subject: [PATCH] src/plymouthd.defaults: Increase DeviceTimeout from 8s to 14s
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The DeviceTimeout variable defines how long plymouth will wait for a
+suitable drm device to be reported by udev before falling back to using a
+framebuffer device instead.
+
+Previously the amdgpu driver took around 6s to finish probing on the SteamDeck,
+so that timeout worked, although it was already somewhat risky. Recently, due to
+a systemd update to 261.2-1.1, it is now sometimes taking up to 10s. Since this
+is above the timeout setting, plymouth falls back to initializing the
+UEFI framebuffer, which is oblivious to the panel rotation on the deck and so
+the logo appears rotated on the screen, plus when the amdgpu driver finally
+finishes probing shortly after it takes over the fb, resulting in the screen
+going black until gamescope draws the logo animation on screen.
+
+We don't want to entirely disable the timeout for falling back to the
+framebuffer, as showing something even if rotated is better than showing
+nothing, particularly when running plymouth to show progress on a firmware
+update, but we do only want the fallback to happen if the drm driver is broken
+and will never probe, rather than when it is just being slow to finish probing.
+
+We also still want to keep the timeout as short as possible, since it will
+translate to the time period where nothing gets shown on screen if the drm
+device failed to probe both for a normal boot and a firmware update.
+
+Increase the timeout to 14s, which should have a high enough margin for the
+current delayed boots to always be seamless, while an eventual boot with a
+broken drm driver can still give provide updates to the user without a huge
+delay.
+
+Signed-off-by: Nícolas F. R. A. Prado <nfraprado@collabora.com>
+---
+ src/plymouthd.defaults | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/plymouthd.defaults b/src/plymouthd.defaults
+index 0f75ab32d926..d00c95d87cf1 100644
+--- a/src/plymouthd.defaults
++++ b/src/plymouthd.defaults
+@@ -3,4 +3,4 @@
+ Theme=holo
+ ShowDelay=0
+ DeviceScale=1
+-DeviceTimeout=8
++DeviceTimeout=14
+-- 
+2.53.0
+

@@ -4,30 +4,26 @@
 # Contributor: Tom Gundersen <teg@jklm.no>
 # Contributor: John Proctor <jproctor@prium.net>
 
-pkgbase=libxml2
+pkgbase=lib32-libxml2
 pkgname=(
-  libxml2
-  libxml2-docs
+  lib32-libxml2
 )
 pkgver=2.15.4
 pkgrel=1.1 # Rebuild for Holo
-pkgdesc="XML C parser and toolkit"
+pkgdesc="XML C parser and toolkit (32-bit)"
 url="https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home"
 arch=(x86_64)
 license=(MIT)
 depends=(
-  bash
-  glibc
-  icu
-  readline
-  zlib
+  lib32-glibc
+  lib32-icu
+  lib32-zlib
+  libxml2
 )
 makedepends=(
-  docbook-xsl
-  doxygen
   git
+  lib32-readline
   meson
-  python
 )
 source=(
   "git+https://gitlab.gnome.org/GNOME/libxml2.git#tag=v$pkgver"
@@ -45,8 +41,11 @@ prepare() {
 
 build() {
   local meson_options=(
+    --cross-file lib32
+    -D docs=disabled
     -D icu=enabled
     -D legacy=enabled
+    -D python=disabled
   )
 
   arch-meson libxml2 build "${meson_options[@]}"
@@ -57,26 +56,13 @@ check() {
   meson test -C build --print-errorlogs
 }
 
-package_libxml2() {
+package_lib32-libxml2() {
   depends+=(libicuuc.so)
-  optdepends=('python: Python bindings')
   provides=(libxml2.so)
 
   meson install -C build --destdir "$pkgdir"
-  install -Dm644 libxml2/libxml.m4 -t "$pkgdir/usr/share/aclocal"
 
-  # Split docs
-  mkdir -p doc/usr/share
-  mv "$pkgdir"/usr/share/doc -t doc/usr/share
-
-  install -Dm644 libxml2/Copyright -t "$pkgdir/usr/share/licenses/$pkgname"
-}
-
-package_libxml2-docs() {
-  pkgdesc+=" (documentation)"
-  depends=()
-
-  mv doc/* "$pkgdir"
+  rm -r "$pkgdir"/usr/{bin,include}
 
   install -Dm644 libxml2/Copyright -t "$pkgdir/usr/share/licenses/$pkgname"
 }
