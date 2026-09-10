@@ -1,0 +1,22 @@
+# Author : Manuel A. Fernandez Montecelo <mafm@igalia.com>
+
+pkgname='holo-plymouth-config'
+pkgver=1.0
+pkgrel=1
+pkgdesc='Configuration for plymouth in Holo'
+arch=('any')
+license=('MIT')
+url='https://github.com/evlav/holo'
+depends=('plymouth')
+source=(
+  '10-holo-defaults.conf'
+)
+b2sums=(
+  '3e128a0cb91bd6b902fb87e20f9d96976f6ab8dc15f0c9a11ad694d53089979a18716c03a4e86d504bfadb8bb11850fb0f4f5a7cd711f5c4f30d6f7075478d9a'
+)
+
+package() {
+  local dest_systemd_sddm_confd="${pkgdir}/usr/lib/systemd/system/sddm.service.d"
+
+  install -Dm0644 '10-holo-defaults.conf' -t "${dest_systemd_sddm_confd}"
+}
