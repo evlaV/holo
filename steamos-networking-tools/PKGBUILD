@@ -1,7 +1,7 @@
 # Author : Manuel A. Fernandez Montecelo <mafm@igalia.com>
 
 pkgname='steamos-networking-tools'
-pkgver=1.2
+pkgver=1.3
 pkgrel=1
 pkgdesc='SteamOS networking tools'
 arch=('any')
@@ -16,7 +16,7 @@ source=(
 )
 sha256sums=(
   '2fd71495b31d3b98442f8a8cd72719ee203a1d1777d278eb3c49066ba28c724e'
-  'b8cfea8158a263891ad9abdb6a881dce32597db6fed83b88271ba381776a688c'
+  '8db1d639fe3efe668e4aee90e6419dd2a2e2dcfe315a785a2f1e38e3ae5d7510'
   'ebc55a73168f331d34ce03ecf0d081699faa448ae49098ecd2ce15e8081598bc'
   'd5b620c8b6cf581f1d0068611d63b17671f7383ce5ed11ab085966d9cf7574cc'
 )

@@ -74,7 +74,9 @@ write_config_wifi_backend() {
 ensure_default_interface() {
     if ! iw dev wlan0 info &>/dev/null; then
         echo 'INFO: missing wlan0, creating it explicitly'
-        iw phy phy0 interface add wlan0 type station
+        if ! iw phy phy0 interface add wlan0 type station; then
+            echo >&2 'ERROR: cannot add wlan0 to phy0, possibly system without WiFi hardware'
+        fi
         sleep 1s
         if ! iw dev wlan0 info &>/dev/null; then
             echo >&2 'ERROR: wlan0 could not be created'
