@@ -1,0 +1,134 @@
+From 439e32d27f95ab7b755b8063605dd8f8185161ec Mon Sep 17 00:00:00 2001
+From: Vignesh Raman <vignesh.raman@collabora.com>
+Date: Tue, 8 Sep 2026 11:03:29 +0530
+Subject: [PATCH] wifi/iwd: fix forget-connect issue
+
+When a network is deleted, NM deactivates the device and sends
+disconnect to iwd. That disables iwd's autoconnect, so NM takes
+over autoconnect. When the network is re-added and connected,
+NM starts to connect due to autoconnect enabled. The UI's explicit
+activation for the same profile arrives a few milliseconds later,
+so NM stops the first attempt to start the second one, and stopping
+it sends another disconnect to iwd that aborts the connect already
+in progress. The second attempt then runs and fails, and NM reports
+it as a no-secrets error. This only happens when the explicit request
+lands while the first attempt is still in progress, so it is not seen
+every time.
+
+To fix this issue, do not send the disconnect request in deactivate()
+and deactivate_async() when the deactivation is for a new activation.
+Network connect is now cancelled via a dedicated act_cancellable so
+its stale callback can't fail the new activation. Also hand over
+autoconnect back to IWD only if it is connected.
+---
+ src/core/devices/wifi/nm-device-iwd.c | 32 +++++++++++++++++++++------
+ 1 file changed, 25 insertions(+), 7 deletions(-)
+
+diff --git a/src/core/devices/wifi/nm-device-iwd.c b/src/core/devices/wifi/nm-device-iwd.c
+index d97032920a..5b4a723abc 100644
+--- a/src/core/devices/wifi/nm-device-iwd.c
++++ b/src/core/devices/wifi/nm-device-iwd.c
+@@ -58,6 +58,7 @@ typedef struct {
+     CList                         aps_lst_head;
+     NMWifiAP                     *current_ap;
+     GCancellable                 *cancellable;
++    GCancellable                 *act_cancellable;
+     _NMDeviceWifiCapabilities     capabilities;
+     NMActRequestGetSecretsCallId *wifi_secrets_id;
+     guint                         periodic_scan_id;
+@@ -568,6 +569,7 @@ cleanup_association_attempt(NMDeviceIwd *self, gboolean disconnect)
+ 
+     cleanup_assumed_connect(self);
+     wifi_secrets_cancel(self);
++    nm_clear_g_cancellable(&priv->act_cancellable);
+ 
+     set_current_ap(self, NULL, TRUE);
+     nm_clear_g_source(&priv->periodic_update_id);
+@@ -653,6 +655,10 @@ deactivate(NMDevice *device)
+     if (priv->iwd_autoconnect && nm_device_get_state(device) < NM_DEVICE_STATE_DISCONNECTED)
+         return;
+ 
++    if (priv->iwd_autoconnect
++        && nm_device_get_state_reason(device) == NM_DEVICE_STATE_REASON_NEW_ACTIVATION)
++        return;
++
+     if (priv->dbus_station_proxy)
+         send_disconnect(self);
+     else
+@@ -716,6 +722,12 @@ deactivate_async(NMDevice                  *device,
+         return;
+     }
+ 
++    if (priv->iwd_autoconnect
++        && nm_device_get_state_reason(device) == NM_DEVICE_STATE_REASON_NEW_ACTIVATION) {
++        nm_utils_invoke_on_idle(cancellable, disconnect_cb_on_idle, user_data);
++        return;
++    }
++
+     if (priv->dbus_station_proxy) {
+         g_dbus_proxy_call(priv->dbus_station_proxy,
+                           "Disconnect",
+@@ -2441,13 +2453,16 @@ act_stage2_config(NMDevice *device, NMDeviceStateReason *out_failure_reason)
+                 goto out_fail;
+             }
+ 
++            if (!priv->act_cancellable)
++                priv->act_cancellable = g_cancellable_new();
++
+             /* Use Station.ConnectHiddenNetwork method instead of Network proxy. */
+             g_dbus_proxy_call(priv->dbus_station_proxy,
+                               "ConnectHiddenNetwork",
+                               g_variant_new("(s)", ssid),
+                               G_DBUS_CALL_FLAGS_NONE,
+                               G_MAXINT,
+-                              priv->cancellable,
++                              priv->act_cancellable,
+                               network_connect_cb,
+                               self);
+             return NM_ACT_STAGE_RETURN_POSTPONE;
+@@ -2465,8 +2480,8 @@ act_stage2_config(NMDevice *device, NMDeviceStateReason *out_failure_reason)
+             goto out_fail;
+         }
+ 
+-        if (!priv->cancellable)
+-            priv->cancellable = g_cancellable_new();
++        if (!priv->act_cancellable)
++            priv->act_cancellable = g_cancellable_new();
+ 
+         s_wireless_sec = nm_connection_get_setting_wireless_security(connection);
+         if (s_wireless_sec
+@@ -2485,7 +2500,7 @@ act_stage2_config(NMDevice *device, NMDeviceStateReason *out_failure_reason)
+                           NULL,
+                           G_DBUS_CALL_FLAGS_NONE,
+                           G_MAXINT,
+-                          priv->cancellable,
++                          priv->act_cancellable,
+                           network_connect_cb,
+                           self);
+ 
+@@ -2837,9 +2852,11 @@ state_changed(NMDeviceIwd *self, const char *new_state)
+         /* If we reach this point, it means autoconnect was re-armed by
+          * Network.Connect(), no need to use NM autoconnect anymore
+          */
+-        priv->iwd_autoconnect_temp_disabled = FALSE;
+-        schedule_periodic_scan(self, FALSE);
+-        nm_log_info(LOGD_DEVICE | LOGD_WIFI, "Handing over autoconnect back to IWD, if set");
++        if (NM_IN_STRSET(new_state, "connected", "roaming")) {
++            priv->iwd_autoconnect_temp_disabled = FALSE;
++            schedule_periodic_scan(self, FALSE);
++            nm_log_info(LOGD_DEVICE | LOGD_WIFI, "Handing over autoconnect back to IWD, if set");
++        }
+ 
+         if (!ap) {
+             _LOGW(LOGD_DEVICE | LOGD_WIFI,
+@@ -3926,6 +3943,7 @@ dispose(GObject *object)
+     NMDeviceIwdPrivate *priv = NM_DEVICE_IWD_GET_PRIVATE(self);
+ 
+     nm_clear_g_cancellable(&priv->cancellable);
++    nm_clear_g_cancellable(&priv->act_cancellable);
+ 
+     g_signal_handlers_disconnect_by_func(self, autoconnect_changed, self);
+     nm_device_iwd_set_dbus_object(self, NULL);
+-- 
+2.47.3
+
