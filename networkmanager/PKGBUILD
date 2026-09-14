@@ -18,7 +18,7 @@ pkgname=(
   networkmanager-docs
 )
 pkgver=1.58.0
-pkgrel=1.6
+pkgrel=1.7
 pkgdesc="Network connection manager and user applications"
 url="https://networkmanager.dev/"
 arch=(x86_64)
@@ -99,6 +99,9 @@ source=(
   # stable and users can no longer downgrade to 3.8 from the UI.
   "0001-iwd-mirror-wpa_supplicant-connections-into-IWD-profi.patch"
   "0002-iwd-remove-IWD-profile-on-forget.patch"
+
+  # Holo: https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/2308
+  "0001-wifi-iwd-fix-forget-connect-issue.patch"
 )
 b2sums=('1bf42970ab8ffc3fe919d00cf2aca9626dfde0db24e655514b4f2873fef2dda3a88608d72487619c755f5c9e366789cf18943e7502a3ec5476ea7c914d7d48a4'
         'acb84792effee07ff8853f85136d5fe2822f11810a82a6dbb071c9dba7051d9f5ad232e49442b78cf3b29f24caf9e947ee18941adbe3e1876c11f7212e055509'
@@ -107,7 +110,8 @@ b2sums=('1bf42970ab8ffc3fe919d00cf2aca9626dfde0db24e655514b4f2873fef2dda3a88608d
         '00829f18f0e159a43f33dccb9230abbf6cc1690752b215e8ae8c2157a16353cf0b6e35c78c50605aac5122f02be234daf377f3b6a0d2f63e11b7cc35f64164f0'
         '83fa2db6a72c30a9ee636929d967fff75bccb2612d9ace5e3eed5b0917793e561aed244ebf62ebb51c2155567f0057bdcf41c717b5b1beaae05543b318fa705c'
         'a700bf7a441b2dcc5aca0847936d890e07b9297970592945732107f90fdf6d0f7dc500f850aaf36d4af77c384905112543d267d3f3ba2214622f2da33f78fae4'
-        '97a27192ccc2cf37a7cc7cdccc4b867c127bcb2a698db1b4c529c3021e01ea5b6a61738f50f6c7c04acb6f72995583ecf1d0e6896b15b5cb7eee5f0cf404ed05')
+        '97a27192ccc2cf37a7cc7cdccc4b867c127bcb2a698db1b4c529c3021e01ea5b6a61738f50f6c7c04acb6f72995583ecf1d0e6896b15b5cb7eee5f0cf404ed05'
+        'e5b1a720ed6111f4a7f8f041ce9b6fbd288c025605a1d34ab66bdf421d554ccb7d40e97e6e307b2f7634f6ef5a0f31da3fd8637b4b31b1a2ff9cee6f132839f8')
 validpgpkeys=(
   3D10AD045AB4AAFF8E8F36AF9B980AC2FB874FEB # Ana Cabral <acabral@redhat.com>
   F07F7C1EABD382F81CBFBA3B998D4828CD7E1656 # Beniamino Galvani <bgalvani@redhat.com>
@@ -135,6 +139,7 @@ prepare() {
   patch -Np1 < ../0001-wifi-supplicant-scan-only-the-last-associated-freq.patch
   patch -Np1 < ../0001-iwd-mirror-wpa_supplicant-connections-into-IWD-profi.patch
   patch -Np1 < ../0002-iwd-remove-IWD-profile-on-forget.patch
+  patch -Np1 < ../0001-wifi-iwd-fix-forget-connect-issue.patch
 }
 
 build() {
