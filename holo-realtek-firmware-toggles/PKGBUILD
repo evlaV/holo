@@ -2,7 +2,7 @@
 
 pkgname='holo-realtek-firmware-toggles'
 pkgver=1.3
-pkgrel=2
+pkgrel=3
 pkgdesc='Tool to toggle realtek rtw89 driver bits'
 arch=('any')
 license=('MIT')
@@ -11,7 +11,7 @@ source=(
   'holo-realtek-firmware-toggles'
   'org.valve.holo-realtek-firmware-toggles.policy'
 )
-sha256sums=('57b69da6031bad057e7a5512beca9c0bfb82a0c97aae465106222728775689c3'
+sha256sums=('a73258ba8bef37d7e993708376cd1caa7cb30816886791ee580c55400164352f'
             '7e1c21c1b23b67d7baea989b85f96a8d8c611778b09449fb181619064cf7231e')
 depends=('bash')
 

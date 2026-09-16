@@ -201,7 +201,7 @@ for DEBUGFS_DIR in "${RTW89_DEBUGFS_DIRS[@]}"; do
                     "$0" set-mcs-rates 0-9
                     "$0" set-powersave off
                     "$0" set-pd-thresh -75
-                    "$0" set-aggressive-edca off
+                    "$0" set-aggressive-edca on
                     ;;
                 0)
                     "$0" reset
