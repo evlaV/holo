@@ -1,12 +1,11 @@
 # Maintainer: Holo Team
 
 pkgbase=steamos-customizations-git
-#pkgname=('steamos-customizations-git' 'holo-pacman')
 pkgname=('steamos-customizations-git')
 _srctag=jupiter-20260914.1
 _srcver=${_srctag#jupiter-}
 pkgver=${_srcver}
-pkgrel=1
+pkgrel=2
 pkgdesc='SteamOS customizations - This package installs various SteamOS-specific files'
 arch=('any')
 url='http://repo.steampowered.com'
@@ -27,13 +26,4 @@ package_steamos-customizations-git() {
 	echo "Symlink grub binaries using holo helpers from libdir..."
 	ln -sf "/usr/lib/holo/holo-grub-install" "${pkgdir}/usr/bin/grub-install"
 	ln -sf "/usr/lib/holo/holo-grub-mkimage" "${pkgdir}/usr/bin/grub-mkimage"
-}
-
-package_holo-pacman() {
-	pkgdesc='Holo customizations - pacman keyring services'
-	depends=()
-	groups=(holo-base)
-
-	cd "${pkgbase%-git}"
-	make DESTDIR="$pkgdir" prefix="/usr" sbindir="/usr/bin" libexecdir="/usr/lib" install-pacman
 }
