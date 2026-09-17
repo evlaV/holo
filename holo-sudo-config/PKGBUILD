@@ -1,0 +1,28 @@
+# Author : Manuel A. Fernandez Montecelo <mafm@igalia.com>
+
+pkgname='holo-sudo-config'
+pkgver=1.0
+pkgrel=1
+pkgdesc='Holo customizations - configuration for sudo'
+groups=(holo-base)
+arch=('any')
+license=('MIT')
+url='https://github.com/evlav/holo'
+source=(
+  'holo-group-sudo'
+  'holo-group-wheel'
+  'holo-no-fqdn'
+)
+b2sums=(
+  '2328ac01aee213dd9341c91fbbfa55a21c58ac2caa31679d641fc035db4e70a359d728b2c9b7964b9513cdc9454cffadcab46ad78b3fad7a46f10104e472e69f'
+  'eadebeabb24c542c0fdcb729ca49e87510457505078f800324b5966535d1e10bbd7a373849c7b34312a86453552d74eb7ec9457d3ad6d4f701ec8d2716bdf0ad'
+  'ad9bc525c0696684e814ae7b1a442e14c8c9c9d00d891f0ef4b48107af3c52a3863f911acfc03c5fe99672d0469efe036bf4d08a70b142825a42b161cad0dc70'
+)
+
+package() {
+  local dest_etc_sudoersd="${pkgdir}/etc/sudoers.d"
+
+  # note that permissions are removed (0) for "others"
+  install -d 0750 "${dest_etc_sudoersd}"
+  install -m 0640 -t "${dest_etc_sudoersd}" holo-{group-sudo,group-wheel,no-fqdn}
+}

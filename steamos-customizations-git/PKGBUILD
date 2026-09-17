@@ -1,9 +1,9 @@
 # Maintainer: Holo Team
 
 pkgbase=steamos-customizations-git
-#pkgname=('steamos-customizations-git' 'holo-pacman' 'holo-sudo')
-pkgname=('steamos-customizations-git' 'holo-sudo')
-_srctag=jupiter-20260911.1
+#pkgname=('steamos-customizations-git' 'holo-pacman')
+pkgname=('steamos-customizations-git')
+_srctag=jupiter-20260914.1
 _srcver=${_srctag#jupiter-}
 pkgver=${_srcver}
 pkgrel=1
@@ -14,7 +14,7 @@ license=('LGPLv2+')
 depends=('e2fsprogs' 'gptfdisk' 'rsync' 'util-linux' 'mkinitcpio')
 makedepends=('git' 'systemd')
 source=("${pkgbase%-git}::git+https://github.com/evlav/${pkgbase%-git}.git#tag=${_srctag}")
-sha256sums=('cb434f3fcc30667db0918fdd23175db80483193b3849260b24a67c9ac53f37b5')
+sha256sums=('0d53c1a815adb56e7c7eee5ebb1f899115ea08a253d769a41f470511715ed8a0')
 
 package_steamos-customizations-git() {
 	provides=("${pkgbase%-git}")
@@ -37,13 +37,3 @@ package_holo-pacman() {
 	cd "${pkgbase%-git}"
 	make DESTDIR="$pkgdir" prefix="/usr" sbindir="/usr/bin" libexecdir="/usr/lib" install-pacman
 }
-
-package_holo-sudo() {
-	pkgdesc='Holo customizations - sudo settings'
-	depends=()
-	groups=(holo-base)
-
-	cd "${pkgbase%-git}"
-	make DESTDIR="$pkgdir" prefix="/usr" sbindir="/usr/bin" libexecdir="/usr/lib" install-sudo
-}
-
