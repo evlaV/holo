@@ -1,0 +1,22 @@
+# Author : Manuel A. Fernandez Montecelo <mafm@igalia.com>
+
+pkgname='holo-desync-config'
+pkgver=1.0
+pkgrel=1
+pkgdesc='Holo customizations - configuration for desync'
+arch=('any')
+license=('MIT')
+url='https://github.com/evlav/holo'
+depends=('desync')
+source=(
+  'config.json'
+)
+b2sums=(
+  'c4297b105b42014c2d72adcfada8fb8f59b8fa7ebaac76b2c2d04d2e4b45e093c01f55191a4f290384240d9d423378fd51203106e213ab2de61a83cc8124b93e'
+)
+
+package() {
+  local dest_etc_desync="${pkgdir}/etc/desync"
+
+  install -D -m 0600 config.json -t "${dest_etc_desync}"
+}
