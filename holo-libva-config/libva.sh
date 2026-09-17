@@ -1,0 +1,2 @@
+LIBVA_DRIVER_NAME=radeonsi
+export LIBVA_DRIVER_NAME

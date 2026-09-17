@@ -1,0 +1,21 @@
+# Author : Manuel A. Fernandez Montecelo <mafm@igalia.com>
+
+pkgname='holo-libva-config'
+pkgver=1.0
+pkgrel=1
+pkgdesc='Holo customizations - configuration for libva'
+arch=('any')
+license=('MIT')
+url='https://github.com/evlav/holo'
+source=(
+  'libva.sh'
+)
+b2sums=(
+  'e5ead81e6ce7547d9dea35fe48016f990b5ef3de11ee579bcf0db462b2a4fd7eae00d22823cd986457452ae702c57c632709e053a79d9c52cb680a958f805f3a'
+)
+
+package() {
+  local dest="${pkgdir}/etc/profile.d"
+
+  install -D -m 0644 'libva.sh' -t "${dest}"
+}
