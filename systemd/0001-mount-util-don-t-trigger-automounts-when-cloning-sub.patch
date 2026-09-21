@@ -1,0 +1,95 @@
+From e42638cdeff2235763dcc21685fc44c0370255a9 Mon Sep 17 00:00:00 2001
+From: Eric Curtin <eric.curtin@docker.com>
+Date: Sun, 26 Jul 2026 18:06:45 +0100
+Subject: [PATCH 1/2] mount-util: don't trigger automounts when cloning
+ submounts
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+get_sub_mounts() clones each submount of the given prefix with
+OPEN_TREE_CLONE. The kernel resolves the path of an OPEN_TREE_CLONE
+with LOOKUP_AUTOMOUNT, i.e. if the submount is an autofs automount
+point that has not been triggered yet, cloning it forces the automount
+to trigger, and open_tree() blocks until the automount request has
+been served.
+
+This is particularly problematic during boot: setting up a private
+/proc for the first sandboxed service (e.g. systemd-userdbd.service,
+which uses ProtectProc=invisible) clones the submounts of /proc, which
+include PID 1's own /proc/sys/fs/binfmt_misc automount point. The
+executor then blocks until PID 1 gets around to dispatching the
+resulting proc-sys-fs-binfmt_misc.mount job, which competes with the
+ongoing boot transaction. On a Fedora 44 VM this delayed
+systemd-userdbd.service by ~0.9s, and with it every early-boot NSS
+user/group lookup that ends up in nss-systemd's varlink queries — most
+importantly systemd-tmpfiles-setup-dev-early.service, which
+systemd-udevd.service is ordered after, stalling the whole boot
+critical path:
+
+  [2.131846] proc-sys-fs-binfmt_misc.automount: Got automount request
+             for /proc/sys/fs/binfmt_misc, triggered by 323 ((systemd-userd))
+  [2.943574] Mounting proc-sys-fs-binfmt_misc.mount...
+  [2.968507] Mounted proc-sys-fs-binfmt_misc.mount.
+
+Triggering the automount here also defeats its purpose, since
+binfmt_misc ends up mounted on every boot even if nothing ever
+accesses it.
+
+Pass AT_NO_AUTOMOUNT so that untriggered automount points are cloned
+as they are instead.
+
+Before (Fedora 44 VM, 4 vCPUs):
+  Startup finished in ... + 2.559s (userspace)
+    1.058s systemd-tmpfiles-setup-dev-early.service
+     938ms systemd-userdbd.service
+
+After:
+  Startup finished in ... + 1.582s (userspace)
+     137ms systemd-tmpfiles-setup-dev-early.service
+      22ms systemd-userdbd.service
+(cherry picked from commit 0494ced5a9897dc1bdbdd142c61bf6762b2265bf)
+---
+ src/shared/mount-util.c | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/src/shared/mount-util.c b/src/shared/mount-util.c
+index 20eda5b0ef3a..543682f11179 100644
+--- a/src/shared/mount-util.c
++++ b/src/shared/mount-util.c
+@@ -1841,13 +1841,21 @@ int get_sub_mounts(const char *prefix, SubMount **ret_mounts, size_t *ret_n_moun
+                 /* If possible on a newer kernel, use MS_PRIVATE to decouple it from the original mount.
+                  * Otherwise MNT_DETACH of the source path could propagate through and unmount the
+                  * just-moved nested children at the destination (relevant for preserving nested mounts
+-                 * under sysext hierarchies). */
++                 * under sysext hierarchies).
++                 *
++                 * Also, pass AT_NO_AUTOMOUNT so that we clone automount points (i.e. autofs mounts) as
++                 * they are, instead of triggering them. OPEN_TREE_CLONE would otherwise force them to be
++                 * mounted, and — worse — block until the automount request has been served. If the
++                 * automount point is managed by PID 1 itself (as is the case for systemd's own
++                 * /proc/sys/fs/binfmt_misc automount point, which is cloned whenever a private /proc is
++                 * set up for a service) this can take a long time during boot, since the resulting mount
++                 * job competes with the ongoing boot transaction. */
+                 static bool mount_attr_unsupported = false;
+ 
+                 if (!mount_attr_unsupported) {
+                         mount_fd = open_tree_attr_with_fallback(
+                                         AT_FDCWD, path,
+-                                        OPEN_TREE_CLONE|OPEN_TREE_CLOEXEC|AT_RECURSIVE,
++                                        OPEN_TREE_CLONE|OPEN_TREE_CLOEXEC|AT_RECURSIVE|AT_NO_AUTOMOUNT,
+                                         &(struct mount_attr) { .propagation = MS_PRIVATE });
+                         if (mount_fd == -ENOENT) /* The path may be hidden by another over-mount or already unmounted. */
+                                 continue;
+@@ -1861,7 +1869,7 @@ int get_sub_mounts(const char *prefix, SubMount **ret_mounts, size_t *ret_n_moun
+                 }
+ 
+                 if (mount_attr_unsupported) {
+-                        mount_fd = RET_NERRNO(open_tree(AT_FDCWD, path, OPEN_TREE_CLONE|OPEN_TREE_CLOEXEC|AT_RECURSIVE));
++                        mount_fd = RET_NERRNO(open_tree(AT_FDCWD, path, OPEN_TREE_CLONE|OPEN_TREE_CLOEXEC|AT_RECURSIVE|AT_NO_AUTOMOUNT));
+                         if (mount_fd == -ENOENT)
+                                 continue;
+                         if (mount_fd < 0)
+-- 
+2.48.1
+
