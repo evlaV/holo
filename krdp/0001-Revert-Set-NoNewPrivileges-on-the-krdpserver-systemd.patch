@@ -1,0 +1,31 @@
+From 66a98cd6eb4cf92a5a09de66aa951cbd943e74f1 Mon Sep 17 00:00:00 2001
+From: David Edmundson <kde@davidedmundson.co.uk>
+Date: Thu, 25 Jun 2026 15:19:35 +0100
+Subject: [PATCH 01/16] Revert "Set NoNewPrivileges on the krdpserver systemd
+ service"
+
+This reverts commit 8e1de600a6ea4fcb1662508626da2cf0499f9734.
+
+The PAM backend needs privs to check.
+
+BUG: 521776
+(cherry picked from commit 981319d36b88200dd413a9a5052717189e524581)
+---
+ server/app-org.kde.krdpserver.service.in | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/server/app-org.kde.krdpserver.service.in b/server/app-org.kde.krdpserver.service.in
+index 833b630..d3b7be5 100644
+--- a/server/app-org.kde.krdpserver.service.in
++++ b/server/app-org.kde.krdpserver.service.in
+@@ -9,7 +9,6 @@ After=plasma-core.target
+ Type=exec
+ ExecStart=@CMAKE_INSTALL_PREFIX@/bin/krdpserver
+ Restart=on-abnormal
+-NoNewPrivileges=true
+ 
+ [Install]
+ WantedBy=plasma-workspace.target
+-- 
+2.55.0
+
