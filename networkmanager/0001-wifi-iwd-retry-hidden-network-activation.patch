@@ -1,0 +1,232 @@
+From 1fe6be4bf2553ae3763494ec6121a94910cf26ae Mon Sep 17 00:00:00 2001
+From: Vignesh Raman <vignesh.raman@collabora.com>
+Date: Tue, 7 Jul 2026 16:04:45 +0530
+Subject: [PATCH] wifi/iwd: retry hidden network activation
+
+Connecting to a hidden network that IWD already has as a known network
+could fail on the very first activation attempt.
+
+act_stage1_prepare() assumed a hidden known network's AP would already
+be in the scanned AP list, so it failed immediately whenever it wasn't
+there. But IWD only adds a hidden network's AP to that list after a
+scan sends a directed probe request for its SSID and gets a response
+and that scan may not have happened yet by the time the connection
+attempt starts.
+
+Instead of failing, trigger a scan and postpone the activation
+until the AP appears, bounded by a timeout. If IWD's own autoconnect
+connects the network while stage 1 is postponed, continue the pending
+activation on top of that connection instead of starting a second one,
+which would fail as "already active" and make NM disconnect IWD.
+---
+ src/core/devices/wifi/nm-device-iwd.c | 114 +++++++++++++++++++++++++-
+ 1 file changed, 110 insertions(+), 4 deletions(-)
+
+diff --git a/src/core/devices/wifi/nm-device-iwd.c b/src/core/devices/wifi/nm-device-iwd.c
+index 5b4a723abc..3a55c6b5f9 100644
+--- a/src/core/devices/wifi/nm-device-iwd.c
++++ b/src/core/devices/wifi/nm-device-iwd.c
+@@ -38,6 +38,10 @@
+ #define _NMLOG_DEVICE_TYPE NMDeviceIwd
+ #include "devices/nm-device-logging.h"
+ 
++/* Seconds to keep an activation waiting for a hidden network's SSID to be
++ * revealed by scanning before giving up. */
++#define HIDDEN_NETWORK_SCAN_TIMEOUT_SEC 30
++
+ /*****************************************************************************/
+ 
+ NM_GOBJECT_PROPERTIES_DEFINE(NMDeviceIwd,
+@@ -63,6 +67,7 @@ typedef struct {
+     NMActRequestGetSecretsCallId *wifi_secrets_id;
+     guint                         periodic_scan_id;
+     guint                         periodic_update_id;
++    GSource                      *hidden_scan_source;
+     bool                          enabled : 1;
+     bool                          can_scan : 1;
+     bool                          nm_autoconnect : 1;
+@@ -440,6 +445,10 @@ get_ordered_networks_cb(GObject *source, GAsyncResult *res, gpointer user_data)
+ 
+         nm_device_recheck_available_connections(NM_DEVICE(self));
+     }
++
++    /* Retry stage 1 in case the hidden network appeared. */
++    if (priv->hidden_scan_source && nm_device_get_state(NM_DEVICE(self)) == NM_DEVICE_STATE_PREPARE)
++        nm_device_activate_schedule_stage1_device_prepare(NM_DEVICE(self), FALSE);
+ }
+ 
+ static void
+@@ -562,6 +571,33 @@ cleanup_assumed_connect(NMDeviceIwd *self)
+     g_clear_object(&priv->assumed_ac);
+ }
+ 
++static void
++hidden_network_scan_cleanup(NMDeviceIwd *self)
++{
++    NMDeviceIwdPrivate *priv = NM_DEVICE_IWD_GET_PRIVATE(self);
++
++    nm_clear_g_source_inst(&priv->hidden_scan_source);
++}
++
++static gboolean
++hidden_network_scan_timeout_cb(gpointer user_data)
++{
++    NMDeviceIwd        *self = user_data;
++    NMDeviceIwdPrivate *priv = NM_DEVICE_IWD_GET_PRIVATE(self);
++
++    nm_clear_g_source_inst(&priv->hidden_scan_source);
++
++    if (nm_device_get_state(NM_DEVICE(self)) != NM_DEVICE_STATE_PREPARE)
++        return G_SOURCE_REMOVE;
++
++    _LOGW(LOGD_DEVICE | LOGD_WIFI,
++          "hidden network's SSID was not revealed by scanning within timeout");
++    nm_device_state_changed(NM_DEVICE(self),
++                            NM_DEVICE_STATE_FAILED,
++                            NM_DEVICE_STATE_REASON_SSID_NOT_FOUND);
++    return G_SOURCE_REMOVE;
++}
++
+ static void
+ cleanup_association_attempt(NMDeviceIwd *self, gboolean disconnect)
+ {
+@@ -570,6 +606,7 @@ cleanup_association_attempt(NMDeviceIwd *self, gboolean disconnect)
+     cleanup_assumed_connect(self);
+     wifi_secrets_cancel(self);
+     nm_clear_g_cancellable(&priv->act_cancellable);
++    hidden_network_scan_cleanup(self);
+ 
+     set_current_ap(self, NULL, TRUE);
+     nm_clear_g_source(&priv->periodic_update_id);
+@@ -633,6 +670,8 @@ deactivate(NMDevice *device)
+     NMDeviceIwd        *self = NM_DEVICE_IWD(device);
+     NMDeviceIwdPrivate *priv = NM_DEVICE_IWD_GET_PRIVATE(self);
+ 
++    hidden_network_scan_cleanup(self);
++
+     if (!priv->dbus_obj)
+         return;
+ 
+@@ -2083,6 +2122,37 @@ assumed_connection_state_changed_before_managed(NMActiveConnection *active,
+     cleanup_association_attempt(self, disconnect);
+ }
+ 
++static gboolean
++continue_pending_activation(NMDeviceIwd *self, NMWifiAP *ap)
++{
++    NMDeviceIwdPrivate *priv   = NM_DEVICE_IWD_GET_PRIVATE(self);
++    NMDevice           *device = NM_DEVICE(self);
++    NMActRequest       *req    = nm_device_get_act_request(device);
++    NMConnection       *connection;
++
++    if (!req || !priv->hidden_scan_source)
++        return FALSE;
++
++    connection = nm_act_request_get_applied_connection(req);
++    if (!connection || !nm_wifi_ap_check_compatible(ap, connection))
++        return FALSE;
++
++    _LOGD(LOGD_DEVICE | LOGD_WIFI,
++          "IWD autoconnected the network we were waiting for; "
++          "continuing the pending activation on top of it");
++
++    hidden_network_scan_cleanup(self);
++    set_current_ap(self, ap, TRUE);
++
++    priv->assumed_ac = g_object_ref(NM_ACTIVE_CONNECTION(req));
++    g_signal_connect(priv->assumed_ac,
++                     "notify::" NM_ACTIVE_CONNECTION_STATE,
++                     G_CALLBACK(assumed_connection_state_changed_before_managed),
++                     self);
++    nm_device_activate_schedule_stage1_device_prepare(device, FALSE);
++    return TRUE;
++}
++
+ static void
+ assume_connection(NMDeviceIwd *self, NMWifiAP *ap)
+ {
+@@ -2267,12 +2337,14 @@ act_stage1_prepare(NMDevice *device, NMDeviceStateReason *out_failure_reason)
+     ap_path = nm_active_connection_get_specific_object(NM_ACTIVE_CONNECTION(req));
+     ap      = ap_path ? nm_wifi_ap_lookup_for_device(NM_DEVICE(self), ap_path) : NULL;
+     if (ap) {
++        hidden_network_scan_cleanup(self);
+         set_current_ap(self, ap, TRUE);
+         return NM_ACT_STAGE_RETURN_SUCCESS;
+     }
+ 
+     ap = nm_wifi_aps_find_first_compatible(&priv->aps_lst_head, connection);
+     if (ap) {
++        hidden_network_scan_cleanup(self);
+         nm_active_connection_set_specific_object(NM_ACTIVE_CONNECTION(req),
+                                                  nm_dbus_object_get_path(NM_DBUS_OBJECT(ap)));
+         set_current_ap(self, ap, TRUE);
+@@ -2280,14 +2352,44 @@ act_stage1_prepare(NMDevice *device, NMDeviceStateReason *out_failure_reason)
+     }
+ 
+     /* In infrastructure mode the specific object should be set by now except
+-     * for a first-time connection to a hidden network.  If a hidden network is
+-     * a Known Network it should still have been in the AP list.
++     * for a hidden network. A hidden network's AP may not be in the list yet,
++     * because IWD only reports it after a scan has probed for its SSID.
+      */
+-    if (!nm_setting_wireless_get_hidden(s_wireless)
+-        || is_connection_known_network(priv->manager, connection))
++    if (!nm_setting_wireless_get_hidden(s_wireless))
+         return NM_ACT_STAGE_RETURN_FAILURE;
+ 
++    /* Trigger a scan and wait for the AP to appear. get_ordered_networks_cb()
++     * resumes stage 1 after each scan.
++     */
++    if (is_connection_known_network(priv->manager, connection)) {
++        if (!priv->hidden_scan_source) {
++            priv->hidden_scan_source =
++                nm_g_timeout_add_seconds_source(HIDDEN_NETWORK_SCAN_TIMEOUT_SEC,
++                                                hidden_network_scan_timeout_cb,
++                                                self);
++        }
++
++        if (!priv->cancellable)
++            priv->cancellable = g_cancellable_new();
++
++        if (priv->can_scan && !priv->scanning && !priv->scan_requested) {
++            g_dbus_proxy_call(priv->dbus_station_proxy,
++                              "Scan",
++                              NULL,
++                              G_DBUS_CALL_FLAGS_NONE,
++                              -1,
++                              priv->cancellable,
++                              scan_cb,
++                              self);
++            priv->scan_requested = TRUE;
++        }
++
++        return NM_ACT_STAGE_RETURN_POSTPONE;
++    }
++
+ add_new:
++    hidden_network_scan_cleanup(self);
++
+     /* If the user is trying to connect to an AP that NM doesn't yet know about
+      * (hidden network or something) or starting a Hotspot, create a fake AP
+      * from the security settings in the connection.  This "fake" AP gets used
+@@ -2924,6 +3026,9 @@ state_changed(NMDeviceIwd *self, const char *new_state)
+          * the secrets -- we record this fact and remain in NEED_AUTH.
+          */
+         if (!nm_connection) {
++            if (continue_pending_activation(self, ap))
++                return;
++
+             _LOGD(LOGD_DEVICE | LOGD_WIFI, "This is a new connection, 'assuming' it");
+             assume_connection(self, ap);
+             return;
+@@ -3944,6 +4049,7 @@ dispose(GObject *object)
+ 
+     nm_clear_g_cancellable(&priv->cancellable);
+     nm_clear_g_cancellable(&priv->act_cancellable);
++    hidden_network_scan_cleanup(self);
+ 
+     g_signal_handlers_disconnect_by_func(self, autoconnect_changed, self);
+     nm_device_iwd_set_dbus_object(self, NULL);
+-- 
+2.47.3
+
