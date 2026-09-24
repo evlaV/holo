@@ -19,7 +19,7 @@ pkgname=('systemd'
 # way or another. We use proper version for pacman here (no dash for rc
 # release!), and change in source array below.
 pkgver=261.2
-pkgrel=1.1
+pkgrel=1.2
 arch=('x86_64')
 license=('LGPL-2.1-or-later')
 url='https://www.github.com/systemd/systemd'
@@ -47,6 +47,8 @@ source=("git+https://github.com/systemd/systemd#tag=v${pkgver/rc/-rc}?signed"
         # Holo: allow suspend-then-hibernate to work together with hibernation
         # cancellation
         '0001-sleep-Don-t-fallback-to-suspend-if-hibernate-failed-.patch'
+        '0001-mount-util-don-t-trigger-automounts-when-cloning-sub.patch'
+        '0002-terminal-util-don-t-query-terminal-size-on-virtual-c.patch'
 
         # bootloader files
         'arch.conf'
@@ -71,6 +73,8 @@ sha512sums=('1c2a3aed0b7c613040722ef1bd063a1f35d2f3993e0f678701ef5e4d42d31628804
             'ddb9401e47d0bf01874f255803a4b2167ec631484189d29d03694101fd9c77724e735f16d99c5f4ffd8061ae78839b2826ff0e0a925a6f0dbca25f2cfb271a82'
             'f0a8a7ec9ab53ad5273c491f3b8d94cf76b51434a030e572178bd04d3ebb5936b38bf17a708290f4d054d5cb93545b2e2049113268b234f12004d0c7d296989e'
             '28db3e3c9f2d54c7b4595ed2147649f81db3522b6b9659c3ac7b5ec47e384a82c53401c78a5d72e97f3f77b703a54318842f5002029d191bdb36bb1367efedb7'
+            'e6ff5fd3500534d47412b6909ae39c0c851db6da038f96c4a09b571d7c322114488c017fedd71c56d731c93f6e017c12d3c59198c0d7782db362a5cd9ca23187'
+            'd0ded5a1b77790d410d908e298629a0af0dfc34d9d8e39629ae7ee9485ae19257942643ffd05ae9c41d81f0cf4ff645d8da6ca1f9711975e70015a8350d69b25'
             '61032d29241b74a0f28446f8cf1be0e8ec46d0847a61dadb2a4f096e8686d5f57fe5c72bcf386003f6520bc4b5856c32d63bf3efe7eb0bc0deefc9f68159e648'
             '3194d1f8bff31b88a79657df83632b9224b66ca2cf8fd806a3ef35cf7a43f46c09c57f3dfd02256a99b6514a8f789b7d3bcfd7e17e00e34aa55ff0c6cedb5f01'
             '5a1d78b5170da5abe3d18fdf9f2c3a4d78f15ba7d1ee9ec2708c4c9c2e28973469bc19386f70b3cf32ffafbe4fcc4303e5ebbd6d5187a1df3314ae0965b25e75'

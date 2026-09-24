@@ -1,0 +1,83 @@
+From 3cdb00ad18262e89f05bd912cec07333303d5e8d Mon Sep 17 00:00:00 2001
+From: Robert Beckett <bob.beckett@collabora.com>
+Date: Thu, 17 Sep 2026 16:46:23 +0100
+Subject: [PATCH 2/2] terminal-util: don't query terminal size on virtual
+ consoles
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+terminal_fix_size() queries the terminal for its dimensions with CSI 18
+and DSR. On a virtual console that is pointless: the kernel renders the
+screen itself, so TIOCGWINSZ is already authoritative.
+
+It is also slow. PID 1 queries /dev/console from console_setup(), and
+writes there go through redirected_tty_write(), so while plymouth holds a
+TIOCCONS redirect the query never reaches the VT and no reply is ever
+generated. Each query then waits out CONSOLE_ANSI_SEQUENCE_TIMEOUT_USEC.
+Previously the write failed immediately with EAGAIN — the kernel forces
+O_NONBLOCK on /dev/console — so the query was abandoned at no cost; since
+ba10d789a899 it is retried until the timeout instead. On a Steam Deck
+booting with console=tty1 and plymouth the two queries cost 667ms, about a
+quarter of userspace boot time, and no log level shows it because main()
+runs console_setup() between log_close() and log_open().
+
+So skip the query on a virtual console and keep the dimensions the kernel
+gave us, reporting success rather than an error: declining to ask is not a
+failure, and the "dimensions already match" path below returns 0 for the
+same reason.
+
+Note this also skips the query on a /dev/ttyN that would have answered,
+and does not help a serial console behind a TIOCCONS redirect.
+
+Fixes: ba10d789a899
+Fixes: d91a184509e6
+(cherry picked from commit 874df4ed352ac6f5e978a17ddcfb59dc8c2fca53)
+---
+ src/basic/terminal-util.c | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+diff --git a/src/basic/terminal-util.c b/src/basic/terminal-util.c
+index 597880d0ff1c..23537b5fc129 100644
+--- a/src/basic/terminal-util.c
++++ b/src/basic/terminal-util.c
+@@ -2681,6 +2681,19 @@ int terminal_get_size(
+         return r;
+ }
+ 
++static int fd_is_vc(int fd) {
++        _cleanup_free_ char *name = NULL;
++        int r;
++
++        assert(fd >= 0);
++
++        r = getttyname_malloc(fd, &name);
++        if (r < 0)
++                return r;
++
++        return tty_is_vc_resolve(name);
++}
++
+ int terminal_fix_size(int input_fd, int output_fd) {
+         unsigned rows, columns;
+         int r;
+@@ -2697,6 +2710,16 @@ int terminal_fix_size(int input_fd, int output_fd) {
+         if (ioctl(output_fd, TIOCGWINSZ, &ws) < 0)
+                 return log_debug_errno(errno, "Failed to query terminal dimensions, ignoring: %m");
+ 
++        /* Don't ask a virtual console at all. There is no intermediary here that could be wrong about the
++         * dimensions: the kernel renders the screen itself, so the winsize we just read is authoritative. */
++        r = fd_is_vc(input_fd);
++        if (r < 0)
++                log_debug_errno(r, "Failed to determine whether terminal is a virtual console, assuming it is not: %m");
++        else if (r > 0) {
++                log_debug("Not querying dimensions of a virtual console, kernel dimensions are authoritative.");
++                return 0;
++        }
++
+         r = terminal_get_size(input_fd, output_fd, &rows, &columns, /* try_dsr= */ true, /* try_csi18= */ true);
+         if (r < 0)
+                 return log_debug_errno(r, "Failed to acquire terminal dimensions via ANSI sequences, not adjusting terminal dimensions: %m");
+-- 
+2.48.1
+
