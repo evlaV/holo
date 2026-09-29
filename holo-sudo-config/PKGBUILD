@@ -1,8 +1,8 @@
-# Author : Manuel A. Fernandez Montecelo <mafm@igalia.com>
+# Maintainer: Holo Team
 
 pkgname='holo-sudo-config'
 pkgver=1.0
-pkgrel=1
+pkgrel=2
 pkgdesc='Holo customizations - configuration for sudo'
 groups=(holo-base)
 arch=('any')
