@@ -2,10 +2,10 @@
 
 pkgbase=steamos-customizations-git
 pkgname=('steamos-customizations-git')
-_srctag=jupiter-20260914.1
+_srctag=jupiter-20260916.1
 _srcver=${_srctag#jupiter-}
 pkgver=${_srcver}
-pkgrel=2
+pkgrel=1
 pkgdesc='SteamOS customizations - This package installs various SteamOS-specific files'
 arch=('any')
 url='http://repo.steampowered.com'
@@ -13,7 +13,7 @@ license=('LGPLv2+')
 depends=('e2fsprogs' 'gptfdisk' 'rsync' 'util-linux' 'mkinitcpio')
 makedepends=('git' 'systemd')
 source=("${pkgbase%-git}::git+https://github.com/evlav/${pkgbase%-git}.git#tag=${_srctag}")
-sha256sums=('0d53c1a815adb56e7c7eee5ebb1f899115ea08a253d769a41f470511715ed8a0')
+sha256sums=('f3ea4cd862c48012b8f0da08b510d5058d88ed34469d9c6804fd1609f47fd998')
 
 package_steamos-customizations-git() {
 	provides=("${pkgbase%-git}")
