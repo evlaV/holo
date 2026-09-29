@@ -1,0 +1,44 @@
+# Author : Manuel A. Fernandez Montecelo <mafm@igalia.com>
+
+pkgname='holo-networking-tools'
+pkgver=1.4
+pkgrel=1
+pkgdesc='Holo networking tools'
+arch=('any')
+license=('LGPL2.1')
+url='https://github.com/evlav/holo'
+conflicts=('steamos-networking-tools')
+replaces=('steamos-networking-tools')
+source=("${pkgname%-git}::git+${url}#tag=${_tag}")
+source=(
+  'holo-wifi-set-backend'
+  'holo-wifi-set-backend-privileged'
+  'holo-wifi-set-backend.bash-completion'
+  'com.steampowered.Holo.WifiSetBackend.policy'
+)
+b2sums=(
+  'ecd1e4244909b8f0c2fd56f93d15052bd7929620988891daace146f1827f4bb1056142d124be9667c834c3b4a94f304d345bdaaf9f7c5b4607cbf3e849b56ecf'
+  '82d3b97e07a4942d569cc13eba8d2efe4d48c3b568d13c74f9c7c7f6df89753cee0ac70a6e370a3ef5807b58b1c5df98ba8cd4cbdba063a8c3d1a57cc745bd44'
+  'd8d6a34b4d8df2817c5604ff8a6a500f3ff04c74e45b7c59e9368e0dab7106128081e345e8ec47b44e5871bf062da5a94da2bdd8b1e0f7dd265e4c6a70ed6717'
+  '72eb75d5225f5b2edd7605350a53dc7802142f8c4178f6add6fbd8616b9fd4dd3f89246ffc534223b90f84a4aaaee48edfe236f35c50832adbcf1541f7fe0bbb'
+)
+
+# depends on these at runtime, but commented out as not needed at build time and
+# all of them are very basic packages already pulled in
+#
+# depends=(
+#   'bash'
+#   'iw'
+#   'iwd'                            # iwd systemd unit
+#   'network-manager'                # NetworkManager systemd unit and config
+#   'systemd'                        # systemctl
+#   'polkit'
+# )
+
+package() {
+  install -D -m 0755 holo-wifi-set-backend -t "${pkgdir}"/usr/bin
+  install -D -m 0755 holo-wifi-set-backend-privileged -t "${pkgdir}"/usr/bin/holo-polkit-helpers
+  install -D -m 0644 holo-wifi-set-backend.bash-completion -T "${pkgdir}"/usr/share/bash-completion/completions/holo-wifi-set-backend
+  install -d -m 0755 "${pkgdir}"/usr/share/polkit-1/actions
+  install -D -m 0644 com.steampowered.Holo.WifiSetBackend.policy -t "${pkgdir}"/usr/share/polkit-1/actions
+}
