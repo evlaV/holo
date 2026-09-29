@@ -1,0 +1,42 @@
+From caf1593882e6bb45c32eddc4ddbe54a8c6ebe444 Mon Sep 17 00:00:00 2001
+From: Vignesh Raman <vignesh.raman@collabora.com>
+Date: Mon, 14 Sep 2026 18:43:56 +0530
+Subject: [PATCH] iwd: check for sae network type
+
+IWD now reports WPA3-SAE networks as type "sae" instead "psk".
+Add a case for it here too, so SAE APs get NM_802_11_AP_SEC_KEY_MGMT_SAE
+instead of being treated as having no security at all.
+---
+ src/core/devices/wifi/nm-device-iwd.c  | 2 ++
+ src/core/devices/wifi/nm-iwd-manager.c | 2 +-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/core/devices/wifi/nm-device-iwd.c b/src/core/devices/wifi/nm-device-iwd.c
+index d97032920a..2194cfdb8b 100644
+--- a/src/core/devices/wifi/nm-device-iwd.c
++++ b/src/core/devices/wifi/nm-device-iwd.c
+@@ -254,6 +254,8 @@ ap_security_flags_from_network_type(const char *type)
+ 
+     if (nm_streq(type, "psk"))
+         flags = NM_802_11_AP_SEC_KEY_MGMT_PSK;
++    else if (nm_streq(type, "sae"))
++        flags = NM_802_11_AP_SEC_KEY_MGMT_SAE;
+     else if (nm_streq(type, "8021x"))
+         flags = NM_802_11_AP_SEC_KEY_MGMT_802_1X;
+     else
+diff --git a/src/core/devices/wifi/nm-iwd-manager.c b/src/core/devices/wifi/nm-iwd-manager.c
+index 660482e82d..3d895e96df 100644
+--- a/src/core/devices/wifi/nm-iwd-manager.c
++++ b/src/core/devices/wifi/nm-iwd-manager.c
+@@ -2061,7 +2061,7 @@ nm_iwd_manager_get_ap_mirror_connection(NMIwdManager *self, NMWifiAP *ap)
+     if (flags & NM_802_11_AP_FLAGS_PRIVACY)
+         kn_id.security = NM_IWD_NETWORK_SECURITY_WEP;
+ 
+-    if (sec_flags & NM_802_11_AP_SEC_KEY_MGMT_PSK)
++    if (sec_flags & (NM_802_11_AP_SEC_KEY_MGMT_PSK | NM_802_11_AP_SEC_KEY_MGMT_SAE))
+         kn_id.security = NM_IWD_NETWORK_SECURITY_PSK;
+     else if (sec_flags & NM_802_11_AP_SEC_KEY_MGMT_802_1X)
+         kn_id.security = NM_IWD_NETWORK_SECURITY_8021X;
+-- 
+2.47.3
+
