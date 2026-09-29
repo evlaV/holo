@@ -1,0 +1,37 @@
+From e6fb0999583f7a6fa379700ec06d231221b30de4 Mon Sep 17 00:00:00 2001
+From: Vignesh Raman <vignesh.raman@collabora.com>
+Date: Mon, 14 Sep 2026 18:19:22 +0530
+Subject: [PATCH] network: report WPA3-SAE networks as sae in Network.Type
+
+iwd reports both WPA2-PSK and WPA3-SAE networks as psk in Network.Type.
+NetworkManager relies on this property to pick key-mgmt, so it saves
+WPA3-SAE networks with key-mgmt=wpa-psk instead of key-mgmt=sae.
+
+Report sae for WPA3-SAE networks to fix this issue.
+---
+ src/network.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/src/network.c b/src/network.c
+index a5a2375a..12165176 100644
+--- a/src/network.c
++++ b/src/network.c
+@@ -1842,9 +1842,13 @@ static bool network_property_get_type(struct l_dbus *dbus,
+ {
+ 	struct network *network = user_data;
+ 	enum security security = network_get_security(network);
++	const char *type = security_to_str(security);
++	struct scan_bss *bss = l_queue_peek_head(network->bss_list);
+ 
+-	l_dbus_message_builder_append_basic(builder, 's',
+-						security_to_str(security));
++	if (bss && bss_is_sae(bss))
++		type = "sae";
++
++	l_dbus_message_builder_append_basic(builder, 's', type);
+ 
+ 	return true;
+ }
+-- 
+2.47.3
+
