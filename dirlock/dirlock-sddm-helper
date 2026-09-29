@@ -9,7 +9,6 @@ set -eu
 
 SDDM_CONF=/etc/sddm.conf.d/steamos.conf
 SDDM_STATE_CONF=/var/lib/sddm/state.conf
-SDDM_AUTOLOGIN_CONF=/etc/sddm.conf.d/zz-steamos-autologin.conf
 SDDM_DIRLOCK_CONF=/etc/sddm.conf.d/zz-steamos-dirlock.conf
 
 # Get the Autologin user from the SDDM configuration
@@ -33,7 +32,7 @@ if eval dirlock status -b ~"${user}" 2>&1 | grep -qw locked ; then
 
     # Set the default session in the SDDM login screen
     if [ "$(id -u)" = 0 ] && [ -f "$SDDM_STATE_CONF" ]; then
-        session=$(sed -n '/^\[Autologin\]$/,/^$/{s/^Session=//p}' "$SDDM_AUTOLOGIN_CONF")
+        session=$(sed -n '/^\[Autologin\]$/,/^$/{s/^Session=//p}' /etc/sddm.conf.d/*.conf | tail -n 1)
         for f in "/usr/share/xsessions/$session" "/usr/share/wayland-sessions/$session"; do
             if [ -f "$f" ]; then
                 sed -i "s|^Session=.*|Session=$f|" "$SDDM_STATE_CONF"
