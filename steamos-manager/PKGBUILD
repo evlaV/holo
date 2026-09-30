@@ -3,7 +3,7 @@
 pkgname=steamos-manager
 _srctag=v26.4.1
 pkgver=${_srctag##v}
-pkgrel=2
+pkgrel=3
 pkgdesc='SteamOS Manager daemon for running various system management tasks'
 arch=('x86_64')
 url='https://store.steampowered.com/steamos/'
@@ -18,7 +18,7 @@ optdepends=('cecd: CEC support'
             'jupiter-dock-updater-bin: jupiter dock updater'  # Needed for jupiter-dock-updater
             'orca: Screen reader support'
             'scx-scheds: LAVD scheduler support'
-            'steamos-customizations-jupiter: jupiter support'  # Needed for steamos-factory-reset-config
+            'steamos-customizations: factory reset support'  # Needed for steamos-factory-reset-config
             'steamos-log-submitter: ftrace logging')
 makedepends=('cargo'
              'clang'  # For the speech-dispatcher-sys crate
