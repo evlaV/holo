@@ -2,7 +2,7 @@
 
 pkgname='holo-systemreport'
 pkgver=1.24
-pkgrel=1
+pkgrel=2
 pkgdesc='System report collection tool'
 arch=('x86_64' 'aarch64')
 license=('LGPL2.1')
@@ -46,7 +46,7 @@ package() {
 
   if [[ "${CARCH}" == "x86_64" ]]; then
     depends+=(
-      'steamos-customizations-jupiter' # steamos-{readonly,dump-info}
+      'steamos-customizations' # steamos-{readonly,dump-info}
       'jupiter-hw-support'             # amd_system_info
     )
   elif [[ "${CARCH}" == "aarch64" ]]; then
