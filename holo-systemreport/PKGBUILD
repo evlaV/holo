@@ -1,0 +1,62 @@
+# Author : Clayton Craft <clayton@igalia.com>
+
+pkgname='holo-systemreport'
+pkgver=1.24
+pkgrel=1
+pkgdesc='System report collection tool'
+arch=('x86_64' 'aarch64')
+license=('LGPL2.1')
+url='https://github.com/evlav/holo'
+conflicts=('steamos-systemreport')
+replaces=('steamos-systemreport')
+optdepends=(
+  'steamos-alias: for steamos-alias compatibility symlinks'
+)
+source=(
+  'holo-systemreport'
+  'holo-systemreport-privileged'
+  'com.steampowered.Holo.systemreport.policy'
+)
+sha256sums=('89b6c4442261b65dd2f8ece72153a57216d537c1711e63c7717bb92d92d43577'
+            '36cfc19000071ebcdf59f23ab9779b26b00dcbaa1b59b0010b72bca7c3198128'
+            '9e10afd6c6f396eb580e2ee1282d3f26ea0d6eebe2fed366d2c55411fe800ca0')
+
+package() {
+  depends=(
+    'bash'
+    'bluez-deprecated-tools'         # hcitool
+    'coreutils'                      # dd
+    'rauc'                           # rauc status
+    'drm-info'                       # drm_info
+    'upower'                         # upower
+    'wireplumber'                    # wpctl
+    'iputils'                        # ping
+    'iproute2'                       # ip
+    'iwd'                            # iwctl
+    'pciutils'                       # lspci
+    'usbutils'                       # lsusb
+    'systemd'                        # coredumpctl, journalctl
+    'procps-ng'                      # ps
+    'util-linux'                     # lsblk, hexdump
+    'parted'                         # parted
+    'smartmontools'                  # smartctl
+    'polkit'
+    'zstd'
+  )
+
+  if [[ "${CARCH}" == "x86_64" ]]; then
+    depends+=(
+      'steamos-customizations-jupiter' # steamos-{readonly,dump-info}
+      'jupiter-hw-support'             # amd_system_info
+    )
+  elif [[ "${CARCH}" == "aarch64" ]]; then
+    depends+=(
+      'steamos-customizations-deckard' # steamos-{readonly,dump-info}
+    )
+  fi
+
+  install -Dm755 holo-systemreport -t "$pkgdir"/usr/bin/
+  install -Dm755 holo-systemreport-privileged -t "$pkgdir"/usr/bin/holo-polkit-helpers
+  install -m755 -d "$pkgdir"/usr/share/polkit-1/actions
+  install -m644 com.steampowered.Holo.systemreport.policy -t "$pkgdir"/usr/share/polkit-1/actions
+}
