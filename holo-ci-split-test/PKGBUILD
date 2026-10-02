@@ -1,15 +1,11 @@
 pkgbase=holo-ci-split-test
-pkgname=(holo-ci-split-test holo-ci-split-test-extra)
-pkgver=1
+pkgname=(holo-ci-split-test)
+pkgver=2
 pkgrel=1
 pkgdesc="TEMP Dummy split package"
 arch=('any')
 license=('MIT')
 
 package_holo-ci-split-test() {
-  install -Dm644 /dev/null "$pkgdir/usr/share/$pkgname/null"
-}
-
-package_holo-ci-split-test-extra() {
   install -Dm644 /dev/null "$pkgdir/usr/share/$pkgname/null"
 }
