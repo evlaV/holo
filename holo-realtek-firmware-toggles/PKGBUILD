@@ -1,8 +1,8 @@
 # Maintainer: Elliot Saba <sabae@valvesoftware.com>
 
 pkgname='holo-realtek-firmware-toggles'
-pkgver=1.3
-pkgrel=3
+pkgver=1.4
+pkgrel=1
 pkgdesc='Tool to toggle realtek rtw89 driver bits'
 arch=('any')
 license=('MIT')
@@ -11,7 +11,7 @@ source=(
   'holo-realtek-firmware-toggles'
   'org.valve.holo-realtek-firmware-toggles.policy'
 )
-sha256sums=('a73258ba8bef37d7e993708376cd1caa7cb30816886791ee580c55400164352f'
+sha256sums=('0534273eb532593bfe977835666f88a9f50f5f2edd8d6792f55202f65ba757f8'
             '7e1c21c1b23b67d7baea989b85f96a8d8c611778b09449fb181619064cf7231e')
 depends=('bash')
 
