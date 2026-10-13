@@ -19,7 +19,7 @@ diff --git a/hw/xwayland/xwayland-present.c b/hw/xwayland/xwayland-present.c
 index 7b9a4ac32..d29411d2c 100644
 --- a/hw/xwayland/xwayland-present.c
 +++ b/hw/xwayland/xwayland-present.c
-@@ -870,7 +870,7 @@ xwl_present_flip(present_vblank_ptr vblank, RegionPtr damage)
+@@ -873,7 +873,7 @@ xwl_present_flip(present_vblank_ptr vblank, RegionPtr damage)
      struct xwl_present_event    *event = xwl_present_event_from_vblank(vblank);
      Bool                        implicit_sync = TRUE;
  
