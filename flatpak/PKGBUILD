@@ -7,8 +7,8 @@ pkgname=(
   flatpak
   flatpak-docs
 )
-pkgver=1.18.1
-pkgrel=1.1 # Rebuild for Holo
+pkgver=1.18.4
+pkgrel=0.1 # Rebuild for Holo
 epoch=1
 pkgdesc="Linux application sandboxing and distribution framework (formerly xdg-app)"
 url="https://flatpak.org"
@@ -65,7 +65,7 @@ source=(
   https://dl.flathub.org/repo/flathub.flatpakrepo
   flatpak-bindir.sh
 )
-b2sums=('563cafc9783d11add1930ac5df874fc32bea0f7d544adade434a04af53f0c09e54d0d723ad7cc2ae5463716a4c80b46cf3be004d598c652293f4e4695464d324'
+b2sums=('05c7b0187b068e98e6456ea76c9609b567fcf4ff895436fec61941c6a99d4284d201161e80654f36959267216e910524982d1f21e9942adb1430e51f48c276ea'
         'c094461a28dab284c1d32cf470f38118a6cbce27acce633b81945fb859daef9bdec1261490f344221b5cacf4437f53934cb51173f7ad2f1d2e05001139e75c54'
         '1c45caa65e2a1598f219977d5a81dcb8ea5d458880c43c40ba452b0c77cbbf41b36fa6911741f22c807d318e04e39e4fcc1455ed8d68faaba10162dae2570abc')
 validpgpkeys=(
