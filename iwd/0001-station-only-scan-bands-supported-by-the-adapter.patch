@@ -1,0 +1,62 @@
+From cac1a2cae4670fef6e7f10c868aefe6010c8aa17 Mon Sep 17 00:00:00 2001
+From: Ludovico de Nittis <ludovico.denittis@collabora.com>
+Date: Tue, 6 Oct 2026 14:26:40 +0200
+Subject: [PATCH] station: only scan bands supported by the adapter
+
+If we always include the 2.4 GHz bands, the kernel could end up
+rejecting the scan with EINVAL if the adapter doesn't actually support
+them.
+
+Use the adapter supported bands to create the subset to scan.
+
+Signed-off-by: Ludovico de Nittis <ludovico.denittis@collabora.com>
+---
+ src/station.c | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/src/station.c b/src/station.c
+index 8fcf8c70..2dbdb039 100644
+--- a/src/station.c
++++ b/src/station.c
+@@ -5060,13 +5060,15 @@ static void station_fill_scan_freq_subsets(struct station *station)
+ {
+ 	const struct scan_freq_set *supported =
+ 				wiphy_get_supported_freqs(station->wiphy);
++	uint32_t bands = allowed_bands &
++				wiphy_get_supported_bands(station->wiphy);
+ 	unsigned int subset_idx = 0;
+ 
+ 	/*
+-	 * Scan the 2.4GHz "social channels" first, 5GHz second, if supported,
++	 * If supported, scan the 2.4GHz "social channels" first, 5GHz second and
+ 	 * all other 2.4GHz channels last.  To be refined as needed.
+ 	 */
+-	if (allowed_bands & BAND_FREQ_2_4_GHZ) {
++	if (bands & BAND_FREQ_2_4_GHZ) {
+ 		station->scan_freqs_order[subset_idx] = scan_freq_set_new();
+ 		scan_freq_set_add(station->scan_freqs_order[subset_idx], 2412);
+ 		scan_freq_set_add(station->scan_freqs_order[subset_idx], 2437);
+@@ -5078,9 +5080,8 @@ static void station_fill_scan_freq_subsets(struct station *station)
+ 	 * TODO: It may might sense to split up 5 and 6ghz into separate subsets
+ 	 *       since the channel set is so large.
+ 	 */
+-	if (allowed_bands & (BAND_FREQ_5_GHZ | BAND_FREQ_6_GHZ)) {
+-		uint32_t mask = allowed_bands &
+-					(BAND_FREQ_5_GHZ | BAND_FREQ_6_GHZ);
++	if (bands & (BAND_FREQ_5_GHZ | BAND_FREQ_6_GHZ)) {
++		uint32_t mask = bands & (BAND_FREQ_5_GHZ | BAND_FREQ_6_GHZ);
+ 		struct scan_freq_set *set = scan_freq_set_clone(supported,
+ 								mask);
+ 
+@@ -5092,7 +5093,7 @@ static void station_fill_scan_freq_subsets(struct station *station)
+ 	}
+ 
+ 	/* Add remaining 2.4ghz channels to subset */
+-	if (allowed_bands & BAND_FREQ_2_4_GHZ) {
++	if (bands & BAND_FREQ_2_4_GHZ) {
+ 		station->scan_freqs_order[subset_idx] = scan_freq_set_new();
+ 		scan_freq_set_foreach(supported, station_add_2_4ghz_freq,
+ 					station->scan_freqs_order[subset_idx]);
+-- 
+2.56.0
+
