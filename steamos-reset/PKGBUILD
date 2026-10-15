@@ -2,15 +2,15 @@
 
 pkgbase='steamos-reset'
 pkgname=('steamos-reset' 'steamos-reset-ui')
-_srctag=jupiter-20260713.1
+_srctag=jupiter-20260907.1
 pkgver=${_srctag#jupiter-}
-pkgrel=2
+pkgrel=1
 arch=('x86_64')
 license=('GPL')
 makedepends=('git' 'qt5-base' 'qt5-quickcontrols2')
 url='https://github.com/evlav/steamos-reset'
 source=("${pkgbase}::git+https://github.com/evlav/steamos-reset#tag=${_srctag}")
-sha256sums=('b88c8f0d29e7727a8aa4bc33245189106a5a9a578469648a6ce26300e6dda791')
+sha256sums=('fb18628b691386134833a3a2dc6da73bdfab07bb8fe665e60d38197f3e02f9bf')
 
 _uifiles=(
     usr/share/holo-reset/lighttpd/holo-reset.conf

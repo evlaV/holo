@@ -5,8 +5,8 @@
 # together properly again.
 
 pkgname=xorg-xwayland
-pkgver=24.1.13
-pkgrel=1.2 # Add seamless boot fixes
+pkgver=24.1.14
+pkgrel=1.1 # Add seamless boot fixes
 arch=('x86_64')
 license=(
     LicenseRef-Adobe-Display-PostScript
@@ -46,10 +46,10 @@ source=(https://xorg.freedesktop.org/archive/individual/xserver/xwayland-$pkgver
         "0002-Revert-xwayland-present-Check-allow_commits-in-xwl_p.patch"
         "0003-LibEi-keysyms.patch"  # allows Steam OSK CJK to work, not upstream yet, requires patched libei.Track at https://gitlab.freedesktop.org/libinput/libei/-/merge_requests/355
 )
-sha512sums=('e06e58025b441892fdd17ac55fd5c7e137bffc941b76ad784dc008047c778c6ee2895fcc47b9e8c74b1d8372491e69c39933c4186aec4df55571614f8ba98e3c'
+sha512sums=('0c09214bf5478697430db3f403ba6fc5b669faab4428a902ce9e148ea5dae630798da03f2977ab937486a07224fa2e73d146e3f51fff8abe00d2dd78d5a05bf1'
             'SKIP'
-            'a32fbd58e47e6f276d91f23cb16bd9e5fa010e8faea4116b20011b49000125966e090ea0bc64fc6d825b1d23694b2d57f018e392860ab2418e0625a0f4df80a5'
-            '99f0935a4efc26c0f992063cd03c121a68f9972fbf6938c40585e9f2b20d15068e722e85ac945511af3cfa206132ca980aaae36a3734f65c2829327ea471ec4f'
+            '0460c52e705bfa8e48a4332ec7c1f85f317b61aab471aa58487786e83ec5943aa96d8ad8d5f37f04c809e4b314d9612d46c8b6abc3ba3f9b337b68e71baea122'
+            '0ff4c0628d284e4fed31ade64153871b38607458884d002719ad4030661e159ad72cbc5a3e4b0c0478ab0dd8f4eaceb6dcfb97301b575fc5679836b16f5ada9e'
             '1b7d1e09e963fc1c47974565a0516e7de948a7f24dbd3fd011e237c4e8d1ee198a3c85979a2b40a5e2c6cd6286a793cd36f94ae4bed72aec9ac418cf843e6b85')
 provides=('xorg-server-xwayland')
 conflicts=('xorg-server-xwayland')
