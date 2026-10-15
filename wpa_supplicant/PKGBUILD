@@ -5,7 +5,7 @@
 
 pkgname=wpa_supplicant
 pkgver=2.12
-pkgrel=1.2
+pkgrel=1.3
 epoch=2
 pkgdesc='A utility providing key negotiation for WPA wireless networks'
 url='https://w1.fi/wpa_supplicant/'
@@ -53,9 +53,11 @@ source=(
   0008-Revert-Mark-authorization-completed-on-driver-indica.patch
 
   # Holo: https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/1457
-  # https://lists.infradead.org/pipermail/hostap/2026-August/045450.html
-  0001-wpa_supplicant-avoid-redundant-rescan.patch
-  0002-wpa_supplicant-don-t-force-rescan.patch
+  # These patches are backported from upstream and will be available in next wpa_supplicant release
+  # https://git.w1.fi/cgit/hostap/commit/?id=20e1762ee4355995e3e471cc4a1e18e021c73f92
+  # https://git.w1.fi/cgit/hostap/commit/?id=ab3200b10628bbae50abb56edb7c48334452d6e5
+  0001-wpa_supplicant-Avoid-redundant-rescan-when-6-GHz-was.patch
+  0002-wpa_supplicant-Don-t-force-rescan-for-restricted-sca.patch
 
   # Holo: https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/2284
   # https://lists.infradead.org/pipermail/hostap/2026-August/045488.html
@@ -72,8 +74,8 @@ b2sums=('632b255467f1c7b52fccaf217ff471a89a59943b74bef3536f7b5eb6146527dc9e86c67
         'c1ce2e8d6f42cbc8181aeb2bdc19d4a22bff804c18f6e505d8315a294c67c936e90135046812ec37765be3d0f433e31554604deb1d7b160549d7e3284610a22b'
         'c70aa659f2e5e5cd59d7f5006eda115f780a6bdcb3e006505c9dde560c590d596da368795ee42991d4735b9c8e55eb9412a58dfc17239f518c5ecdb013347cce'
         '72742bba49ea105419d510f64c3d728d672efa4a91612bfd7d22d5c46d98e0d496ae7713f971074442621f6e87d5623fa33675b6b329278422f50b3a4afdbf1b'
-        'b5904764fffca39cecfda167d2ef37a7a1a0f7fb591184a6ac15ecdc016f0c7278698be19c0aab0142011790157dd5413cb001033d5663e3f2875061c98bf6e1'
-        '65c088a6d2cae319302c19a68d81b372ba88771bb738613b3519e42a5f677ece57a217dda97327a5cbb6282fd2be1def827f81ce88a95934744e906999f518e9'
+        '0747e1b8a4d75252ef44dba58e8fa1c9caffe21fa1379f6cca1588c955fb840c9bc69683d8118e89b06e0ab652639fdf3fff4b6b1030af7402507d0ba3a56efe'
+        '22be75bbf9a695e30f9ab76d0a35dfd1a848d26cb2a9085d73aaab1813aee0346b7023a09f7c3377b83266bc2ef658a6fd36aced941f84f44c131fc61a1b12ab'
         '8a578b2cee42f849d4808f37d1c393e7f8f38ced9eb68a181b79c0f43d1ab2ab4c878cfbea7d44a75ef8183a6d2feb8e56503819234fca1dff2fb50b2c901bd9')
 validpgpkeys=(
   EC4AA0A991A5F2464582D52D2B6EF432EFC895FA # Jouni Malinen <j@w1.fi>
