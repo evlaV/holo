@@ -1,0 +1,27 @@
+# Maintainer: Holo Team
+
+pkgname='holo-networkmanager-config'
+pkgver=1.0
+pkgrel=1
+pkgdesc='Holo customizations - configuration for NetworkManager'
+arch=('any')
+license=('MIT')
+url='https://github.com/evlav/holo'
+depends=('networkmanager')
+source=(
+  '10-holo-defaults.conf'
+)
+b2sums=(
+  '93b6f0584998b7c9bd2dc4adc327bf892b3d05d0e3ee5c1768b35389ce9f11d2334269032bbeed69cbeba1747ce750d68cdd51ef25fa41b1f9ef2fb8c2b68201'
+)
+
+package() {
+  local dest_confd="${pkgdir}/usr/lib/NetworkManager/conf.d"
+  install -D -m 0644 '10-holo-defaults.conf' -t "${dest_confd}"
+
+  local systemd_units_dir="/usr/lib/systemd/system"
+  local dest_systemd_units_dir="${pkgdir}${systemd_units_dir}"
+  install -d "${dest_systemd_units_dir}"/multi-user.target.wants
+  ln -s "${systemd_units_dir}"/systemd-resolved.service "${dest_systemd_units_dir}"/multi-user.target.wants/
+  ln -s "${systemd_units_dir}"/systemd-resolved.service "${dest_systemd_units_dir}"/dbus-org.freedesktop.resolve1.service
+}
