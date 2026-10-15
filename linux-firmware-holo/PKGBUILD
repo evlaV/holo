@@ -1,0 +1,46 @@
+# Maintainer: Holo Team
+
+pkgbase=linux-firmware-holo
+pkgname=(linux-firmware-holo-whence linux-firmware-holo)
+_tag=20261005.1
+pkgver=${_tag//-/.}
+pkgrel=1
+pkgdesc="Holo provided firmware files for Linux"
+url="https://github.com/evlav/linux-firmware-holo"
+license=(
+  GPL-2.0-only
+  GPL-2.0-or-later
+  GPL-3.0-only
+  custom
+)
+arch=('any')
+makedepends=(
+  git
+  parallel
+  python
+)
+options=(
+  !strip
+  !debug
+)
+source=("git+https://github.com/evlav/linux-firmware-holo.git#tag=$_tag")
+sha256sums=('cc03f36d91a39f9eabcf87b7a45d2b99c14475b4d5b93ed7fc4c93783c32f1e2')
+
+package_linux-firmware-holo-whence() {
+  pkgdesc+=" - contains the WHENCE license file which documents the vendor license details"
+
+  install -Dt "${pkgdir}/usr/share/licenses/${pkgname}" -m644 ${pkgbase}/WHENCE
+}
+
+package_linux-firmware-holo() {
+  depends=('linux-firmware-holo-whence')
+
+  cd ${pkgbase}
+
+  ZSTD_CLEVEL=19 make DESTDIR="${pkgdir}" install-zst
+
+  install -Dt "${pkgdir}/usr/share/licenses/${pkgname}" -m644 LICEN*
+  install -Dt "${pkgdir}/usr/share/licenses/${pkgname}/qca" -m644 qca/NOTICE.txt
+}
+
+# vim:set sw=2 et:
