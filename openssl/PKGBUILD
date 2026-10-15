@@ -1,13 +1,13 @@
 # Maintainer: Pierre Schmitz <pierre@archlinux.de>
 
 pkgname=openssl
-pkgver=3.5.7
-pkgrel=1.1 # Rebuild for holo
-pkgdesc='The Open Source toolkit for Secure Sockets Layer and Transport Layer Security'
+pkgver=3.6.5
+pkgrel=1.1 # Rebuild for Holo
+pkgdesc='The Open Source toolkit for cryptography and Transport Layer Security'
 arch=('x86_64')
 url='https://www.openssl.org'
 license=('Apache-2.0')
-depends=('glibc')
+depends=('brotli' 'glibc' 'zlib' 'zstd')
 makedepends=('perl')
 optdepends=('ca-certificates' 'perl')
 replaces=('openssl-perl' 'openssl-doc')
@@ -15,11 +15,12 @@ provides=('libcrypto.so' 'libssl.so')
 backup=('etc/ssl/openssl.cnf')
 source=("https://github.com/${pkgname}/${pkgname}/releases/download/${pkgname}-${pkgver}/${pkgname}-${pkgver}.tar.gz"{,.asc}
         'ca-dir.patch')
-sha256sums=('a8c0d28a529ca480f9f36cf5792e2cd21984552a3c8e4aa11a24aa31aeac98e8'
+sha256sums=('a2157c2830efdec3788939b00c9b0638306d3f0bbb76dc4832ee503bb397df98'
             'SKIP'
             '0a32d9ca68e8d985ce0bfef6a4c20b46675e06178cc2d0bf6d91bd6865d648b7')
 validpgpkeys=('EFC0A467D613CB83C7ED6D30D894E2CE8B3D79F5'
-              'BA5473A2B0587B07FB27CF2D216094DFD0CB81EF')
+              'BA5473A2B0587B07FB27CF2D216094DFD0CB81EF'
+              'B146647E45A7B33947AB226B2A2C87D161692D40')
 
 prepare() {
 	# Holo: Add /usr/bin/core_perl to the PATH so the pod2man binary is found
@@ -43,7 +44,8 @@ build() {
 
 
 	./Configure --prefix=/usr --openssldir=/etc/ssl --libdir=lib \
-		shared enable-ktls enable-ec_nistp_64_gcc_128 ${_platform}
+		shared enable-ktls enable-brotli enable-zlib enable-zstd \
+		enable-ec_nistp_64_gcc_128 ${_platform}
 
 	make depend
 	make
@@ -73,6 +75,8 @@ package() {
 	cd "$srcdir/$pkgname-$pkgver"
 
 	make DESTDIR="$pkgdir" MANDIR=/usr/share/man MANSUFFIX=ssl install_sw install_ssldirs install_man_docs
+
+	chmod 700 "$pkgdir/etc/ssl/private"
 
 	install -D -m644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
 }
