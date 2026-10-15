@@ -1,0 +1,28 @@
+From 372ca9a352773d570b4b2ae4b89a7b690e01a0a2 Mon Sep 17 00:00:00 2001
+From: Martyn Welch <martyn.welch@collabora.com>
+Date: Thu, 8 Oct 2026 08:02:28 +0100
+Subject: [PATCH] fwupd.conf: Set ESP location to protect against efi usage
+
+We've had a few instances of fwupd failing to update the Steam Machine
+BIOS. It appears to be picking one of the two efi-A/efi-B partitions
+(64MiB) which do not have enough free space for a update capsule. The
+efi partitions are part of the second stage bootloader configuration,
+the esp partition should be used to store the update capsule, which is
+where the 1st stage bootloader lives.
+
+Explicitly configure use of the esp partition.
+---
+ data/fwupd.conf | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/data/fwupd.conf b/data/fwupd.conf
+index 7b5146712..9a062fc9c 100644
+--- a/data/fwupd.conf
++++ b/data/fwupd.conf
+@@ -1,2 +1,3 @@
+ [fwupd]
+ # use `man 5 fwupd.conf` for documentation
++EspLocation=/esp
+-- 
+2.53.0
+
