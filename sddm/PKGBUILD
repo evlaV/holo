@@ -4,7 +4,7 @@
 
 pkgname=sddm
 pkgver=0.21.0
-pkgrel=7.1  # Holo: cherry-pick a fix for holo-team/tasks#2354
+pkgrel=7.2  # Holo: cherry-pick a fix for holo-team/tasks#2354
 pkgdesc='QML based X11 and Wayland display manager'
 arch=(x86_64)
 url='https://github.com/sddm/sddm'
@@ -36,16 +36,14 @@ backup=('usr/share/sddm/scripts/Xsetup'
         'etc/pam.d/sddm-autologin'
         'etc/pam.d/sddm-greeter')
 provides=(display-manager)
-source=(git+https://github.com/$pkgname/$pkgname#tag=v$pkgver
-        https://github.com/sddm/sddm/pull/2227.patch)
-sha256sums=('67394c93f331fc02f89559f68e149a992efaed07690f548e6a83ec384ebb8000'
-            '5cee1b992dec7766b3dafa98832adc925e629281858c6deca5bfd55e1b66ca80')
+source=(git+https://github.com/$pkgname/$pkgname#tag=v$pkgver)
+sha256sums=('67394c93f331fc02f89559f68e149a992efaed07690f548e6a83ec384ebb8000')
 
 prepare() {
   git -C $pkgname cherry-pick -n 228778c2b4b7e26db1e1d69fe484ed75c5791c3a # Fix build with cmake 4
 
-  # Holo: apply a patch that fixes holo-team/tasks#2354 (not merged upstream yet)
-  patch -d $pkgname -p1 < ../2227.patch
+  # Holo: cherry-pick an unreleased upstream commit that fixes holo-team/tasks#2354
+  git -C $pkgname cherry-pick -n 633c1bf5c08d6c8e5b8435a70edb281b9f7b1550
 }
 
 build() {
