@@ -1,0 +1,13 @@
+diff --git a/dirlock/src/config.rs b/dirlock/src/config.rs
+index 9ba17ee..2326d2f 100644
+--- a/dirlock/src/config.rs
++++ b/dirlock/src/config.rs
+@@ -15,7 +15,7 @@ use std::{
+ };
+ 
+ const CONFIG_FILE_PATH:   &str = "/etc/dirlock.conf";
+-const DEFAULT_TPM2_TCTI: &str = "device:/dev/tpm0";
++const DEFAULT_TPM2_TCTI: &str = "device:/dev/tpmrm0";
+ // If this variable is set use this keystore dir instead of the default one
+ const KEYSTORE_DIR_ENV_VAR : &str = "DIRLOCK_KEYSTORE";
+ const DEFAULT_KEYSTORE_DIR : &str = "/var/lib/dirlock";

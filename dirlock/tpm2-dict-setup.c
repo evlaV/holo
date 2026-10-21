@@ -58,10 +58,10 @@ int main(int argc, char *argv[])
     /* Tell the TSS library not to log anything to stderr */
     setenv("TSS2_LOG", "all+NONE", 1);
 
-    /* We use /dev/tpm0, it can be overridden with the TCTI variable */
+    /* We use /dev/tpmrm0, it can be overridden with the TCTI variable */
     tcti = getenv("TCTI");
     if (!tcti)
-        tcti = "device:/dev/tpm0";
+        tcti = "device:/dev/tpmrm0";
 
     /* Initialize the TCTI context */
     ret = Tss2_TctiLdr_Initialize(tcti, &tcti_ctx);
