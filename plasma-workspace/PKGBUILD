@@ -5,13 +5,12 @@
 # Contributor: Alexey D. <lq07829icatm at rambler.ru>
 
 # Holo: Build with the GLIBC_LOCALE_PREGENERATED=ON option
-# Holo: Backport patch to stop graphical-session.target (drop >= 6.5.2)
 
 pkgbase=plasma-workspace
 pkgname=(plasma-workspace plasma-x11-session)
 pkgver=6.7.3
 _dirver=$(echo $pkgver | cut -d. -f1-3)
-pkgrel=2.1
+pkgrel=2.2
 pkgdesc='KDE Plasma Workspace'
 arch=(x86_64)
 url='https://kde.org/plasma-desktop/'
@@ -124,8 +123,7 @@ makedepends=(baloo
              qcoro)
 groups=(plasma)
 source=(https://download.kde.org/stable/plasma/$_dirver/$pkgname-$pkgver.tar.xz{,.sig}
-        # Holo: To be documented
-        0003-use-qtvirtualkeyboard.patch)
+        0003-use-qtvirtualkeyboard.patch) # Holo specific. The steam keyboard is an X11 client and cannot show on the lock screen. This patch enables an alternative in-process keyboard on the lock screen.
 sha256sums=('438851708a70781ecf3afa0a08488fdc6768b6ed5abca5f202a87e395aa6376f'
             'SKIP'
             '59d41b5073a01a93416c0f0b68b90936261d49ff7f12c4526ce21550f538f98a')
