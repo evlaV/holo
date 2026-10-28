@@ -1,0 +1,73 @@
+# Maintainer: Holo Team
+# Author: Manuel A. Fernandez Montecelo <mafm@igalia.com>
+
+pkgname='holo-fs-offload'
+pkgver=1.0
+pkgrel=1
+pkgdesc="Holo Filesystem Offload"
+arch=('any')
+license=('LGPL2.1')
+url='https://github.com/evlav/holo'
+conflicts=('steamos-customizations-jupiter<20261019.1')
+source=(
+    'systemd_holo-fs-offload.target'
+    'systemd_template.mount.in'
+    'tmpfiles.d_holo-fs-offload.conf.in'
+)
+b2sums=(
+    '2d1c70c95ac526013b21134704eb08e5660e26265ef16ebbb9b58c26aa633e0223e495d278bc314a31330917801c6137ab01a85c88d357a8caa5dec7d4f0320b'
+    'c26e14d8cf67b07e141e6a4792d7f8c0b385ff3a600d0c6356a74605e2434dc819f6d35d527cf1b1c8b9975982c7035c53f15b4ac253fbe89e584161cc4c9845'
+    'b8434c081a81c6a7bf0498cf6fff93bb09a5b3e58a5a5c8723c802948e36d8a752711e67bd276f92be666f2c15fc88f19ae99849993a4a341e3783608c9ee59d'
+)
+
+package() {
+    local OFFLOAD_BASE_PATH="/home/.steamos/offload"
+
+    local conf_file="tmpfiles.d_holo-fs-offload.conf"
+    sed "s|@OFFLOAD_BASE_PATH@|${OFFLOAD_BASE_PATH}|g" \
+	"${conf_file}".in > "${conf_file}"
+    echo -n "Created file: "
+    tail -n +0 -v "${conf_file}"
+    echo '--'
+    echo "Installing tmpfiles.d file:"
+    install -v -m 0644 -D "${conf_file}" "${pkgdir}"/usr/lib/tmpfiles.d/holo-fs-offload.conf
+    echo
+
+    local unit_destdir="${pkgdir}/usr/lib/systemd/system"
+    local target_destpath="${unit_destdir}/holo-fs-offload.target"
+    local target_wants_destpath="${target_destpath}.wants"
+    echo "Installing systemd target holo-fs-offload:"
+    install -v -m 0644 -D systemd_holo-fs-offload.target "${target_destpath}"
+    install -v -m 0755 -d "${target_wants_destpath}"
+    echo "Enabling holo-fs-offload as Wants on local-fs target:"
+    install -v -m 0755 -d "${unit_destdir}/local-fs.target.wants"
+    ln -sfv ../holo-fs-offload.target "${unit_destdir}/local-fs.target.wants/"
+    echo
+
+    local paths
+    paths=(
+	'opt'
+	'root'
+	'srv'
+	'var/cache/pacman'
+	'var/lib/docker'
+	'var/lib/flatpak'
+	'var/lib/systemd/coredump'
+	'var/log'
+	'var/tmp'
+    )
+    for path in "${paths[@]}"; do
+	local mount_filename="${path//\//-}.mount"
+	sed -e "s:@OFFLOAD_BASE_PATH@:${OFFLOAD_BASE_PATH}:g" \
+	    -e "s:@BIND_MOUNT_PATH@:/${path}:g" \
+	    systemd_template.mount.in > "${mount_filename}"
+
+	echo "Created file '${mount_filename}', diff -U0 with template:"
+	diff -U0 systemd_template.mount.in "${mount_filename}" || true
+	echo '--'
+	echo "Installing and enabling systemd unit '${mount_filename}':"
+	install -v -m 0644 -D "${mount_filename}" "${unit_destdir}"
+	ln -sfv ../"${mount_filename}" "${target_wants_destpath}"/
+	echo
+    done
+}
