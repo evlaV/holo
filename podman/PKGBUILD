@@ -1,12 +1,13 @@
-# Maintainer: Morten Linderud <foxboron@archlinux.org>
 # Maintainer: David Runge <dvzrv@archlinux.org>
+# Maintainer: Robin Candau <antiz@archlinux.org>
+# Contributor: Morten Linderud <foxboron@archlinux.org>
 # Contributor: Bartłomiej Piotrowski <bpiotrowski@archlinux.org>
 # Maintainer (Holo): Alberto Garcia <berto@igalia.com>
 
 pkgbase=podman
 pkgname=podman
-pkgver=6.0.2
-pkgrel=2.1 # Holo: build only podman and not podman-docker. Remove podman-remote to reduce its size
+pkgver=6.1.4
+pkgrel=1.1 # Holo: build only podman and not podman-docker. Remove podman-remote to reduce its size
 pkgdesc='A tool for managing OCI containers and pods.'
 arch=(x86_64)
 url='https://github.com/podman-container-tools/podman'
@@ -38,8 +39,8 @@ validpgpkeys=(
   7CE1E6F8C90CB53E7E4D8F2D502E08DB0BBF8EEE  # Ashley Cui <acui@redhat.com>
   9E33DD8704CC03E2DEB84D9A1C1EDD7CC7C3A0DD  # Lokesh Mandvekar <lsm5@redhat.com>
 )
-sha512sums=('52ed49139a317ff73b2cb03cdf16293b87b44fee0f48a0ca355846a7b6dccb76ac2b64dc1e4f5246c388277df07552dbda27db40ab042cb68f1d9a49d51ae7ba')
-b2sums=('0ce0c7f04e44e9cc9a222cb4018e742a574b69874a5fab534a60c7060fa0a13938f858e84ae834bbb15cabc22d75305beffc4ab9898b487cd1b1e250311718d7')
+sha512sums=('b500929487d057b087c46003802199afca0838de965b817263440134081300ae3751d5e71710a3ea49bf3e7b6ec996d270ad1b6fa9ef5ed6c77ae643fdf2ca46')
+b2sums=('a0053bee2147a2e29a53981d28aeeb482a26881e2ea457881e20041ac0df704aba877905d0f7502db20b6a0271c77c9d4ead8f297bbdba470c3a6221e00f3b60')
 
 build() {
   export CGO_CPPFLAGS="${CPPFLAGS}"
