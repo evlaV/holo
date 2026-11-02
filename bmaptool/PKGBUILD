@@ -3,7 +3,7 @@
 pkgname=bmaptool
 replaces=('bmap-tools')
 pkgver=3.9.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Tool optimized for copying largely sparse files using information from a block map (bmap) file"
 arch=('any')
 url='https://github.com/yoctoproject/bmaptool'
