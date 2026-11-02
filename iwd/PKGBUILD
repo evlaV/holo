@@ -4,7 +4,7 @@
 
 pkgname=iwd
 pkgver=3.12
-pkgrel=1.4
+pkgrel=1.5
 pkgdesc='Internet Wireless Daemon'
 arch=('x86_64')
 url='https://git.kernel.org/cgit/network/wireless/iwd.git/'

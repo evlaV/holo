@@ -3,7 +3,7 @@
 
 pkgname=ttf-twemoji-default
 pkgver=13.1.0
-pkgrel=2.5
+pkgrel=2.6
 _fedrel=1.fc35
 pkgdesc="Twitter Emoji for everyone."
 url="https://github.com/twitter/twemoji"

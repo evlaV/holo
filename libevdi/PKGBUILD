@@ -1,7 +1,7 @@
 # Maintainer: Vicki Pfau <vi@endrift.com>
 
 pkgname=libevdi
-_srctag=1.15.0
+_srctag=1.15.1
 pkgver=${_srctag//-/.}
 pkgrel=1
 pkgdesc="Extensible Virtual Display Interface userland library"
@@ -11,7 +11,7 @@ license=('LGPL2.1')
 depends=('glibc')
 makedepends=('libdrm')
 source=("https://github.com/DisplayLink/evdi/archive/refs/tags/v$_srctag.tar.gz")
-sha256sums=('c19cd1120b43a0d88e91cdd893b592a56b9a904ead25ea8299eb4b451f649899')
+sha256sums=('b120df303d14be09062157aab17a8598746c0caf2e076ff3388b4091186cf2d9')
 conflicts=('evdi')
 provides=("evdi=$pkgver")
 

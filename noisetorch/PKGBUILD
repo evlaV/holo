@@ -2,7 +2,7 @@
 
 pkgname=noisetorch
 pkgver=0.12.2.r47.g6d895f3
-pkgrel=3
+pkgrel=4
 _commit=6d895f35d32a6a7dd5f472f596ccfb6cfeac5c08  # Latest tested version
 pkgdesc="RNNoise LADSPA noise suppression filter for pipewire & pulseaudio"
 url=https://github.com/noisetorch/NoiseTorch
