@@ -7,7 +7,7 @@
 pkgbase=bluez
 pkgname=('bluez' 'bluez-utils' 'bluez-libs' 'bluez-cups' 'bluez-deprecated-tools' 'bluez-hid2hci' 'bluez-mesh' 'bluez-obex')
 pkgver=5.87
-pkgrel=2.4
+pkgrel=2.5
 url="http://www.bluez.org/"
 arch=('x86_64')
 license=('GPL-2.0-only')
