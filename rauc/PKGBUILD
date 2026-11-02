@@ -3,7 +3,7 @@
 
 pkgname=rauc
 pkgver=1.15.2
-pkgrel=1.1
+pkgrel=2.1
 pkgdesc="Safe and secure software updates for embedded Linux"
 arch=(x86_64)
 url="https://rauc.io"
@@ -43,14 +43,23 @@ optdepends=(
 source=(
   https://github.com/rauc/rauc/releases/download/v$pkgver/$pkgname-$pkgver.tar.xz{,.asc}
   $pkgname.tmpfiles
+  openssl-4.patch
 )
 sha512sums=('8d62e667afa34541c57e751bf939277c791112d0aec9795d5a29bff25ea31a4291a4de17b9518bd4b8702fed07fa03ff21c09be2b960627dd5de92fa41fc8993'
             'SKIP'
-            '35173525a8529c4d5a227186db353107193bf8cdd3e8ab0cd94c418b34187be50fe379bcabf623bfddbf1916e8e7e965800a269e823f7ee9c26f44ac1f689c94')
+            '35173525a8529c4d5a227186db353107193bf8cdd3e8ab0cd94c418b34187be50fe379bcabf623bfddbf1916e8e7e965800a269e823f7ee9c26f44ac1f689c94'
+            '4309b7784be76225bd05b4c179b9ea906aa093bb66b2cd872ef9e73877f5f3235ed1b872d08ae0fa32db3ece2e3aba60a98b886608916f37420c831e75b8e8cc')
 b2sums=('c21a6349ebb0e806e70137dada383eff83b0056da0a0bdc47df256dbe8bf1a3c1d9da5687ffc4d9a0428596ec5f4ba7a854024bd3e988f6b9dd62d4fa2cb44a1'
         'SKIP'
-        'e970b292f89cf4663b4ea318965444dc9bb47ef5f937143f180a372c5906f534e7c2f234dfa824b70434011069ea7758e4d6c8afd73dd5c4d92337da7e281eca')
+        'e970b292f89cf4663b4ea318965444dc9bb47ef5f937143f180a372c5906f534e7c2f234dfa824b70434011069ea7758e4d6c8afd73dd5c4d92337da7e281eca'
+        '8fdda2ded5b6d6dc418fc4e2b5fd02117ae3a281d5ad0b0bffa4fcaa09c14bafc830c57fbcad16be2ceda22f2390ead2b5121013ae6c16cb32c1e5b8d3788fb6')
 validpgpkeys=("977843FD5C3EBF76BAD4008EA58CC53DBF05E090")  # Jan Lübbe <jlu@pengutronix.de>
+
+prepare() {
+  cd $pkgname-$pkgver
+  # fix build with openssl 4 (Fedora)
+  patch -p0 -i ../openssl-4.patch
+}
 
 build() {
   # Holo: disable streaming option until we switch to verity update bundle type
