@@ -6,7 +6,7 @@
 pkgname=scx-scheds
 gitname=scx
 pkgver=1.1.3.linux.steamos.2
-pkgrel=1
+pkgrel=2
 pkgdesc="sched_ext schedulers"
 arch=('x86_64' 'aarch64')
 url="https://github.com/evlav/scx/-/tree/v$pkgver"
