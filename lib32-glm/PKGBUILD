@@ -1,42 +1,37 @@
-# Maintainer: Sven-Hendrik Haase <svenstaro@archlinux.org>
+# Maintainer: Holo team
+# Contributor: Sven-Hendrik Haase <svenstaro@archlinux.org>
 # Contributor: Peter Hatina <phatina AT gmail.com>
-# Maintainer for SteamOS: Edmund Smith <ed.smith@collabora.com>
+
 pkgname=lib32-glm
-_base=glm
-pkgver=1.0.0
-pkgrel=1
-pkgdesc="C++ mathematics library for 3D software based on the OpenGL Shading Language (GLSL) specification (32-bit)"
-arch=(x86_64)
+pkgver=1.0.3
+pkgrel=1.1
+pkgdesc="C++ mathematics library for 3D software based on the OpenGL Shading Language (GLSL) specification"
+arch=('x86_64')
 license=('MIT')
 url="http://glm.g-truc.net"
-makedepends=('cmake')
+depends=('glm')
+makedepends=('cmake' 'ninja' 'lib32-gcc-libs')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/g-truc/glm/archive/refs/tags/${pkgver}.tar.gz")
-sha512sums=('62e22002a6369a54e1f0ee2885a65f2780af7d2a446573e5387b81518f5dc7e8076053837cb99ae850a0166ce8b0f077bed009e8986d9884d01c456ce467553f')
+sha512sums=('0a490f0c79cd4a8ba54f37358f8917cef961dab9e61417c84ae0959c61bc860e5b83f4fb7f27169fb3d08eef1d84131bddde23d60876922310205c901b1273aa')
 
 build() {
-  cd ${_base}-${pkgver}
-
-  export CC="gcc -m32"
-  export CXX="g++ -m32"
-  export PKG_CONFIG="i686-pc-linux-gnu-pkg-config"
-
+  export CC='gcc -m32'
+  export CXX='g++ -m32'
   export CXXFLAGS+=" -ffat-lto-objects"
-  cmake \
-    -Bbuild \
+
+  cmake -S glm-${pkgver} -B build -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_INSTALL_DATAROOTDIR=/usr/lib32/cmake \
     -DCMAKE_INSTALL_LIBDIR=lib32 \
     -W no-dev
   cmake --build build --verbose
 }
 
 package() {
-  cd ${_base}-${pkgver}
-
   DESTDIR="$pkgdir" cmake --install build
 
   rm -rf "$pkgdir"/usr/include
-  mv "$pkgdir"/usr/share/glm "$pkgdir"/usr/lib32/glm
 
-  install -vDm 644 copying.txt -t "${pkgdir}/usr/share/licenses/${pkgname}"
+  install -vDm 644 glm-${pkgver}/copying.txt -t "${pkgdir}/usr/share/licenses/${pkgname}"
 }

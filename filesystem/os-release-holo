@@ -1,0 +1,11 @@
+NAME="Holo"
+PRETTY_NAME="Holo"
+VERSION_CODENAME=holo
+ID=holo
+ID_LIKE=arch
+ANSI_COLOR="1;35"
+HOME_URL="https://gitlab.steamos.cloud/"
+DOCUMENTATION_URL="https://gitlab.steamos.cloud/"
+SUPPORT_URL="https://gitlab.steamos.cloud/"
+BUG_REPORT_URL="https://gitlab.steamos.cloud/"
+LOGO=holo
