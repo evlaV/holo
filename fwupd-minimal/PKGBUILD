@@ -6,15 +6,14 @@
 
 # Holo: Variant of fwupd disabling some less common plugins/features to save on disk space/dependencies
 pkgname=fwupd-minimal
-pkgver=2.1.7
-pkgrel=2
+pkgver=2.1.9
+pkgrel=1
 pkgdesc="Simple daemon to allow session software to update firmware"
 arch=(x86_64)
 url='https://github.com/fwupd/fwupd'
 license=(LGPL-2.1-or-later)
 depends=(
   bash
-  bluez
   curl
   fwupd-efi
   glib2
@@ -57,6 +56,9 @@ makedepends=(
   vala
   valgrind
 )
+optdepends=(
+  "bluez: Update bluetooth devices"
+)
 source=(
   "git+https://github.com/fwupd/fwupd.git#tag=${pkgver}?signed"
   # Holo: Force use of /esp partition for capsules, config, not upstreamable:
@@ -65,11 +67,11 @@ source=(
   fwupd.sysusers
   fwupd-refresh.rules
 )
-sha512sums=('560fde8c73f68b2611786255c5bfffc3f30cbcf02b45ab54d9ac79dd93990c9be1421b952c1c7a0437baca1f208ce7f886dd0d9806fbdb04913c0141d6103fff'
+sha512sums=('79c3e94d962526efea7e07ac5ad19ed9e34f349ab2fd7f86e88d5bff503d7373ccede1fa9dc70ee5bb4984710ca9e95d4a63e781616575fab9127d9d1222c3aa'
             '774115709ad4ef864f1d4c68310be7817c7808b9b92c8c8cdd5ea9beb7071bfd1520ea51a64bda675a93a2d1e2840d6689b0459a0f27437cff9fa6abca903076'
             'f9a99c60786a2b98e0de439a9288af61b2c0716f8339a4c93e2df7108d2a7f9ef8128967dcaa1e12022ffa647945bf5eb3749e38cac83e00a28cbc5b015fbee9'
             '21e04acbae83d8ca548d6e7f9b2344e7b4dc8e1ab1c0a7799ded3160c99c54c2116b158a559d2b3243e960a6e4c72a3391599d68327209fa79a291622de3c1b8')
-b2sums=('098893b6ec9e0592b0647740e928fbad2665976f95d24dd232a6ea0ab141fa9ea01f5203430569dc20a2966f5f06e2aa574398805a8ad48de13cabef0fb25d92'
+b2sums=('257c0dee1f6171369bce28c63df63807dc284282b57345bf71d8a7916ba7928aa9e1e457f16ba4d2eb50609ef053c11dc60c75e833612692db99b8254cd8d194'
         'fb5b4f56fb95430e90251016231704b23cd3ac5b31f95fe213be7844ee5c84db0eba9b7ffa56c19d3026bd2a20587431c7e881d7c1179a7a0162cdaf769ce6b6'
         'c294c6dd324c0ad0d752affdc459d427d34f4bf865def099ac0e25db6b5dfbfcf645ca325e4e7732d1256e75c624ff27094d5c814726909c7e348128a9dd93f9'
         'b9e1c1c66452adb29378cbb42bd18152a2760750696644ee8dd4c09c6f23116d3e66fd405fc69c4694a5ea0f47b75d5959356a12da56ab1cc8345fe926098b3b')
@@ -97,6 +99,7 @@ build() {
     -D efi_binary=false
     -D supported_build=enabled
     -D systemd_unit_user=fwupd
+    -D p2p_policy=none
     -D hsi=disabled
     -D introspection=disabled
     -D umockdev_tests=disabled
