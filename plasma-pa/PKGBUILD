@@ -1,7 +1,8 @@
-# Maintainer:Antonio Rojas <arojas@archlinux.org>
+# Maintainer: Holo Team
+# Contributor: Antonio Rojas <arojas@archlinux.org>
 
 pkgname=plasma-pa
-pkgver=6.7.3
+pkgver=6.8.2
 _dirver=$(echo $pkgver | cut -d. -f1-3)
 pkgrel=1.1
 pkgdesc='Plasma applet for audio volume management using PulseAudio'
@@ -37,7 +38,7 @@ groups=(plasma)
 source=(https://download.kde.org/stable/plasma/$_dirver/$pkgname-$pkgver.tar.xz{,.sig}
         # Holo: To be documented
         0001-CEC-Support.patch)
-sha256sums=('c97e985d37494c3617afcbe1d43e039de0068ed53e237083f27dc046e20d1665'
+sha256sums=('0c95a5a8d3e4f42f5add3c8654ca804a58ab303dde8228dcf97fc256159c6ddb'
             'SKIP'
             'ce0d0f7d288a268a7150d5a416c82613a6d7c3358ad46649014f1e8f727a699b')
 validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>
