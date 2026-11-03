@@ -4,7 +4,7 @@
 
 pkgname=sddm
 pkgver=0.21.0
-pkgrel=7.2  # Holo: cherry-pick a fix for holo-team/tasks#2354
+pkgrel=7.3  # Holo: cherry-pick a fix for holo-team/tasks#2354
 pkgdesc='QML based X11 and Wayland display manager'
 arch=(x86_64)
 url='https://github.com/sddm/sddm'
