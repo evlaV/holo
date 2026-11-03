@@ -1,0 +1,20 @@
+--- src/signature.c.org	2026-04-14 16:01:55.525184506 +0200
++++ src/signature.c	2026-04-14 16:02:00.054157510 +0200
+@@ -1400,7 +1400,7 @@
+ 				"missing manifest in inline signature");
+ 		goto out;
+ 	}
+-	if (!(*content)->data || ((*content)->length <= 0)) {
++	if ((ASN1_STRING_get0_data(*content) == NULL) || (ASN1_STRING_length(*content) <= 0)) {
+ 		g_set_error(
+ 				error,
+ 				R_SIGNATURE_ERROR,
+@@ -1409,7 +1409,7 @@
+ 		goto out;
+ 	}
+ 
+-	tmp = g_bytes_new((*content)->data, (*content)->length);
++	tmp = g_bytes_new(ASN1_STRING_get0_data(*content), ASN1_STRING_length(*content));
+ 	if (!tmp) {
+ 		g_set_error_literal(
+ 				error,

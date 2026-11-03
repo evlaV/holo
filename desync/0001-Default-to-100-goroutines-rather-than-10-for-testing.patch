@@ -1,26 +1,78 @@
-From 0309e8f7433899d865e98e8148bf398064ad3b4d Mon Sep 17 00:00:00 2001
+From e28efabe17615296a21ea37eebc01b222b6e7d91 Mon Sep 17 00:00:00 2001
 From: John Schoenick <johns@valvesoftware.com>
 Date: Tue, 21 Apr 2026 13:53:36 -0700
-Subject: [PATCH 1/1] Default to 100 goroutines rather than 10 for testing
+Subject: [PATCH] Default to 100 goroutines rather than 10 for testing
 
 Really this should be dynamic
 ---
- cmd/desync/options.go | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ cmd/desync/options.go      |  2 +-
+ cmd/desync/options_test.go | 12 ++++++------
+ 2 files changed, 7 insertions(+), 7 deletions(-)
 
 diff --git a/cmd/desync/options.go b/cmd/desync/options.go
-index 7e70e79..922a2ce 100644
+index 9f20b5a..81a9770 100644
 --- a/cmd/desync/options.go
 +++ b/cmd/desync/options.go
-@@ -62,7 +62,7 @@ func (o cmdStoreOptions) validate() error {
+@@ -120,7 +120,7 @@ func (o cmdStoreOptions) cpuWorkers() int {
  
  // Add common store option flags to a command flagset.
  func addStoreOptions(o *cmdStoreOptions, f *pflag.FlagSet) {
--	f.IntVarP(&o.n, "concurrency", "n", 10, "number of concurrent goroutines")
-+	f.IntVarP(&o.n, "concurrency", "n", 100, "number of concurrent goroutines")
+-	f.IntVarP(&o.n, "concurrency", "n", 10, fmt.Sprintf("number of concurrent goroutines, -1 to let desync choose: the number of CPUs for chunking and hashing, adapting to each store up to %d for transfers", desync.MaxAdaptiveConcurrency))
++	f.IntVarP(&o.n, "concurrency", "n", 100, fmt.Sprintf("number of concurrent goroutines, -1 to let desync choose: the number of CPUs for chunking and hashing, adapting to each store up to %d for transfers", desync.MaxAdaptiveConcurrency))
  	f.StringVar(&o.clientCert, "client-cert", "", "path to client certificate for TLS authentication")
  	f.StringVar(&o.clientKey, "client-key", "", "path to client key for TLS authentication")
  	f.StringVar(&o.caCert, "ca-cert", "", "trust authorities in this file, instead of OS trust store")
+diff --git a/cmd/desync/options_test.go b/cmd/desync/options_test.go
+index bc6b0c9..c39b396 100644
+--- a/cmd/desync/options_test.go
++++ b/cmd/desync/options_test.go
+@@ -108,7 +108,7 @@ func TestStoreOptionsValidate(t *testing.T) {
+ 		opt     cmdStoreOptions
+ 		wantErr string
+ 	}{
+-		{"defaults", cmdStoreOptions{n: 10}, ""},
++		{"defaults", cmdStoreOptions{n: 100}, ""},
+ 		{"TLS client auth", cmdStoreOptions{n: 10, clientCert: "c", clientKey: "k"}, ""},
+ 		{"key without cert", cmdStoreOptions{n: 10, clientKey: "k"}, "--client-key and --client-cert"},
+ 		{"cert without key", cmdStoreOptions{n: 10, clientCert: "c"}, "--client-key and --client-cert"},
+@@ -130,7 +130,7 @@ func TestStoreOptionsValidate(t *testing.T) {
+ // The concurrency flag carries a default rather than a zero value, so the
+ // merge has to tell "not given" from "given as 10" to let a config file set it.
+ func TestConcurrencyOption(t *testing.T) {
+-	const defaultConcurrency = 10
++	const defaultConcurrency = 100
+ 	for _, test := range []struct {
+ 		name           string
+ 		args           []string
+@@ -149,7 +149,7 @@ func TestConcurrencyOption(t *testing.T) {
+ 			20, 20,
+ 		},
+ 		{"the flag set to the default still overrides",
+-			[]string{"--concurrency", "10"},
++			[]string{"--concurrency", "100"},
+ 			[]byte(`{"store-options": {"/store/*/":{"n": 50}}}`),
+ 			defaultConcurrency, defaultConcurrency,
+ 		},
+@@ -367,16 +367,16 @@ func TestStoreWorkers(t *testing.T) {
+ 		locations []string
+ 		want      int
+ 	}{
+-		{"default", nil, []string{"https://other/"}, 10},
++		{"default", nil, []string{"https://other/"}, 100},
+ 		{"flag", []string{"-n", "20"}, []string{"https://store/a/"}, 20},
+ 		{"adaptive flag", []string{"-n", "-1"}, []string{"https://other/"}, desync.MaxAdaptiveConcurrency},
+ 		{"adaptive flag, local stores", []string{"-n", "-1"}, []string{"/other/", "/store/a/"}, runtime.GOMAXPROCS(0)},
+ 		{"adaptive flag, no location", []string{"-n", "-1"}, []string{""}, runtime.GOMAXPROCS(0)},
+ 		{"adaptive in the config", nil, []string{"https://other/", "https://store/a/"}, desync.MaxAdaptiveConcurrency},
+ 		{"adaptive in the config of a group member", nil, []string{"https://other/|https://store/a/"}, desync.MaxAdaptiveConcurrency},
+-		{"adaptive in the config of a local store", nil, []string{"https://other/", "/store/a/"}, 10},
++		{"adaptive in the config of a local store", nil, []string{"https://other/", "/store/a/"}, 100},
+ 		{"adaptive in the config, overridden by the flag", []string{"-n", "20"}, []string{"https://store/a/"}, 20},
+-		{"no location", nil, []string{""}, 10},
++		{"no location", nil, []string{""}, 100},
+ 	} {
+ 		t.Run(test.name, func(t *testing.T) {
+ 			f := filepath.Join(t.TempDir(), "desync-options")
 -- 
-2.53.0
+2.56.0
 

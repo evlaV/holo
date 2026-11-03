@@ -3,7 +3,7 @@
 
 pkgname=zenity-gtk3 # Holo: rename the package
 pkgver=3.44.5
-pkgrel=1.1
+pkgrel=1.2
 pkgdesc="Display graphical dialog boxes from shell scripts using GTK3"
 url="https://gitlab.gnome.org/GNOME/zenity"
 arch=(x86_64)
