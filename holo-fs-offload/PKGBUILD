@@ -3,7 +3,7 @@
 
 pkgname='holo-fs-offload'
 pkgver=1.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Holo Filesystem Offload"
 arch=('any')
 license=('LGPL2.1')

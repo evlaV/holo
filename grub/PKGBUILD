@@ -9,7 +9,7 @@ epoch=2
 _pkgver=2.14
 _unifont_ver=17.0.04
 pkgver=${_pkgver/-/}
-pkgrel=1.6
+pkgrel=1.8
 url='https://gnu-grub.freedesktop.org/'
 arch=('x86_64')
 license=('GPL-3.0-or-later')
@@ -80,7 +80,7 @@ validpgpkeys=(
 # as it is a subset of the debian patch 'debian-default-grub-d.patch'
 source=(
   "git+https://gitlab.freedesktop.org/gnu-grub/grub.git#tag=grub-${_pkgver}?signed"
-  "git+https://git.savannah.gnu.org/git/gnulib.git"
+  "git+https://github.com/coreutils/gnulib.git"
   # This is used to grab the .mo files from the distributed tarball
   # It is not used in the main package build.
   "https://ftp.gnu.org/gnu/${pkgname}/${pkgname}-${pkgver}.tar.xz"{,.sig}
