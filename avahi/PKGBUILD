@@ -7,9 +7,14 @@
 # enough mDNS browsing support for CUPS remote printing to work.
 # sd-resolved: Used by steamos devkit (mDNS publishing)
 # avahi: mDNS browsing (finding network printers for CUPS)
-pkgname=avahi
+pkgbase=avahi
+pkgname=(
+  avahi
+  avahi-bookmarks
+  avahi-gtk
+)
 pkgver=0.9rc5
-pkgrel=1.1
+pkgrel=2.1
 epoch=1
 pkgdesc="Service Discovery for Linux using mDNS/DNS-SD (compatible with Bonjour)"
 url="https://github.com/avahi/avahi"
@@ -33,27 +38,11 @@ makedepends=(
   gobject-introspection
   graphviz
   gtk3
-  libevent
   python-dbus
   python-gobject
+  python-twisted
   systemd
   xmltoman
-)
-optdepends=(
-  'gtk3: avahi-discover, avahi-discover-standalone, bshell, bssh, bvnc'
-  'libevent: libevent bindings'
-  'nss-mdns: NSS support for mDNS'
-  'python-dbus: avahi-bookmarks, avahi-discover'
-  'python-gobject: avahi-bookmarks, avahi-discover'
-  'python-twisted: avahi-bookmarks'
-)
-provides=(
-  libavahi-{client,common,core,glib,gobject,libevent,ui-gtk3}.so
-  libdns_sd.so
-)
-backup=(
-  etc/avahi/{hosts,avahi-daemon.conf,avahi-{autoip,dnsconf}d.action}
-  usr/lib/avahi/service-types.db
 )
 source=(
   "git+$url#tag=v${pkgver/[a-z]/-&}"
@@ -83,6 +72,7 @@ build() {
     --localstatedir=/var
     --sbindir=/usr/bin
     --runstatedir=/run
+    --disable-libevent
     --disable-mono
     --disable-qt5
     --enable-compat-libdns_sd
@@ -101,14 +91,85 @@ build() {
   make
 }
 
-package() {
+_pick() {
+  local p="$1" f d; shift
+  for f; do
+    d="$srcdir/$p/$f"
+    mkdir -p "$(dirname "$d")"
+    mv "$f" "$d"
+    rmdir -p --ignore-fail-on-non-empty "$(dirname "$f")"
+  done
+}
+
+package_avahi() {
   depends+=(libdbus-1.so)
+  optdepends=(
+    'avahi-bookmarks: avahi-bookmarks'
+    'avahi-gtk: avahi-discover, avahi-discover-standalone, bshell, bssh, bvnc'
+    'nss-mdns: NSS support for mDNS'
+    'python-dbus: Python bindings'
+  )
+  provides=(
+    libavahi-{client,common,core,glib,gobject}.so
+    libdns_sd.so
+  )
+  backup=(
+    etc/avahi/{hosts,avahi-daemon.conf,avahi-{autoip,dnsconf}d.action}
+    usr/lib/avahi/service-types.db
+  )
 
   cd avahi
   make DESTDIR="$pkgdir" install
 
-  echo 'u avahi - "Avahi mDNS/DNS-SD daemon"' |
+  echo 'u! avahi - "Avahi mDNS/DNS-SD daemon"' |
     install -Dm644 /dev/stdin "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
+
+  (
+    cd "$pkgdir"
+
+    _pick a-bm usr/bin/avahi-bookmarks
+    _pick a-bm usr/share/man/man1/avahi-bookmarks.1*
+
+    _pick a-gtk usr/bin/{avahi-discover{,-standalone},bshell,bssh,bvnc}
+    _pick a-gtk usr/include/avahi-ui
+    _pick a-gtk usr/lib/libavahi-ui-gtk3.*
+    _pick a-gtk usr/lib/pkgconfig/avahi-ui-gtk3.pc
+    _pick a-gtk usr/lib/python*/site-packages/avahi/ServiceTypeDatabase.py
+    _pick a-gtk usr/share/applications
+    _pick a-gtk usr/share/avahi/interfaces
+    _pick a-gtk usr/share/man/man1/{avahi-discover,bshell,bssh,bvnc}.1*
+  )
+}
+
+package_avahi-bookmarks() {
+  pkgdesc+=" - web page of Zeroconf-announced HTTP/FTP services"
+  depends=(
+    "avahi=$epoch:$pkgver-$pkgrel"
+    glib2
+    python
+    python-dbus
+    python-gobject
+  )
+  optdepends=('python-twisted: built-in web server (default mode, not -c)')
+
+  mv a-bm/* "$pkgdir"
+}
+
+package_avahi-gtk() {
+  pkgdesc+=" - GTK tools and UI library"
+  depends=(
+    "avahi=$epoch:$pkgver-$pkgrel"
+    gdbm
+    glib2
+    glibc
+    gtk3
+    python
+    python-dbus
+    python-gobject
+  )
+  provides=(libavahi-ui-gtk3.so)
+
+  mv a-gtk/* "$pkgdir"
 }
 
 # vim:set sw=2 sts=-1 et:
