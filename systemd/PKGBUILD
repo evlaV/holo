@@ -18,8 +18,8 @@ pkgname=('systemd'
 # Upstream versioning is incompatible with pacman's version comparisons, one
 # way or another. We use proper version for pacman here (no dash for rc
 # release!), and change in source array below.
-pkgver=261.2
-pkgrel=1.2
+pkgver=262.1
+pkgrel=2.1
 arch=('x86_64')
 license=('LGPL-2.1-or-later')
 url='https://www.github.com/systemd/systemd'
@@ -31,7 +31,8 @@ makedepends=('acl' 'apparmor' 'cryptsetup' 'docbook-xsl' 'gperf' 'lz4' 'xz' 'pam
              'meson' 'libseccomp' 'pcre2' 'audit' 'kexec-tools' 'libxkbcommon'
              'bash-completion' 'p11-kit' 'systemd' 'libfido2' 'tpm2-tss' 'rsync'
              'bpf' 'libbpf' 'clang' 'llvm' 'curl' 'gnutls' 'python-pyelftools'
-             'libpwquality' 'qrencode' 'lib32-gcc-libs' 'python-pefile' 'linux-headers')
+             'libpwquality' 'qrencode' 'lib32-gcc-libs' 'python-pefile' 'linux-headers'
+             'rust' 'rust-bindgen')
 conflicts=("mkinitcpio<38-1")
 validpgpkeys=('63CDA1E5D3FC22B998D20DD6327F26951A015CC4'  # Lennart Poettering <lennart@poettering.net>
               'A9EA9081724FFAE0484C35A1A81CEA22BC8C7E2E'  # Luca Boccassi <luca.boccassi@gmail.com>
@@ -47,8 +48,6 @@ source=("git+https://github.com/systemd/systemd#tag=v${pkgver/rc/-rc}?signed"
         # Holo: allow suspend-then-hibernate to work together with hibernation
         # cancellation
         '0001-sleep-Don-t-fallback-to-suspend-if-hibernate-failed-.patch'
-        '0001-mount-util-don-t-trigger-automounts-when-cloning-sub.patch'
-        '0002-terminal-util-don-t-query-terminal-size-on-virtual-c.patch'
 
         # bootloader files
         'arch.conf'
@@ -68,13 +67,12 @@ source=("git+https://github.com/systemd/systemd#tag=v${pkgver/rc/-rc}?signed"
         '30-systemd-daemon-reload-user.hook'
         '35-systemd-enqueue-marked.hook'
         '35-systemd-udev-reload.hook'
-        '35-systemd-update.hook')
-sha512sums=('1c2a3aed0b7c613040722ef1bd063a1f35d2f3993e0f678701ef5e4d42d31628804df477158e5fa2bb47e523a9969d01cfb7622762cf32ff44e0367e5f432368'
+        '35-systemd-update.hook'
+        '36-systemd-modules-load.hook')
+sha512sums=('7be7a345e35c13dce59db37247146d1a1f3f3ff121e6d655f056ca78834b5ff38ffbb5be53760a5d2339f9389ca2e0f04f4c3f4ce9d2b49f8bcc484f580fbfde'
             'ddb9401e47d0bf01874f255803a4b2167ec631484189d29d03694101fd9c77724e735f16d99c5f4ffd8061ae78839b2826ff0e0a925a6f0dbca25f2cfb271a82'
             'f0a8a7ec9ab53ad5273c491f3b8d94cf76b51434a030e572178bd04d3ebb5936b38bf17a708290f4d054d5cb93545b2e2049113268b234f12004d0c7d296989e'
             '28db3e3c9f2d54c7b4595ed2147649f81db3522b6b9659c3ac7b5ec47e384a82c53401c78a5d72e97f3f77b703a54318842f5002029d191bdb36bb1367efedb7'
-            'e6ff5fd3500534d47412b6909ae39c0c851db6da038f96c4a09b571d7c322114488c017fedd71c56d731c93f6e017c12d3c59198c0d7782db362a5cd9ca23187'
-            'd0ded5a1b77790d410d908e298629a0af0dfc34d9d8e39629ae7ee9485ae19257942643ffd05ae9c41d81f0cf4ff645d8da6ca1f9711975e70015a8350d69b25'
             '61032d29241b74a0f28446f8cf1be0e8ec46d0847a61dadb2a4f096e8686d5f57fe5c72bcf386003f6520bc4b5856c32d63bf3efe7eb0bc0deefc9f68159e648'
             '3194d1f8bff31b88a79657df83632b9224b66ca2cf8fd806a3ef35cf7a43f46c09c57f3dfd02256a99b6514a8f789b7d3bcfd7e17e00e34aa55ff0c6cedb5f01'
             '5a1d78b5170da5abe3d18fdf9f2c3a4d78f15ba7d1ee9ec2708c4c9c2e28973469bc19386f70b3cf32ffafbe4fcc4303e5ebbd6d5187a1df3314ae0965b25e75'
@@ -90,7 +88,8 @@ sha512sums=('1c2a3aed0b7c613040722ef1bd063a1f35d2f3993e0f678701ef5e4d42d31628804
             '190112e38d5a5c0ca91b89cd58f95595262a551530a16546e1d84700fc9644aa2ca677953ffff655261e8a7bff6e6af4e431424df5f13c00bc90b77c421bc32d'
             '51ebf20a1c93c2a86e8ced0d68e91f4a2bf6a537a2d674e05da69961d5861213159e28f228ffdc897bed721abd61ff133f49aeb0a9ebbbe76020c5b847c2a2df'
             'a50d202a9c2e91a4450b45c227b295e1840cc99a5e545715d69c8af789ea3dd95a03a30f050d52855cabdc9183d4688c1b534eaa755ebe93616f9d192a855ee3'
-            '825b9dd0167c072ba62cabe0677e7cd20f2b4b850328022540f122689d8b25315005fa98ce867cf6e7460b2b26df16b88bb3b5c9ebf721746dce4e2271af7b97')
+            '825b9dd0167c072ba62cabe0677e7cd20f2b4b850328022540f122689d8b25315005fa98ce867cf6e7460b2b26df16b88bb3b5c9ebf721746dce4e2271af7b97'
+            '717d93fb29034398394b68510f53da8d599cb68accf1cb92baee158fca1fde3fa5a1f698d35f81661b22c7acec6da34422b852e29dbc731b296a0884ffb6fcb0')
 
 _meson_version="${pkgver}-${pkgrel}"
 _systemd_src_dir="${pkgbase}"
@@ -227,9 +226,9 @@ package_systemd() {
   depends=(
     "systemd-libs=${pkgver}"
     'acl' 'bash' 'cryptsetup' 'dbus'
-    'dbus-units' 'kbd' 'kmod' 'hwdata'
+    'dbus-units' 'glibc' 'kbd' 'kmod' 'hwdata'
     'libgcrypt' 'libxcrypt' 'libidn2' 'lz4' 'pam'
-    'libelf' 'libseccomp' 'util-linux' 'xz' 'pcre2' 'audit'
+    'libelf' 'libgcc' 'libseccomp' 'util-linux' 'xz' 'pcre2' 'audit'
     'openssl')
   provides=('nss-myhostname' "systemd-tools=$pkgver" "udev=$pkgver")
   replaces=('nss-myhostname' 'systemd-tools' 'udev')
@@ -391,7 +390,18 @@ package_systemd-sysvcompat() {
 
 package_systemd-tests() {
   pkgdesc='systemd tests'
-  depends=("systemd=${pkgver}")
+  depends=(
+    'bash'
+    'glibc'
+    'libgcc'
+    'python'
+    'python-packaging'
+    'python-colorama'
+    'python-pexpect'
+    'python-pytest'
+    'python-psutil'
+    "systemd=${pkgver}-${pkgrel}"
+    "systemd-libs=${pkgver}-${pkgrel}")
 
   install -d -m0755 "$pkgdir"/usr/lib/systemd
   mv systemd-tests/tests "$pkgdir"/usr/lib/systemd/tests
@@ -400,7 +410,7 @@ package_systemd-tests() {
 package_systemd-ukify() {
   pkgdesc='Combine kernel and initrd into a signed Unified Kernel Image'
   provides=('ukify')
-  depends=("systemd=${pkgver}" 'binutils' 'python-cryptography' 'python-pefile')
+  depends=("systemd=${pkgver}" 'binutils' 'python-cryptography' 'python' 'python-pefile')
   optdepends=('python-pillow: Show the size of splash image'
               'sbsigntools: Sign the embedded kernel')
 
