@@ -5,7 +5,6 @@ PartOf=sddm.service
 
 [Service]
 Type=oneshot
-ExecStartPre=rm -f /etc/sddm.conf.d/zz-steamos-dirlock.conf
 ExecStart=/usr/lib/steamos/dirlock-pam-config
 
 [Install]

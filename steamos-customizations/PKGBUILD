@@ -1,7 +1,7 @@
 # Maintainer: Holo Team
 
 pkgname=steamos-customizations
-_srctag=jupiter-20261021.2
+_srctag=jupiter-20261027.1
 _srcver=${_srctag#jupiter-}
 pkgver=${_srcver//-/.}
 pkgrel=2
@@ -15,7 +15,7 @@ conflicts=('steamos-customizations-jupiter<20260930.1')
 replaces=('steamos-customizations-jupiter')
 provides=('steamos-customizations-jupiter')
 source=("${pkgname}::git+https://github.com/evlav/steamos-customizations.git#tag=${_srctag}")
-sha256sums=('a5422d1180c290880ff4c4db8094827bda00b038a9a5657241312321645a72c0')
+sha256sums=('58e7eb288660139cec91168798ada08f167253a1252b1f6c17194025665d9df5')
 
 package() {
 	cd "${pkgname}"

@@ -1,0 +1,52 @@
+# Maintainer: Holo Team
+
+pkgname=holo-config-kernel
+pkgver=1.0
+pkgrel=1
+pkgdesc='Holo customizations - configuration for the kernel'
+arch=('any')
+url='https://github.com/evlav/holo'
+license=('LGPLv2+')
+source=(
+    'modules-load.d_holo-hid-preload.conf'
+    'modules-load.d_holo-ntsync.conf'
+    'sysctl.d_20-holo-mtu-probing.conf'
+    'sysctl.d_20-holo-net-timeout.conf'
+    'sysctl.d_20-holo-sched.conf'
+    'sysctl.d_30-holo-splitlock.conf'
+    'sysctl.d_30-holo-vm.conf'
+)
+b2sums=(
+    '7017f11ea5768170d7a7546e6e15a64e19babc526976a59a4c1075ae1e202744ab3539f166ee3b2c6bff300b9e4cc39e92eddf8d768a53588d327d54858aa404'
+    '545f52e369dfcfa9166f10766620f82d63068da9aebdeca39003abe9c5378a8f2340bd2f4be7b3da2b410fc9a90193fd9e6a222204339a2b1a891e8b00db2f0d'
+    '9414ff9c01079eb465e330e3e8fd9c3fe50bee7e92374b210cbe430c06e12be864fa7f6b378b27103d483942454b8df3d4c375d7edce76ec1e6c058cd691d5e8'
+    'd9d6eb92dc9e7033eb524a9f9636e594b581bfa50bf3f66b5bbe05cefce86857db42f0c5c4ac4a2c6cde0f060f2a8237bd2295bdda6f07bf1502f754685eb692'
+    'f166a565317e08214c777bb332bd15d4ad0da7477fbf9e309c90a9f247d61d689941d7d3030ca4c570e307064b18f3424567bcb2605d4c756f0aa33c05e395c7'
+    'e14aee259d277c6b11492ecf5f4f9c248e448a2a04b39b95650862e1b982d75b66da08ff9713e6aac61c7b627074e6206bda1816766038c244961ba4fc3027d5'
+    'a5d5e89597e19a06ead79a10453384cf36c63969051901c4517699ce463a7ffc2d0a254637b85f6e23bf281280dce9dcc19e8dc12308f71912352a1b9e4c91c7'
+)
+
+package() {
+    local modules_files
+    modules_files=(
+	'modules-load.d_holo-hid-preload.conf'
+	'modules-load.d_holo-ntsync.conf'
+    )
+    echo "Installing modules-load.d files:"
+    for file in "${modules_files[@]}"; do
+	install -v -D -m 0644 "${file}" "${pkgdir}"/usr/lib/modules-load.d/"${file/modules-load.d_/}"
+    done
+
+    local sysctl_files
+    sysctl_files=(
+	'sysctl.d_20-holo-mtu-probing.conf'
+	'sysctl.d_20-holo-net-timeout.conf'
+	'sysctl.d_20-holo-sched.conf'
+        'sysctl.d_30-holo-splitlock.conf'
+        'sysctl.d_30-holo-vm.conf'
+    )
+    echo "Installing sysctl.d files:"
+    for file in "${sysctl_files[@]}"; do
+        install -v -D -m 0644 "${file}" "${pkgdir}"/usr/lib/sysctl.d/"${file/sysctl.d_/}"
+    done
+}
