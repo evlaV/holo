@@ -1,0 +1,149 @@
+From b9b6d0608ffa46ba5a3d9860574df64b49ae049e Mon Sep 17 00:00:00 2001
+From: Matthew Schwartz <matthew.schwartz@linux.dev>
+Date: Wed, 28 Oct 2026 15:28:28 -0700
+Subject: [PATCH] l3cfg: ignore local ARP flux conflicts while defending
+ addresses
+
+With the kernel default arp_ignore=0, an interface answers ARP requests
+for any address of the host, also for addresses that are only
+configured on another interface. When two interfaces of the host are on
+the same L2 network, ACD on one of them can receive an ARP packet for
+its own address that was sent by the other one.
+
+This happens for example on a Steam Deck connected to Wi-Fi and to a
+USB-C dock with Ethernet on the same LAN, each with its own DHCP
+address:
+
+  device (enp4s0f3u1u4c2): conflict detected for IP address 192.168.1.133 with host E8:8D:A6:E2:9B:6D
+
+where E8:8D:A6:E2:9B:6D is the local wlan0. The address is then
+considered not ready and its routes are not configured, while the
+device stays activated. It was observed not to recover until the
+connection was activated again.
+
+While defending an address, ignore a conflict if the sender MAC belongs
+to another local link and no link with that MAC has the address
+configured. A duplicate address on another interface of the host is
+still reported as conflict, and probing is unchanged.
+
+n-acd stops the probe on a conflict, so start announcing again with a
+new one, at most once every 10 seconds. In between, the address stays
+configured but ACD monitoring is suspended.
+
+https://github.com/ValveSoftware/SteamOS/issues/2512
+https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/issues/1681
+---
+ src/core/nm-l3cfg.c | 76 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 76 insertions(+)
+
+diff --git a/src/core/nm-l3cfg.c b/src/core/nm-l3cfg.c
+index 98a2a2a6d6..91c0ae41d3 100644
+--- a/src/core/nm-l3cfg.c
++++ b/src/core/nm-l3cfg.c
+@@ -56,6 +56,7 @@ G_STATIC_ASSERT(NM_ACD_TIMEOUT_RFC5227_MSEC == N_ACD_TIMEOUT_RFC5227);
+ #define ACD_WAIT_TIME_PROBING_FULL_RESTART_MSEC ((guint32) 30000u)
+ #define ACD_WAIT_TIME_CONFLICT_RESTART_MSEC     ((guint32) 120000u)
+ #define ACD_WAIT_TIME_ANNOUNCE_RESTART_MSEC     ((guint32) 30000u)
++#define ACD_WAIT_TIME_IGNORED_CONFLICT_MSEC     ((guint32) 10000u)
+ #define ACD_DEFENDCONFLICT_INFO_RATELIMIT_MSEC  ((guint32) 30000u)
+ 
+ static gboolean
+@@ -107,6 +108,8 @@ typedef struct {
+ 
+     gint64 last_defendconflict_timestamp_msec;
+ 
++    gint64 last_ignored_conflict_timestamp_msec;
++
+     guint n_track_infos_alloc;
+ 
+     /* This is only relevant while in state NM_L3_ACD_ADDR_STATE_PROBING. It's the
+@@ -780,6 +783,45 @@ _l3_acd_ipv4_addresses_on_link_contains(NML3Cfg *self, in_addr_t addr)
+     return g_hash_table_contains(self->priv.p->acd_ipv4_addresses_on_link, GUINT_TO_POINTER(addr));
+ }
+ 
++static gboolean
++_l3_acd_sender_is_own_other_link(NML3Cfg *self, in_addr_t addr, const NMEtherAddr *sender_addr)
++{
++    const NMDedupMultiHeadEntry *pl_links_head_entry;
++    NMDedupMultiIter             pliter;
++    const NMPlatformLink        *plink;
++    gboolean                     found = FALSE;
++
++    /* With the kernel's default ARP settings (arp_ignore=0), an interface answers
++     * ARP requests for any address of the host, also for addresses that are only
++     * configured on another interface ("ARP flux"). When two interfaces of this host
++     * are on the same L2 network, ACD on one of them then sees packets for its own
++     * address, sent by the other interface of this very host. That is not another
++     * host using the address, so it must not be treated as a conflict.
++     *
++     * Several links can share a MAC address (e.g. a bridge and its ports). If any
++     * of them has the address configured itself, it's a regular duplicate and still
++     * reported as conflict. */
++    pl_links_head_entry = nm_platform_lookup_obj_type(self->priv.platform, NMP_OBJECT_TYPE_LINK);
++    nmp_cache_iter_for_each_link (&pliter, pl_links_head_entry, &plink) {
++        gs_unref_hashtable GHashTable *addrs = NULL;
++
++        if (plink->l_address.len != sizeof(*sender_addr)
++            || !nm_ether_addr_equal(&plink->l_address.ether_addr, sender_addr))
++            continue;
++
++        if (plink->ifindex == self->priv.ifindex)
++            return FALSE;
++
++        addrs = nm_platform_ip4_address_addr_to_hash(self->priv.platform, plink->ifindex);
++        if (addrs && g_hash_table_contains(addrs, GUINT_TO_POINTER(addr)))
++            return FALSE;
++
++        found = TRUE;
++    }
++
++    return found;
++}
++
+ /*****************************************************************************/
+ 
+ static NAcdProbe *
+@@ -2855,6 +2897,40 @@ handle_init:
+     case ACD_STATE_CHANGE_MODE_NACD_CONFLICT:
+         nm_assert(acd_data->info.state == NM_L3_ACD_ADDR_STATE_DEFENDING);
+ 
++        if (_l3_acd_sender_is_own_other_link(self, acd_data->info.addr, sender_addr)) {
++            /* n-acd gave up on the probe. Start announcing again with a new one, but
++             * not more often than every ACD_WAIT_TIME_IGNORED_CONFLICT_MSEC. While
++             * waiting, the address stays configured but is not monitored. */
++            acd_data->nacd_probe = n_acd_probe_free(acd_data->nacd_probe);
++
++            nm_utils_get_monotonic_timestamp_msec_cached(p_now_msec);
++            if (acd_data->last_ignored_conflict_timestamp_msec == 0
++                || *p_now_msec >= acd_data->last_ignored_conflict_timestamp_msec
++                                      + ACD_WAIT_TIME_IGNORED_CONFLICT_MSEC) {
++                acd_data->last_ignored_conflict_timestamp_msec = *p_now_msec;
++                _LOGT_acd(acd_data,
++                          "ignore conflict for %s with %s, another interface of this host",
++                          nm_inet4_ntop(acd_data->info.addr, sbuf_addr),
++                          nm_ether_addr_to_string_a(sender_addr));
++                goto handle_start_defending;
++            }
++
++            _LOGT_acd(acd_data,
++                      "ignore conflict for %s with %s, another interface of this host "
++                      "(announce again later)",
++                      nm_inet4_ntop(acd_data->info.addr, sbuf_addr),
++                      nm_ether_addr_to_string_a(sender_addr));
++            if (!acd_data->acd_data_timeout_source) {
++                /* The timeout starts announcing again. Account for that restart. */
++                acd_data->last_ignored_conflict_timestamp_msec +=
++                    ACD_WAIT_TIME_IGNORED_CONFLICT_MSEC;
++                _l3_acd_data_timeout_schedule(acd_data,
++                                              acd_data->last_ignored_conflict_timestamp_msec
++                                                  - *p_now_msec);
++            }
++            return;
++        }
++
+         _LOGT_acd(acd_data,
+                   "address conflict for %s detected with %s",
+                   nm_inet4_ntop(acd_data->info.addr, sbuf_addr),
+-- 
+2.56.0
+
