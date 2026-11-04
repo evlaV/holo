@@ -4,7 +4,7 @@
 
 pkgname=iwd
 pkgver=3.12
-pkgrel=1.5
+pkgrel=2.2
 pkgdesc='Internet Wireless Daemon'
 arch=('x86_64')
 url='https://git.kernel.org/cgit/network/wireless/iwd.git/'
@@ -14,6 +14,11 @@ makedepends=('python-docutils' 'dbus' 'systemd')
 optdepends=('qrencode: for displaying QR code after DPP is started')
 source=(https://www.kernel.org/pub/linux/network/wireless/iwd-${pkgver}.tar{.xz,.sign}
         0001-use-network-group-for-unprivileged-access.diff
+        0001-rrm-fix-stack-buffer-overflow-in-rrm_report_beacon_r.patch
+        0002-ie-fix-off-by-one-in-HE-Capabilities-Channel-Width-S.patch
+        0003-ft-fix-mde_equal-self-comparison-and-type-mismatch.patch
+        0004-ie-fix-uint8_t-underflow-in-FTE-sub-element-parser.patch
+
         # Holo: one fix is for iwd partial channel scans flushing the kernel BSS cache and
         # one fix is to protect pending BSS ids during the connection process.
         # See https://gitlab.steamos.cloud/holo-team/tasks/-/issues/1978 for details
@@ -40,6 +45,10 @@ source=(https://www.kernel.org/pub/linux/network/wireless/iwd-${pkgver}.tar{.xz,
 sha256sums=('d89a5e45c7180170e19be828f9e944a768c593758094fc57a358d0e7c4cb1a49'
             'SKIP'
             'd5fb4fb864b7a0632117aa2039df535ab5c1d024ae618a1f09e34dfab8ee0cc7'
+            'db5e63cf8e7d2071b0048f134e4aebed1f46e0b191cad5530ce99c07b1157b13'
+            'cdd07a19f831c5f207817cdf8398a790bb5b233e32bb0e7d7998eb41a1a61763'
+            'c160d0c3c7c0219ceff7cf107f8c24c33163c92cee3fc2573c26b1515bd05f22'
+            '42dba8b8f2b0d39036df71f4b1887db5915e25ca3575e841d3f5352dfb0d514a'
             'fb573fbea862377ec4ba404b3430f886dee297d6e9e913b47f9f00582a66671a'
             '58614bbc48e03073d9b204b98b9268434529de4bdeb4bd5831ad813cf935472b'
             '5adc33168ee7dd4772d94a2e873952c113bfc91e2cbff41df3243af148738d84'
@@ -56,6 +65,13 @@ prepare() {
   # https://gitlab.archlinux.org/archlinux/packaging/packages/iwd/-/issues/2 + #3
   patch -Np1 -i ../0001-use-network-group-for-unprivileged-access.diff
 
+  # fixes for https://www.openwall.com/lists/oss-security/2026/08/02/2
+  # see https://github.com/abhinavagarwal07/iwd-security-poc/blob/main/patches/README.md
+  patch -Np1 -i ../0001-rrm-fix-stack-buffer-overflow-in-rrm_report_beacon_r.patch
+  patch -Np1 -i ../0002-ie-fix-off-by-one-in-HE-Capabilities-Channel-Width-S.patch
+  patch -Np1 -i ../0003-ft-fix-mde_equal-self-comparison-and-type-mismatch.patch
+  patch -Np1 -i ../0004-ie-fix-uint8_t-underflow-in-FTE-sub-element-parser.patch
+
   # Holo: fix iwd flush expiration behavior
   patch -Np1 -i ../0001-station-avoid-flushing-BSS-cache-on-partial-channel-.patch
   # Holo: protect pending BSS ids during connection
@@ -70,16 +86,17 @@ prepare() {
   # https://lore.kernel.org/iwd/20240122105312.66fb4dbf@workstation64.local/T/#u
   # disable one expected test failure - requires a kernel module we cannot load
   # from inside the chroot
+  # Holo: Disable test-wsc, which fails in CI
   sed -i "s:unit/test-wsc::" Makefile.am
   # and another failing test that depends on AES_CTR not available
   sed -i "s:unit/test-storage::" Makefile.am
   # and more since 3.10 - they don't fail building locally
-  sed -i "s:unit/test-crypto::" Makefile.am
-  sed -i "s:unit/test-eapol::" Makefile.am
   # Holo: Disable tests relying on `AF_ALG` which don't have a runtime
   # pre-check. `AF_ALG` has been disabled in CI as a workaround for
   # CVE-2026-31431.
   sed -i "s:unit/test-eap-sim::" Makefile.am
+  # sed -i "s:unit/test-crypto::" Makefile.am
+  # sed -i "s:unit/test-eapol::" Makefile.am
   autoreconf -vfi
 }
 
