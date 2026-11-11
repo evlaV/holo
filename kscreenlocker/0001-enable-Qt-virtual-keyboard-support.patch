@@ -1,0 +1,25 @@
+From 2b3ec6b4281ee165a58f4273f5e14337cb2e5dad Mon Sep 17 00:00:00 2001
+From: David Edmundson <kde@davidedmundson.co.uk>
+Date: Wed, 4 Nov 2026 10:32:02 +0100
+Subject: [PATCH] enable Qt virtual keyboard support
+
+---
+ greeter/main.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/greeter/main.cpp b/greeter/main.cpp
+index 363f3c38e3..c244d9a710 100644
+--- a/greeter/main.cpp
++++ b/greeter/main.cpp
+@@ -75,6 +75,8 @@ int main(int argc, char *argv[])
+     // https://bugreports.qt.io/browse/QTBUG-117130
+     qputenv("QML_DISABLE_DISK_CACHE", "1");
+ 
++    qputenv("QT_IM_MODULE", QByteArrayLiteral("qtvirtualkeyboard"));
++
+     auto format = QSurfaceFormat::defaultFormat();
+     format.setOption(QSurfaceFormat::ResetNotification);
+     QSurfaceFormat::setDefaultFormat(format);
+-- 
+2.56.0
+
