@@ -1,0 +1,40 @@
+From 7cfb3a2f192cb097f9f2a1b0776494fcd7f22f5f Mon Sep 17 00:00:00 2001
+From: David Edmundson <kde@davidedmundson.co.uk>
+Date: Thu, 22 Oct 2026 12:12:57 +0100
+Subject: [PATCH] Fix SDDM wallpaper
+
+---
+ sddm-theme/Main.qml | 15 ++++-----------
+ 1 file changed, 4 insertions(+), 11 deletions(-)
+
+diff --git a/sddm-theme/Main.qml b/sddm-theme/Main.qml
+index ab75d3db99..251623ed5b 100644
+--- a/sddm-theme/Main.qml
++++ b/sddm-theme/Main.qml
+@@ -40,19 +40,12 @@ Item {
+         key: Qt.Key_CapsLock
+     }
+ 
+-    Item {
++    Background {
+         id: wallpaper
+         anchors.fill: parent
+-        Repeater {
+-            model: screenModel
+-
+-            Background {
+-                x: geometry.x; y: geometry.y; width: geometry.width; height: geometry.height
+-                sceneBackgroundType: config.type
+-                sceneBackgroundColor: config.color
+-                sceneBackgroundImage: config.background
+-            }
+-        }
++        sceneBackgroundType: config.type
++        sceneBackgroundColor: config.color
++        sceneBackgroundImage: config.background
+     }
+ 
+     RejectPasswordAnimation {
+-- 
+2.56.0
+
