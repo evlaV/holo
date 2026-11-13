@@ -1,0 +1,40 @@
+From a8be13b8f8a1544c4a11f9430211ddfa1baf54b1 Mon Sep 17 00:00:00 2001
+From: Vignesh Raman <vignesh.raman@collabora.com>
+Date: Mon, 9 Nov 2026 17:36:48 +0530
+Subject: [PATCH] iwd: create the IWD directory before mirroring
+
+Wi-Fi connections activated with the wpa_supplicant backend
+are mirrored as IWD profiles in /var/lib/iwd.
+
+However, that directory is only created when iwd first starts.
+After a factory reset the profile is not mirrored, as iwd never
+ran when wpa_supplicant is the default backend. Create the
+directory before mirroring.
+---
+ src/core/devices/wifi/nm-iwd-manager.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/src/core/devices/wifi/nm-iwd-manager.c b/src/core/devices/wifi/nm-iwd-manager.c
+index 3d895e96df..e1c011cf4f 100644
+--- a/src/core/devices/wifi/nm-iwd-manager.c
++++ b/src/core/devices/wifi/nm-iwd-manager.c
+@@ -1514,6 +1514,16 @@ nm_mirror_wpa_supplicant_connection_to_iwd(NMSettingsConnection *sett_conn)
+         return;
+     }
+ 
++    if (g_mkdir_with_parents(iwd_dir, 0700) != 0) {
++        nm_log_dbg(LOGD_WIFI,
++                   "Wi-Fi connection %s not mirrored as IWD profile: can't create %s: %s (%i)",
++                   nm_settings_connection_get_id(sett_conn),
++                   iwd_dir,
++                   nm_strerror_native(errno),
++                   errno);
++        return;
++    }
++
+     if (!iwd_config_write(iwd_config, full_path, &mtime, &error)) {
+         nm_log_dbg(LOGD_WIFI,
+                    "Wi-Fi connection %s not mirrored as IWD profile: save error: %s",
+-- 
+2.47.3
+

@@ -18,7 +18,7 @@ pkgname=(
   networkmanager-docs
 )
 pkgver=1.58.1
-pkgrel=3.2
+pkgrel=3.3
 pkgdesc="Network connection manager and user applications"
 url="https://networkmanager.dev/"
 arch=(x86_64)
@@ -88,10 +88,16 @@ source=(
   "0001-wifi-supplicant-scan-only-the-last-associated-freq.patch"
 
   # Holo: https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/1471
-  # Workaround needed for 3.9. Can be dropped in 3.10 once 3.9 reaches
-  # stable and users can no longer downgrade to 3.8 from the UI.
+  # Holo: https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/2381
+  # Keep these patches for users who select iwd through developer settings
+  # in the steam client. They ensure saved networks are mirrored from
+  # wpa_supplicant to iwd and forgotten networks are removed from iwd.
+  # We may consider removing these patches in the future once we have verified
+  # that wpa_supplicant works reliably for all users. For now, as long as iwd
+  # remains available as an option, these patches should be kept.
   "0001-iwd-mirror-wpa_supplicant-connections-into-IWD-profi.patch"
   "0002-iwd-remove-IWD-profile-on-forget.patch"
+  "0001-iwd-create-the-IWD-directory-before-mirroring.patch"
 
   # Holo: https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/2308
   # At the moment of writing this patch has not been sent upstream yet
@@ -116,6 +122,7 @@ b2sums=('71ca8a6b298df777841b6f5560bf6ef9100ac7b6b4c48a46c995685a53cb09732d1e8c6
         '83fa2db6a72c30a9ee636929d967fff75bccb2612d9ace5e3eed5b0917793e561aed244ebf62ebb51c2155567f0057bdcf41c717b5b1beaae05543b318fa705c'
         'a700bf7a441b2dcc5aca0847936d890e07b9297970592945732107f90fdf6d0f7dc500f850aaf36d4af77c384905112543d267d3f3ba2214622f2da33f78fae4'
         '97a27192ccc2cf37a7cc7cdccc4b867c127bcb2a698db1b4c529c3021e01ea5b6a61738f50f6c7c04acb6f72995583ecf1d0e6896b15b5cb7eee5f0cf404ed05'
+        'fcecdcb3fcd9a7507f9d236e965a64d18c870041a840341aa1777a0a881810c4eec274fbc3322efc0f4f5ad2b02fdf1185d617af79b2c6e737e6f09ca613308e'
         'e5b1a720ed6111f4a7f8f041ce9b6fbd288c025605a1d34ab66bdf421d554ccb7d40e97e6e307b2f7634f6ef5a0f31da3fd8637b4b31b1a2ff9cee6f132839f8'
         '634f6aa94a9692134006c0085f7a67c54c9d6d9fac158d601bca1e454eebce14fb99652d0db946283cd2230c4ae509b541c603348f7ba7b63b1e413245b268ac'
         '94c62866bf2783a9acfa3507f45e7e7b3229fcb32fcd5d917538379f74ada851fb2a0be4028b96fe638df2e85afd1b1253dd4e3ed8a5e7fc98ebbaa56fe32310'
@@ -153,6 +160,7 @@ prepare() {
   patch -Np1 < ../0001-wifi-iwd-retry-hidden-network-activation.patch
   patch -Np1 < ../0001-iwd-check-for-sae-network-type.patch
   patch -Np1 < ../0001-l3cfg-ignore-local-ARP-flux-conflicts-while-defendin.patch
+  patch -Np1 < ../0001-iwd-create-the-IWD-directory-before-mirroring.patch
 }
 
 build() {
