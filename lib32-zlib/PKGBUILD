@@ -1,0 +1,48 @@
+# Maintainer: David Runge <dvzrv@archlinux.org>
+# Contributor: Ionut Biru <ibiru@archlinux.org>
+# Contributor: Pierre Schmitz <pierre@archlinux.de>
+
+_name=zlib
+pkgname=lib32-$_name
+pkgver=1.4
+pkgrel=1.1 # Rebuild for Holo
+pkgdesc='Compression library implementing the deflate compression method found in gzip and PKZIP (32-bit)'
+arch=(x86_64)
+license=(Zlib)
+url="https://www.zlib.net/"
+depends=(
+  lib32-glibc
+  lib32-gcc-libs
+  $_name
+)
+provides=(libz.so)
+source=(
+  https://github.com/madler/zlib/releases/download/v$pkgver/$_name-$pkgver.tar.xz{,.asc}
+)
+sha512sums=('c6701ef216f2ea451056466794c520df62af0a7ddf57c907c3263678dc625f3d6466e0187106dec0d7721ad6fc6cf105e0f93a4cac82fbcc2ba919eebd29c0b0'
+            'SKIP')
+b2sums=('2564e092d3daf5c727eddab8785cccf64275d8d534cce96ba6d21fa5c891a135ff5c9b21685a5c549f2c1c790b4ec3ed11449f9bc3da7f5df6b930c4b2f45f03'
+        'SKIP')
+validpgpkeys=('5ED46A6721D365587791E2AA783FCD8E58BCAFBA') # Mark Adler <madler@alumni.caltech.edu>
+
+build() {
+  export CFLAGS+=" -m32"
+  export CXXFLAGS+=" -m32"
+  export LDFLAGS+=" -m32"
+  export PKG_CONFIG_PATH='/usr/lib32/pkgconfig'
+
+  cd $_name-$pkgver
+  ./configure --prefix=/usr --libdir=/usr/lib32
+  make
+}
+
+check() {
+  make test -C $_name-$pkgver
+}
+
+package() {
+  make install DESTDIR="$pkgdir" -C $_name-$pkgver
+
+  rm -rf "$pkgdir"/usr/{include,share,bin}
+  install -vDm 644 $_name-$pkgver/LICENSE -t "$pkgdir/usr/share/licenses/$pkgname/"
+}
