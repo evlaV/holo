@@ -3,7 +3,7 @@
 
 pkgname='holo-fs-offload'
 pkgver=1.0
-pkgrel=2
+pkgrel=3
 pkgdesc="Holo Filesystem Offload"
 arch=('any')
 license=('LGPL2.1')
@@ -44,8 +44,12 @@ package() {
     ln -sfv ../holo-fs-offload.target "${unit_destdir}/local-fs.target.wants/"
     echo
 
+    # create /nix, not present in the standard filesystem
+    install -v -m 0755 -d "${pkgdir}/nix"
+
     local paths
     paths=(
+	'nix'
 	'opt'
 	'root'
 	'srv'
