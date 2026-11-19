@@ -3,9 +3,9 @@
 
 pkgbase=kcgroups
 pkgname=('kcgroups' 'plasma-foreground-booster')
-_tag=dmemcg-experimental-3
+_tag=dmemcg-experimental-4
 pkgver=0.0.${_tag//-/.}
-pkgrel=3
+pkgrel=1
 pkgdesc="KDE library to manipulate cgroups (and boost foreground apps)"
 arch=('i686' 'x86_64')
 url="https://invent.kde.org/libraries/kcgroups.git"
