@@ -5,7 +5,7 @@
 pkgname=plasma-desktop
 pkgver=6.8.2
 _dirver=$(echo $pkgver | cut -d. -f1-3)
-pkgrel=2
+pkgrel=3
 pkgdesc='KDE Plasma Desktop'
 arch=(x86_64)
 url='https://kde.org/plasma-desktop/'
@@ -97,10 +97,10 @@ source=(https://download.kde.org/stable/plasma/$_dirver/$pkgname-$pkgver.tar.xz{
          0003-Fix-SDDM-wallpaper.patch # Drop in 6.9
 )
 sha256sums=('fff6177d217e60ab747cb34e35ef249afab41c72bbd5ea61d3471ef88864bd80'
-             'SKIP'
-             'cc863db7cdd458805c34a6240566e3e11823aeb9a2e7a8d324f48d81d367787f'
-             '5a0d49c033d00bcfe8654739b507981c574b2ca3adeacfca292ff30d93e9db6d'
-             '8b625d1750fba7b489d134f48078ac878bf7b403e98bd4573349dbd02e5c34f3')
+            'SKIP'
+            'cc863db7cdd458805c34a6240566e3e11823aeb9a2e7a8d324f48d81d367787f'
+            '70ab13526aceb954dddbc891ba784199649d0ee1a24fb9c7d01f4722c61db66d'
+            '8b625d1750fba7b489d134f48078ac878bf7b403e98bd4573349dbd02e5c34f3')
 validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>
               '0AAC775BB6437A8D9AF7A3ACFE0784117FBCE11D'  # Bhushan Shah <bshah@kde.org>
               'D07BD8662C56CB291B316EB2F5675605C74E02CF'  # David Edmundson <davidedmundson@kde.org>
