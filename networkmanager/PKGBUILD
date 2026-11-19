@@ -18,7 +18,7 @@ pkgname=(
   networkmanager-docs
 )
 pkgver=1.58.1
-pkgrel=3.3
+pkgrel=3.4
 pkgdesc="Network connection manager and user applications"
 url="https://networkmanager.dev/"
 arch=(x86_64)
@@ -115,6 +115,9 @@ source=(
   # Holo: https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/2377
   # https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/merge_requests/2586
   "0001-l3cfg-ignore-local-ARP-flux-conflicts-while-defendin.patch"
+
+  # Holo: https://gitlab.steamos.cloud/holo-team/tasks/-/work_items/2311
+  "0001-wifi-schedule-an-unrestricted-scan-after-resume.patch"
 )
 b2sums=('71ca8a6b298df777841b6f5560bf6ef9100ac7b6b4c48a46c995685a53cb09732d1e8c6e4139f572bbb3f66352eb59737f260ca5738202591b4f25703976f141'
         'acb84792effee07ff8853f85136d5fe2822f11810a82a6dbb071c9dba7051d9f5ad232e49442b78cf3b29f24caf9e947ee18941adbe3e1876c11f7212e055509'
@@ -126,7 +129,8 @@ b2sums=('71ca8a6b298df777841b6f5560bf6ef9100ac7b6b4c48a46c995685a53cb09732d1e8c6
         'e5b1a720ed6111f4a7f8f041ce9b6fbd288c025605a1d34ab66bdf421d554ccb7d40e97e6e307b2f7634f6ef5a0f31da3fd8637b4b31b1a2ff9cee6f132839f8'
         '634f6aa94a9692134006c0085f7a67c54c9d6d9fac158d601bca1e454eebce14fb99652d0db946283cd2230c4ae509b541c603348f7ba7b63b1e413245b268ac'
         '94c62866bf2783a9acfa3507f45e7e7b3229fcb32fcd5d917538379f74ada851fb2a0be4028b96fe638df2e85afd1b1253dd4e3ed8a5e7fc98ebbaa56fe32310'
-        'f66ed3296b6ed166a60cb28ab32d951c2cd24ac3a565e7d10fc39a33934fa44e7a4c964e89aebcfe23db3a272bce7939135dfc001a90823d1446236814b250cb')
+        'f66ed3296b6ed166a60cb28ab32d951c2cd24ac3a565e7d10fc39a33934fa44e7a4c964e89aebcfe23db3a272bce7939135dfc001a90823d1446236814b250cb'
+        '8d1a98ddfe540f60472872cc2067c2ffb70ecaeda6338696d920d7ddb966679c32da7c22c67bdec93c6ecff925ab4172d63184158c7b6bf68d20b4d6399136dd')
 validpgpkeys=(
   3D10AD045AB4AAFF8E8F36AF9B980AC2FB874FEB # Ana Cabral <acabral@redhat.com>
   F07F7C1EABD382F81CBFBA3B998D4828CD7E1656 # Beniamino Galvani <bgalvani@redhat.com>
@@ -161,6 +165,7 @@ prepare() {
   patch -Np1 < ../0001-iwd-check-for-sae-network-type.patch
   patch -Np1 < ../0001-l3cfg-ignore-local-ARP-flux-conflicts-while-defendin.patch
   patch -Np1 < ../0001-iwd-create-the-IWD-directory-before-mirroring.patch
+  patch -Np1 < ../0001-wifi-schedule-an-unrestricted-scan-after-resume.patch
 }
 
 build() {
