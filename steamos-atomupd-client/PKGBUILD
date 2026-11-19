@@ -1,8 +1,8 @@
 # Maintainer: Ludovico de Nittis <ludovico.denittis@collabora.com>
 
 pkgname=steamos-atomupd-client
-pkgver=0.20260821.1
-pkgrel=2
+pkgver=0.20261110.1
+pkgrel=1
 pkgdesc='SteamOS Atomic Update (client) - Atomic update client for SteamOS.'
 arch=('any')
 url='https://store.steampowered.com/steamos/'
@@ -16,7 +16,7 @@ optdepends=(
 provides=("${pkgname}")
 conflicts=("${pkgname}")
 source=("${pkgname}::git+https://github.com/evlav/${pkgname%-client}.git#tag=v${pkgver}")
-sha256sums=('02c38ee7b79b41292a9b77b4324aabc8f29218c068a7eb545def96038a8bcaea')
+sha256sums=('870d6e7e260a8fe90a45581c467d1148c2dbf104e1bb389e83b610305694e053')
 
 build() {
   cd "${pkgname}"
