@@ -7,7 +7,7 @@ pkgname=(
   flatpak
   flatpak-docs
 )
-pkgver=1.18.4
+pkgver=1.18.6
 pkgrel=0.1 # Rebuild for Holo
 epoch=1
 pkgdesc="Linux application sandboxing and distribution framework (formerly xdg-app)"
@@ -64,10 +64,12 @@ source=(
   "git+https://github.com/flatpak/flatpak?signed#tag=$pkgver"
   https://dl.flathub.org/repo/flathub.flatpakrepo
   flatpak-bindir.sh
+  0001-Lock-user-account.patch
 )
-b2sums=('05c7b0187b068e98e6456ea76c9609b567fcf4ff895436fec61941c6a99d4284d201161e80654f36959267216e910524982d1f21e9942adb1430e51f48c276ea'
+b2sums=('762b96dbeb7e760e8a3485f185ce31d514bca007217a548a9467cb563432a09de091413ab551e4b66ba80c98aabecf0e4b6c83c5d6e7371d1f44ac7c956997c7'
         'c094461a28dab284c1d32cf470f38118a6cbce27acce633b81945fb859daef9bdec1261490f344221b5cacf4437f53934cb51173f7ad2f1d2e05001139e75c54'
-        '1c45caa65e2a1598f219977d5a81dcb8ea5d458880c43c40ba452b0c77cbbf41b36fa6911741f22c807d318e04e39e4fcc1455ed8d68faaba10162dae2570abc')
+        '1c45caa65e2a1598f219977d5a81dcb8ea5d458880c43c40ba452b0c77cbbf41b36fa6911741f22c807d318e04e39e4fcc1455ed8d68faaba10162dae2570abc'
+        'c9f987f583659d817b3e33dc2bc8f7806649676c87a85945bf7489e979d19815f8fffadcbbf83b0072b16dfbbaedc3b5a2ba62d8efb61a9cc068820450097419')
 validpgpkeys=(
   DA98F25C0871C49A59EAFF2C4DE8FF2A63C7CC90 # Simon McVittie <smcv@collabora.com>
   9038F70CA72FAC9D10C6327B89AFE307C861D158 # Georges Basile Stavracas Neto (Primary Key) <georges.stavracas@gmail.com>
@@ -76,6 +78,7 @@ validpgpkeys=(
 
 prepare() {
   cd flatpak
+  git apply -3 ../0001-Lock-user-account.patch
 }
 
 build() {
